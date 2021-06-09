@@ -39,3 +39,4 @@ vignettes/*.pdf
 .Renviron
 
 drake-cache.sqlite
+drake-cache-small.sqlite
