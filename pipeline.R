@@ -5,7 +5,7 @@ library(MATSS)
 
 expose_imports(rwar)
 
-be_small = T
+be_small = F
 datasets <- MATSS::build_bbs_datasets_plan()
 
 
