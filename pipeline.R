@@ -62,7 +62,7 @@ if(grepl("ufhpc", nodename)) {
   library(clustermq)
   options(clustermq.scheduler = "slurm", clustermq.template = "slurm_clustermq.tmpl")
   ## Run the pipeline parallelized for HiPerGator
-  make(workflow,
+  make(all,
        force = TRUE,
        cache = cache,
        verbose = 1,
