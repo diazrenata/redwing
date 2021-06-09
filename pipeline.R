@@ -68,7 +68,7 @@ if(grepl("ufhpc", nodename)) {
        verbose = 1,
        parallelism = "clustermq",
        jobs = 20,
-       caching = "master", memory_strategy = "autoclean") # Important for DBI caches!
+       caching = "main", memory_strategy = "autoclean") # Important for DBI caches!
 } else {
 
 
