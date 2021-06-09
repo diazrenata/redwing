@@ -13,4 +13,4 @@
 
 #This is a generic R submission script
 module load R
-Rscript crossval_pipeline.R
+Rscript pipeline.R
