@@ -30,12 +30,17 @@ methods <- drake_plan(
                    transform = map(begin_end_isds)),
   overlaps = target(overlap(smooths),
                    transform = map(smooths)),
+  comp = target(get_begin_end_composition(dataset),
+                transform = map(
+                  dataset = !!rlang::syms(datasets$target))),
   all_smooths = target(dplyr::bind_rows(smooths),
                         transform = combine(smooths)),
   all_svs = target(dplyr::bind_rows(svs),
                        transform = combine(svs)),
   all_overlaps = target(dplyr::bind_rows(overlaps),
-                       transform = combine(overlaps))
+                       transform = combine(overlaps)),
+  all_composition = target(dplyr::combine(comp),
+                           transform = combine(comp))
 )
 
 all = bind_rows(datasets, methods)
