@@ -40,5 +40,6 @@ vignettes/*.pdf
 
 drake-cache.sqlite
 drake-cache-small.sqlite
+drake-cache-rats.sqlite
 
 logs/workers/*

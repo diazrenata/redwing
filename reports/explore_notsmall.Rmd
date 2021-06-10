@@ -33,72 +33,49 @@ rm(db)
 
 ```{r}
 
-ggplot(all_overlaps, aes(overlap)) + geom_histogram(bins = 100) 
+all_overlaps <- left_join(all_overlaps, all_composition)
 
-ggplot(all_overlaps, aes(overlap)) + geom_histogram() + facet_wrap(vars(location.bcr), scales = "free_y")
+ggplot(filter(all_overlaps, !is.na(sim_seed)), aes(overlap)) + geom_histogram() + facet_wrap(vars(route), scales = "free_y", ncol = 3) + geom_histogram(data = filter(all_overlaps, is.na(sim_seed)), fill = "orange") + geom_histogram(data = filter(all_overlaps, is.na(sim_seed)), aes(x = composition_overlap), fill = "green")
 
-ggplot(all_overlaps, aes(as.factor(location.bcr), overlap)) + geom_boxplot() + geom_jitter(alpha = .1, size = .5, height = 0)
-
-all_overlaps %>%
-  summarize(mean_overlap = mean(overlap),
-            sd_overlap = sd(overlap))
-
-
-all_overlaps %>%
-  group_by(location.bcr) %>%
-  summarize(mean_overlap = mean(overlap),
-            sd_overlap = sd(overlap))
 ```
+So... given some amount of *species* turnover, there's going to be some constraint on how much the ISD can change. The ISD can't change a lot more than the species composition, but it can change a lot less. 
 
-
-Overlap is in general very high, and I don't see this varying in a really pronounced way across BCRs. For comparison, the overlap between Portal 1980-85 and 2010-2014 is .51 (calculated hackily just now so possibly slightly wrong, but ballpark)
-
-That is, like 80% of the ISD is remaining the same across the start and end of the TS. 
-
-## Compositions
+If it changes a lot less, that could be because similarly sized species are replacing each other. 
 
 ```{r}
 
-ggplot(all_composition, aes(composition_overlap)) + geom_histogram(bins = 100) 
+rt15 <- filter(all_smooths, is.na(sim_seed), route == 15)
 
-all_composition <- left_join(all_composition, all_overlaps)
-
-
-ggplot(all_composition, aes(composition_overlap, overlap)) + geom_point() + geom_abline(intercept = 0, slope = 1)
-
-ggplot(all_composition, aes(overlap - composition_overlap)) + geom_histogram(bins = 100)
-all_overlaps %>%
-  summarize(mean_overlap = mean(overlap),
-            sd_overlap = sd(overlap))
+ggplot(rt15, aes(mass, start)) + geom_line() + geom_line(aes(y = end), linetype = 5)
 
 
-all_overlaps %>%
-  group_by(location.bcr) %>%
-  summarize(mean_overlap = mean(overlap),
-            sd_overlap = sd(overlap))
+ggplot(filter(all_smooths, route == 15, sim_seed == 60346513), aes(mass, start)) + geom_line() + geom_line(aes(y = end), linetype = 5)
+
+
+
 ```
 
-## Smooths 
 
 ```{r}
 
-smooth_summary <- all_smooths %>% 
-  group_by(mass) %>%
-  mutate(overall_mean = mean(density_diff)) %>%
-  ungroup() %>%
-  group_by(location.bcr, mass) %>%
-  mutate(bcr_mean = mean(density_diff)) %>%
-  ungroup() %>%
-  group_by(location.bcr) %>%
-  mutate(nroutes = length(unique(route))) %>%
-  ungroup()
 
-rg14 <- filter(smooth_summary, location.bcr == 14)
+route_15_wide <- filter(all_svs, route == 15) %>%
+  select(energy, mean_energy, timechunk, sim_seed) %>%
+  tidyr::pivot_wider(id_cols = sim_seed, names_from = timechunk, values_from = c( "energy", "mean_energy"))
 
-ggplot(rg14, aes(mass, density_diff, group = location.routename, color = density_diff > 0)) + geom_col(position = "stack") + geom_line(aes(mass, bcr_mean * length(unique(rg14$`location.routename`))), color = "black")+ geom_line(aes(mass, overall_mean * length(unique(rg14$`location.routename`))), color = "black", linetype= 3)
 
-bcrs <- unique(smooth_summary$location.bcr)
+ggplot(route_15_wide, aes(abs(energy_start - energy_end), fill = is.na(sim_seed))) + 
+  geom_histogram(data = filter(route_15_wide, !is.na(sim_seed)), bins = 100) +
+  geom_histogram(data = filter(route_15_wide, is.na(sim_seed)), bins = 100)
 
-ggplot(filter(smooth_summary, location.bcr %in% sample(bcrs, size = 4)), aes(mass, density_diff, group = location.routename, color = density_diff >0)) + geom_col(position = "stack") + geom_line(aes(y = bcr_mean * nroutes), color = "black") + theme(legend.position = "none") + scale_color_viridis_d(option = "turbo", begin = .1, end = .9, direction = -1) + facet_wrap(vars(location.bcr), scales = "free_y")
 
+
+route_3_wide <- filter(all_svs, route == 3) %>%
+  select(energy, mean_energy, timechunk, sim_seed) %>%
+  tidyr::pivot_wider(id_cols = sim_seed, names_from = timechunk, values_from = c( "energy", "mean_energy"))
+
+
+ggplot(route_3_wide, aes(abs(energy_start - energy_end), fill = is.na(sim_seed))) + 
+  geom_histogram(data = filter(route_3_wide, !is.na(sim_seed)), bins = 100) +
+  geom_histogram(data = filter(route_3_wide, is.na(sim_seed)), bins = 100)
 ```
