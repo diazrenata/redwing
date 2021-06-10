@@ -5,13 +5,19 @@ library(MATSS)
 
 expose_imports(rwar)
 
-be_small = T
+be_small = F
 
 
 
 datasets <- MATSS::build_bbs_datasets_plan()
 nits <- 100
 
+holes <- read.csv(here::here("bbs_holes.csv"))
+
+holes <- filter(holes, complete)
+
+datasets <- datasets %>%
+  filter(target %in% holes$matssname)
 
 if(be_small) {
 
