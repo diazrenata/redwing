@@ -21,6 +21,7 @@ theme_set(theme_bw())
   loadd(all_overlaps, cache = cache)
 loadd(all_smooths, cache = cache)  
 loadd(all_svs, cache = cache)
+loadd(all_composition, cache = cache)
 
 DBI::dbDisconnect(db)
 rm(cache)
@@ -54,6 +55,28 @@ Overlap is in general very high, and I don't see this varying in a really pronou
 
 That is, like 80% of the ISD is remaining the same across the start and end of the TS. 
 
+## Compositions
+
+```{r}
+
+ggplot(all_composition, aes(composition_overlap)) + geom_histogram(bins = 100) 
+
+all_composition <- left_join(all_composition, all_overlaps)
+
+
+ggplot(all_composition, aes(composition_overlap, overlap)) + geom_point() + geom_abline(intercept = 0, slope = 1)
+
+ggplot(all_composition, aes(overlap - composition_overlap)) + geom_histogram(bins = 100)
+all_overlaps %>%
+  summarize(mean_overlap = mean(overlap),
+            sd_overlap = sd(overlap))
+
+
+all_overlaps %>%
+  group_by(location.bcr) %>%
+  summarize(mean_overlap = mean(overlap),
+            sd_overlap = sd(overlap))
+```
 
 ## Smooths 
 

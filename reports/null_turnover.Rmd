@@ -1,0 +1,70 @@
+---
+title: "5 sites"
+output:
+  github_document:
+    toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(BBSsize)
+library(rwar)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+
+dataset <- hartland
+
+
+real_begin_end <- get_begin_end_isds(dataset)
+real_smooths <- get_begin_end_smooths(real_begin_end)
+real_overlap <- overlap(real_smooths)
+real_comp <- get_begin_end_composition(dataset)
+
+
+real_comp <- left_join(real_comp, real_overlap) 
+
+set.seed(1977)
+
+shuffled_comps <- list()
+
+for(i in 1:1) {
+  
+  shuffled_dat <- shuffle_species(hartland)
+  
+  s_begin_end <- get_begin_end_isds(shuffled_dat)
+  s_smooths <- get_begin_end_smooths(s_begin_end)
+  s_overlap <- overlap(s_smooths)
+  s_comp <- get_begin_end_composition(shuffled_dat)
+  
+  
+  s_comp <- left_join(s_comp, s_overlap)
+  
+  shuffled_comps[[i]] <- s_comp
+  
+}
+
+
+s_comps <- bind_rows(shuffled_comps)
+
+
+hist(s_comps$overlap)
+real_comp$overlap
+
+ggplot(s_comps[1:50,], aes(overlap)) + geom_histogram() + geom_vline(xintercept = real_comp$overlap)
+
+sum(s_comps$overlap < real_comp$overlap[1])
+
+```
+
+```{r}
+
+ggplot(s_smooths, aes(mass, density_diff)) + geom_line() 
+ggplot(real_smooths, aes(mass, density_diff)) + geom_line() 
+
+
+
+```

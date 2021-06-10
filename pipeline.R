@@ -5,8 +5,12 @@ library(MATSS)
 
 expose_imports(rwar)
 
-be_small = F
+be_small = T
+
+
+
 datasets <- MATSS::build_bbs_datasets_plan()
+nits <- 100
 
 
 if(be_small) {
@@ -18,7 +22,24 @@ if(be_small) {
              "bbs_rtrg_102_18")
 
   datasets <- datasets[ which(datasets$target %in% rtrgs), ]
+
+  nits <- 100
+
 }
+
+set.seed(1977)
+
+it_seeds <- sample(100000000, size = nits, replace = F)
+
+
+shuffled_datasets <-drake_plan(
+  s =  target(shuffle_species(dataset, seeds),
+                            transform = cross(
+                              dataset = !!rlang::syms(datasets$target),
+                              seeds = !!it_seeds
+                            )))
+
+datasets <- bind_rows(datasets, shuffled_datasets)
 
 methods <- drake_plan(
   begin_end_isds = target(get_begin_end_isds(dataset),
