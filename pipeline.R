@@ -14,7 +14,7 @@ nits <- 100
 
 holes <- read.csv(here::here("bbs_holes.csv"))
 
-holes <- filter(holes, complete)
+holes <- filter(holes, region == 18)
 
 datasets <- datasets %>%
   filter(target %in% holes$matssname)
