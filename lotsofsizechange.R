@@ -3,10 +3,10 @@ library(ggplot2)
 library(BBSsize)
 library(rwar)
 
-h <- hartland
+h <- get_portal_rats()
 
 hstart <- h$abundance[1:5,]
-hend <- h$abundance[21:25,]
+hend <- h$abundance[27:31,]
 
 htime <- data.frame(
   species = colnames(hstart),
@@ -18,12 +18,12 @@ htime <- htime %>%
   mutate(startrel = start / sum(start),
          endrel = end / sum(end))
 
-ggplot(htime, aes(species, startrel - endrel)) + geom_col()
+ggplot(htime, aes(species, endrel - startrel)) + geom_col()
 
 htime <- htime %>%
   arrange(desc(endrel - startrel))
 
-hsize <- sd_table %>%
+hsize <- get_portal_sd_dat() %>%
   select(id, mean_mass) %>%
   rename(species = id) %>%
   filter(species %in% htime$species) %>%
@@ -44,9 +44,10 @@ toyh <- h
 
 toyh$abundance <- toyabund
 
-be <- get_begin_end_isds(toyh)
+be <- get_begin_end_isds(toyh, sd_dat = get_portal_sd_dat())
 sths <- get_begin_end_smooths(be)
 ol <- overlap(sths)
 comp <- get_begin_end_composition(toyh)
+svc <- get_begin_end_svs(be)
 
 ggplot(sths, aes(mass, start)) + geom_line() + geom_line(aes(mass, end), color = "blue")
