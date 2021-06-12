@@ -1,52 +1,14 @@
----
-title: "Connecticut"
-output:
-  github_document:
-    toc: TRUE
----
+Connecticut
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(drake)
-library(dplyr)
-library(ggplot2)
-library(ghibli)
-
-theme_set(theme_bw())
-## Set up the cache and config
-  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-species-swap.sqlite"))
-  cache <- storr::storr_dbi("datatable", "keystable", db)
-  cache$del(key = "lock", namespace = "session")
-  
-  loadd(all_overlaps, cache = cache)
-loadd(all_smooths, cache = cache)  
-loadd(all_svs, cache = cache)
-loadd(all_composition, cache = cache)
-
-DBI::dbDisconnect(db)
-rm(cache)
-rm(db)
-
-all_overlaps <- filter(all_overlaps, is.na(sim_seed))
-all_smooths <- filter(all_smooths, is.na(sim_seed))
-all_svs <- filter(all_svs, is.na(sim_seed))
-all_composition <- filter(all_composition, is.na(sim_seed))
-
-
-isd_r2 <- function(focal, compare) {
-  
-  focal_mean <- mean(focal)
-
-  numer <- sum((focal - compare) ^ 2)
-  denom <- sum((focal - focal_mean) ^ 2)
-  1 - (numer/denom)
-}
-```
+  - [Time periods](#time-periods)
+  - [Overlap in ISD and species
+    composition](#overlap-in-isd-and-species-composition)
+  - [State variables](#state-variables)
 
 ## Time periods
 
-```{r}
-
+``` r
 route_years <- select(all_overlaps, route, region, location.bcr, location.routename, startyears, endyears) %>%
   distinct() %>%
   mutate(start = as.integer(substr(startyears, 0, 4)),
@@ -66,28 +28,29 @@ route_years <- select(all_overlaps, route, region, location.bcr, location.routen
 
 ggplot(route_years, aes(x = start, y = as.factor(route), color = weirdtime)) + 
   geom_errorbar(aes(xmin = start, xmax = end)) + xlab("Time coverage") + ylab("Route")
-
-
-
 ```
 
+![](connecticut_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 ## Overlap in ISD and species composition
 
-```{r}
-
+``` r
 all_overlaps <- left_join(all_overlaps, all_composition) %>% left_join(select(route_years, route, nyears, weirdtime))
-
-ggplot(all_overlaps, aes(composition_overlap, overlap, color = weirdtime)) + geom_point() + geom_abline(intercept = 0, slope = 1) + xlim(.5, 1) + ylim(0.5,1)
-
-
 ```
 
+    ## Joining, by = c("route", "region", "location.bcr", "sim_seed")
+
+    ## Joining, by = "route"
+
+``` r
+ggplot(all_overlaps, aes(composition_overlap, overlap, color = weirdtime)) + geom_point() + geom_abline(intercept = 0, slope = 1) + xlim(.5, 1) + ylim(0.5,1)
+```
+
+![](connecticut_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ## State variables
 
-```{r}
-
+``` r
 all_sv_wide <- all_svs %>%
   select(timechunk, energy, biomass, abundance,route, region, sim_seed) %>%
   tidyr::pivot_wider(id_cols = c("route", "region", "sim_seed"), names_from = timechunk, values_from = c("energy", "biomass", "abundance"))
@@ -97,23 +60,29 @@ all_sv_change <- all_sv_wide %>%
          biomass_lr = log(biomass_end / biomass_start),
          abundance_lr = log(abundance_end/ abundance_start)) %>%
   left_join(select(route_years, route, nyears, weirdtime))
-
-
-ggplot(all_sv_change, aes(abundance_lr, energy_lr, color= weirdtime)) + geom_point() + geom_abline(intercept = 0, slope = 1) 
-
 ```
 
+    ## Joining, by = "route"
 
+``` r
+ggplot(all_sv_change, aes(abundance_lr, energy_lr, color= weirdtime)) + geom_point() + geom_abline(intercept = 0, slope = 1) 
+```
 
-```{r}
+![](connecticut_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
+``` r
 all_long_smooths <- all_smooths %>% left_join(select(route_years, route, weirdtime)) %>% filter(!weirdtime)
+```
 
+    ## Joining, by = "route"
+
+``` r
 ggplot(all_long_smooths, aes(mass, start, group= route)) + geom_line()
 ```
 
-```{r}
+![](connecticut_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
+``` r
 all_long_smooths <- all_long_smooths %>%
   group_by(mass) %>%
   mutate(mean_diff = mean(end - start),
@@ -122,34 +91,87 @@ all_long_smooths <- all_long_smooths %>%
   ungroup()
 
 ggplot(all_long_smooths, aes(mass, end - start, group = route)) + geom_segment(aes(x = mass, y = 0, xend = mass, yend = end - start), alpha = .05) + xlim(1, 8) + geom_line(aes(mass, mean_diff), color = "green", alpha = .05)
-
-all_long_smooths %>% summarize(diff_r2 = isd_r2(density_diff, mean_diff))
-
-
-ggplot(all_long_smooths, aes(mass, start, group = route)) + geom_segment(aes(x = mass, y = 0, xend = mass, yend =  start), alpha = .05) + xlim(1, 8) + geom_line(aes(mass, mean_start), color = "green", alpha = .05)
-
-all_long_smooths %>% summarize(start_r2 = isd_r2(start, mean_start))
-
-ggplot(all_long_smooths, aes(mass, end, group = route)) + geom_segment(aes(x = mass, y = 0, xend = mass, yend = end), alpha = .05) + xlim(1, 8) + geom_line(aes(mass, mean_end), color = "green", alpha = .05)
-
-all_long_smooths %>% summarize(end_r2 = isd_r2(end, mean_end))
-
-
 ```
 
+    ## Warning: Removed 3264 rows containing missing values (geom_segment).
 
-```{r}
+    ## Warning: Removed 3264 row(s) containing missing values (geom_path).
 
+![](connecticut_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+all_long_smooths %>% summarize(diff_r2 = isd_r2(density_diff, mean_diff))
+```
+
+    ## # A tibble: 1 x 1
+    ##   diff_r2
+    ##     <dbl>
+    ## 1   0.643
+
+``` r
+ggplot(all_long_smooths, aes(mass, start, group = route)) + geom_segment(aes(x = mass, y = 0, xend = mass, yend =  start), alpha = .05) + xlim(1, 8) + geom_line(aes(mass, mean_start), color = "green", alpha = .05)
+```
+
+    ## Warning: Removed 3264 rows containing missing values (geom_segment).
+    
+    ## Warning: Removed 3264 row(s) containing missing values (geom_path).
+
+![](connecticut_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+``` r
+all_long_smooths %>% summarize(start_r2 = isd_r2(start, mean_start))
+```
+
+    ## # A tibble: 1 x 1
+    ##   start_r2
+    ##      <dbl>
+    ## 1    0.916
+
+``` r
+ggplot(all_long_smooths, aes(mass, end, group = route)) + geom_segment(aes(x = mass, y = 0, xend = mass, yend = end), alpha = .05) + xlim(1, 8) + geom_line(aes(mass, mean_end), color = "green", alpha = .05)
+```
+
+    ## Warning: Removed 3264 rows containing missing values (geom_segment).
+    
+    ## Warning: Removed 3264 row(s) containing missing values (geom_path).
+
+![](connecticut_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+
+``` r
+all_long_smooths %>% summarize(end_r2 = isd_r2(end, mean_end))
+```
+
+    ## # A tibble: 1 x 1
+    ##   end_r2
+    ##    <dbl>
+    ## 1  0.890
+
+``` r
 meanshift <- select(all_long_smooths, mass, mean_diff) %>%
   distinct()
 
 
 sum(abs(meanshift$mean_diff)) / 2
+```
 
+    ## [1] 0.2018915
+
+``` r
 filter(all_overlaps, !weirdtime) %>%
   select(route, overlap) %>%
   mutate(change = 1-overlap)
-
 ```
 
-
+    ##    route   overlap    change
+    ## 1      1 0.7936932 0.2063068
+    ## 2      3 0.7464598 0.2535402
+    ## 3      4 0.7706216 0.2293784
+    ## 4      6 0.7157300 0.2842700
+    ## 5      7 0.6786691 0.3213309
+    ## 6      8 0.7610836 0.2389164
+    ## 7      9 0.7185126 0.2814874
+    ## 8     10 0.7444544 0.2555456
+    ## 9     11 0.7381455 0.2618545
+    ## 10    13 0.7527466 0.2472534
+    ## 11    14 0.7524419 0.2475581
+    ## 12    15 0.7907799 0.2092201

@@ -42,5 +42,6 @@ drake-cache.sqlite
 drake-cache-small.sqlite
 drake-cache-species-swap.sqlite
 drake-cache-rats.sqlite
-
+.drake/drake/history/db
+.drake/drake/history/total
 logs/workers/*
