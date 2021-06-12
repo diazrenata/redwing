@@ -170,3 +170,81 @@ ggplot(only_real_smooths, aes(mass, end - start, group = route)) + geom_segment(
 
 ```
 
+
+```{r}
+
+isd_r2 <- function(focal, compare) {
+  
+  focal_mean <- mean(focal)
+
+  numer <- sum((focal - compare) ^ 2)
+  denom <- sum((focal - focal_mean) ^ 2)
+  1 - (numer/denom)
+}
+
+
+regional_r2s <- only_real_smooths %>%
+  group_by(route) %>%
+  mutate(diff_r2 = isd_r2(density_diff, mean_diff)) %>%
+  ungroup()
+
+ggplot(regional_r2s, aes(mass, density_diff, color = diff_r2, group = sim_seed)) + geom_line() + geom_line(aes(y = mean_diff), color = "green") + scale_color_viridis_c(option = "turbo", begin = .1, end = .9) + xlim(1.5, 7.5) + facet_wrap(vars(route))
+
+
+ggplot(select(regional_r2s, route, diff_r2) %>% distinct(), aes(diff_r2)) + geom_histogram()
+
+regional_r2s %>% select(route, diff_r2) %>%
+  summarize(mean_r2 = mean(diff_r2))
+
+
+ggplot(filter(regional_r2s, route == 102), aes(mass, density_diff, color = diff_r2, group = sim_seed)) + geom_line() + geom_line(aes(y = mean_diff), color = "pink") + scale_color_viridis_c(option = "turbo", begin = .1, end = .9) + xlim(1.5, 7.5) + facet_wrap(vars(route))
+
+
+
+ggplot(filter(regional_r2s, route == 11), aes(mass, density_diff, color = diff_r2, group = sim_seed)) + geom_line() + geom_line(aes(y = mean_diff), color = "pink") + scale_color_viridis_c(option = "turbo", begin = .1, end = .9) + xlim(1.5, 7.5) + facet_wrap(vars(route))
+
+
+manual_r2 <- only_real_smooths %>%
+  mutate(residual = density_diff - mean_diff) %>%
+  mutate(squared_resid = residual ^ 2) %>%
+  group_by(route) %>%
+  mutate(route_mean = mean(density_diff)) %>%
+  mutate(route_dist_from_mean = density_diff - route_mean) %>%
+  mutate(route_dist_squared = route_dist_from_mean ^ 2) %>%
+  summarize(residuals_sum_squared = sum(squared_resid),
+            obs_sum_squared = sum(route_dist_squared)) %>%
+  ungroup() %>%
+  mutate(man_r2 = 1 - (residuals_sum_squared / obs_sum_squared))
+
+```
+
+
+Sometimes the R2 is really bad (negative). 
+
+```{r}
+
+isd_r2(only_real_smooths$density_diff, only_real_smooths$mean_diff)
+
+ggplot(only_real_smooths, aes(mean_diff, density_diff)) + 
+  geom_point(alpha = .1) +
+  geom_abline(slope = 1, intercept = 0) 
+
+```
+
+
+```{r}
+
+library(gratia)
+library(mgcv)
+
+regional_gam <- gam(density_diff ~ s(mass, k = 150), data = only_real_smooths) # increasing k just gets you very very close to the route-level mean
+
+gam_fit <- add_fitted(only_real_smooths, regional_gam)
+
+ggplot(gam_fit, aes(mass, .value)) + geom_line() + geom_line(aes(y = mean_diff), color = "pink") + geom_line(aes(y = density_diff, group = route), alpha = .1)
+
+summary(regional_gam)
+
+only_real_smooths <- mutate(only_real_smooths, froute =as.factor(route))
+
+```

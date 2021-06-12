@@ -10,14 +10,14 @@ be_small = F
 
 
 datasets <- MATSS::build_bbs_datasets_plan()
-# nits <- 100
-#
-# holes <- read.csv(here::here("bbs_holes.csv"))
-#
-# holes <- filter(holes, region == 18)
-#
-# datasets <- datasets %>%
-#   filter(target %in% holes$matssname)
+nits <- 100
+
+holes <- read.csv(here::here("bbs_holes.csv"))
+
+holes <- filter(holes, region == 18)
+
+datasets <- datasets %>%
+  filter(target %in% holes$matssname)
 
 if(be_small) {
 
@@ -32,20 +32,20 @@ if(be_small) {
   nits <- 100
 
 }
-#
-# set.seed(1977)
-#
-# it_seeds <- sample(100000000, size = nits, replace = F)
-#
-#
-# shuffled_datasets <-drake_plan(
-#   s =  target(shuffle_species(dataset, seeds),
-#                             transform = cross(
-#                               dataset = !!rlang::syms(datasets$target),
-#                               seeds = !!it_seeds
-#                             )))
-#
-# datasets <- bind_rows(datasets, shuffled_datasets)
+
+set.seed(1977)
+
+it_seeds <- sample(100000000, size = nits, replace = F)
+
+
+shuffled_datasets <-drake_plan(
+  s =  target(shuffle_species(dataset, seeds),
+                            transform = cross(
+                              dataset = !!rlang::syms(datasets$target),
+                              seeds = !!it_seeds
+                            )))
+
+datasets <- bind_rows(datasets, shuffled_datasets)
 
 methods <- drake_plan(
   begin_end_isds = target(get_begin_end_isds(dataset),
@@ -81,7 +81,7 @@ if(be_small) {
 } else {
 
   ## Set up the cache and config
-  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache.sqlite"))
+  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-species-swap.sqlite"))
   cache <- storr::storr_dbi("datatable", "keystable", db)
   cache$del(key = "lock", namespace = "session")
 
