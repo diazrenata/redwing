@@ -5,87 +5,47 @@ library(MATSS)
 
 expose_imports(rwar)
 
-be_small = F
-
-
 
 datasets <- MATSS::build_bbs_datasets_plan()
-# nits <- 100
-#
-# holes <- read.csv(here::here("bbs_holes.csv"))
-#
-# holes <- filter(holes, region == 18)
-#
-# datasets <- datasets %>%
-#   filter(target %in% holes$matssname)
 
-if(be_small) {
 
-  rtrgs <- c("bbs_rtrg_312_17",
-             "bbs_rtrg_81_60",
-             "bbs_rtrg_203_14",
-             "bbs_rtrg_15_59",
-             "bbs_rtrg_102_18")
+working_datasets <- read.csv(here::here("working_routes.csv"))
 
-  datasets <- datasets[ which(datasets$target %in% rtrgs), ]
+datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-  nits <- 100
-
-}
-#
-# set.seed(1977)
-#
-# it_seeds <- sample(100000000, size = nits, replace = F)
-#
-#
-# shuffled_datasets <-drake_plan(
-#   s =  target(shuffle_species(dataset, seeds),
-#                             transform = cross(
-#                               dataset = !!rlang::syms(datasets$target),
-#                               seeds = !!it_seeds
-#                             )))
-#
-# datasets <- bind_rows(datasets, shuffled_datasets)
 
 methods <- drake_plan(
-  begin_end_isds = target(get_begin_end_isds(dataset),
-                    transform = map(
-                      dataset = !!rlang::syms(datasets$target))),
+  s = target(slice_dataset(dataset, startyear = 1988, endyear = 2018),
+             transform = map(
+               dataset = !!rlang::syms(datasets$target))),
+  begin_end_isds = target(get_begin_end_isds(s),
+                          transform = map(s)),
   smooths = target(get_begin_end_smooths(begin_end_isds),
-                        transform = map(begin_end_isds)),
-  svs = target(get_begin_end_svs(begin_end_isds),
                    transform = map(begin_end_isds)),
+  svs = target(get_begin_end_svs(begin_end_isds),
+               transform = map(begin_end_isds)),
   overlaps = target(overlap(smooths),
-                   transform = map(smooths)),
-  comp = target(get_begin_end_composition(dataset),
-                transform = map(
-                  dataset = !!rlang::syms(datasets$target))),
+                    transform = map(smooths)),
+  comp = target(get_begin_end_composition(s),
+                transform = map(s)),
   all_smooths = target(dplyr::bind_rows(smooths),
-                        transform = combine(smooths)),
+                       transform = combine(smooths)),
   all_svs = target(dplyr::bind_rows(svs),
-                       transform = combine(svs)),
+                   transform = combine(svs)),
   all_overlaps = target(dplyr::bind_rows(overlaps),
-                       transform = combine(overlaps)),
+                        transform = combine(overlaps)),
   all_composition = target(dplyr::combine(comp),
                            transform = combine(comp))
 )
 
 all = bind_rows(datasets, methods)
 
-if(be_small) {
 
-  ## Set up the cache and config
-  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-small.sqlite"))
-  cache <- storr::storr_dbi("datatable", "keystable", db)
-  cache$del(key = "lock", namespace = "session")
-} else {
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-sliced.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
 
-  ## Set up the cache and config
-  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache.sqlite"))
-  cache <- storr::storr_dbi("datatable", "keystable", db)
-  cache$del(key = "lock", namespace = "session")
-
-}
 
 ## Run the pipeline
 nodename <- Sys.info()["nodename"]
