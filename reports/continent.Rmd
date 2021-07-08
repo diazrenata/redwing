@@ -14,7 +14,7 @@ library(ghibli)
 
 theme_set(theme_bw())
 ## Set up the cache and config
-  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache.sqlite"))
+  db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-sliced.sqlite"))
   cache <- storr::storr_dbi("datatable", "keystable", db)
   cache$del(key = "lock", namespace = "session")
   
@@ -51,7 +51,7 @@ isd_r2 <- function(focal, compare) {
 ## Time periods
 
 ```{r}
-
+# 
 route_years <- select(all_overlaps, route, region, location.bcr, location.routename, startyears, endyears) %>%
   distinct() %>%
   mutate(start = as.integer(substr(startyears, 0, 4)),
@@ -65,13 +65,14 @@ route_years <- select(all_overlaps, route, region, location.bcr, location.routen
          endconsec = endbegin == end - 4) %>%
   group_by_all() %>%
   mutate(weirdtime = startlate | endearly) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(start_1988 = start == 1988)
 
-
-
-ggplot(route_years, aes(x = start, y = as.factor(route), color = weirdtime)) + 
-  geom_errorbar(aes(xmin = start, xmax = end)) + xlab("Time coverage") + ylab("Route")
-
+#
+# 
+# ggplot(route_years, aes(x = start, y = as.factor(route), color = start_1988)) + 
+#   geom_errorbar(aes(xmin = start, xmax = end)) + xlab("Time coverage") + ylab("Route")
+# 
 
 
 ```
@@ -81,9 +82,10 @@ ggplot(route_years, aes(x = start, y = as.factor(route), color = weirdtime)) +
 
 ```{r}
 
-all_overlaps <- left_join(all_overlaps, all_composition) %>% left_join(select(route_years, route, nyears, weirdtime))
+all_overlaps <- left_join(all_overlaps, all_composition) %>% left_join(select(route_years, route, region, location.bcr, nyears, start_1988)) %>%
+  filter(start_1988)
 
-ggplot(all_overlaps, aes(composition_overlap, overlap, color = weirdtime)) + geom_point() + geom_abline(intercept = 0, slope = 1) + xlim(.5, 1) + ylim(0.5,1)
+ggplot(all_overlaps, aes(composition_overlap, overlap, color = as.factor(location.bcr))) + geom_point() + geom_abline(intercept = 0, slope = 1) + xlim(.4, 1) + ylim(.4,1) + theme(legend.position = "none")
 
 
 ```
@@ -94,17 +96,17 @@ ggplot(all_overlaps, aes(composition_overlap, overlap, color = weirdtime)) + geo
 ```{r}
 
 all_sv_wide <- all_svs %>%
-  select(timechunk, energy, biomass, abundance,route, region, sim_seed) %>%
-  tidyr::pivot_wider(id_cols = c("route", "region", "sim_seed"), names_from = timechunk, values_from = c("energy", "biomass", "abundance"))
+    left_join(select(route_years, route, region, location.bcr, nyears, start_1988)) %>%
+  filter(start_1988) %>%
+  select(timechunk, energy, biomass, abundance,route, region,location.bcr, sim_seed) %>%
+  tidyr::pivot_wider(id_cols = c("route", "region", "sim_seed", "location.bcr"), names_from = timechunk, values_from = c("energy", "biomass", "abundance"))
 
 all_sv_change <- all_sv_wide %>%
   mutate(energy_lr = log(energy_end / energy_start),
          biomass_lr = log(biomass_end / biomass_start),
-         abundance_lr = log(abundance_end/ abundance_start)) %>%
-  left_join(select(route_years, route, nyears, weirdtime))
+         abundance_lr = log(abundance_end/ abundance_start)) 
 
-
-ggplot(all_sv_change, aes(abundance_lr, energy_lr, color= weirdtime)) + geom_point() + geom_abline(intercept = 0, slope = 1) 
+ggplot(all_sv_change, aes(abundance_lr, energy_lr, color = as.factor(location.bcr))) + geom_point() + geom_abline(intercept = 0, slope = 1) 
 
 ```
 
@@ -112,7 +114,8 @@ ggplot(all_sv_change, aes(abundance_lr, energy_lr, color= weirdtime)) + geom_poi
 
 ```{r}
 
-all_long_smooths <- all_smooths %>% left_join(select(route_years, route, weirdtime)) %>% filter(!weirdtime)
+all_long_smooths <- all_smooths %>%  left_join(select(route_years, route, region, location.bcr, nyears, start_1988)) %>%
+  filter(start_1988)
 
 ggplot(all_long_smooths, aes(mass, start, group= route)) + geom_line()
 ```
@@ -151,7 +154,7 @@ meanshift <- select(all_long_smooths, mass, mean_diff) %>%
 
 sum(abs(meanshift$mean_diff)) / 2
 
-filter(all_overlaps, !weirdtime) %>%
+filter(all_overlaps) %>%
   select(route, overlap) %>%
   mutate(change = 1-overlap)
 
