@@ -9,8 +9,7 @@ expose_imports(rwar)
 datasets <- MATSS::build_bbs_datasets_plan()
 
 
-working_datasets <- read.csv(here::here("working_routes.csv")) %>%
-  dplyr::filter(location.bcr == 23)
+working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 

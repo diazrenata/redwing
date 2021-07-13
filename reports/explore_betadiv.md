@@ -1,44 +1,16 @@
----
-title: "5 sites"
-output:
-  github_document:
-    toc: TRUE
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(drake)
-library(dplyr)
-library(ggplot2)
-library(ghibli)
-
-theme_set(theme_bw())
-## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-betadiv.sqlite"))
-cache <- storr::storr_dbi("datatable", "keystable", db)
-cache$del(key = "lock", namespace = "session")
-
-loadd(all_smooths, cache = cache)  
-loadd(all_spcomposition, cache = cache)
-
-DBI::dbDisconnect(db)
-rm(cache)
-rm(db)
-
-```
+5 sites
+================
 
 This is gonna be hacky af, but calculating
 
-- species overlap
-- ISD overlap
-- **within** each time chunk
-- for all possible pairs
+  - species overlap
+  - ISD overlap
+  - **within** each time chunk
+  - for all possible pairs
 
+<!-- end list -->
 
-
-```{r}
-
-
+``` r
 pull_species_comp <- function(all_spcomp, rt, rg, bcr, chunk) {
   
   return(all_spcomp %>%
@@ -179,12 +151,9 @@ compare_pair <- function(all_spcomp, all_smooths, rt1, rg1, bcr1,chunk1, rt2, rg
   return(both_comparisons)
   
 }
-
 ```
 
-
-```{r, eval = F}
-
+``` r
 # get list of all routes
 
 all_routes <- all_smooths %>% 
@@ -217,12 +186,9 @@ for(i in 1:nrow(all_pairs)) {
 comparisons <- bind_rows(all_comparisons)
 
 write.csv(comparisons, 'comparisons.csv', row.names = F)
-
 ```
 
-```{r}
-
-
+``` r
 comparisons <- read.csv(here::here("reports", 'comparisons.csv'))
 
 paired_comparisons <- comparisons %>%
@@ -233,67 +199,95 @@ ggplot(paired_comparisons, aes(overlap_start, overlap_end)) +
   geom_abline(slope = 1, intercept = 0)
 ```
 
-So I'm not actually seeing a signal of declining beta diversity over this timespan for this bcr. 
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-Beta diversity obtained as the pairwise overlap in species composition among all possible pairs of routes in the region (relative abundance sp1r1 - sp1r2). 
+So I’m not actually seeing a signal of declining beta diversity over
+this timespan for this bcr.
 
-If routes were becoming more similar in species composition over time, we would expect these pairwise overlap values to be **larger** in the later time period - instead they are pretty much a cloud around the 1:1 line:
+Beta diversity obtained as the pairwise overlap in species composition
+among all possible pairs of routes in the region (relative abundance
+sp1r1 - sp1r2).
 
-```{r}
+If routes were becoming more similar in species composition over time,
+we would expect these pairwise overlap values to be **larger** in the
+later time period - instead they are pretty much a cloud around the 1:1
+line:
 
+``` r
 ggplot(paired_comparisons, aes(compturn_start, compturn_end)) + 
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
 ```
 
-Is this....
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-- spatial scale? mb similarity is increasing **between** regions/at a contintental scale, but not **within** region
-- the metric? most **beta diversity** metrics aren't quite this, they're more focused on presence/absence and turnover. 
+Is this….
+
+  - spatial scale? mb similarity is increasing **between** regions/at a
+    contintental scale, but not **within** region
+  - the metric? most **beta diversity** metrics aren’t quite this,
+    they’re more focused on presence/absence and turnover.
 
 More betadiv metrics:
 
-```{r, fig.dim = c(3,3)}
-
+``` r
 ggplot(paired_comparisons, aes(bray_start, bray_end)) + 
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
+```
 
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
+``` r
 ggplot(paired_comparisons, aes(euclid_start, euclid_end)) + 
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
+```
 
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
+``` r
 ggplot(paired_comparisons, aes(jaccard_start, jaccard_end)) + 
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
+```
 
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
 
+``` r
 ggplot(paired_comparisons, aes(manhattan_start, manhattan_end)) + 
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
+```
 
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
 
+``` r
 ggplot(paired_comparisons, aes(sorenson_start, sorenson_end)) + 
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
 ```
 
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-5-5.png)<!-- -->
 
 Comparing species to size change
 
-
-```{r}
-
+``` r
 onetoone <- geom_abline(slope = 1, intercept = 0)
 
 ggplot(paired_comparisons, aes(compturn_start, overlap_start)) + geom_point() + onetoone + xlim(.4, 1) + ylim(.4, 1)
-
-
-ggplot(paired_comparisons, aes(compturn_end, overlap_end)) + geom_point() + onetoone + xlim(.4, 1) + ylim(.4, 1)
-
-
-ggplot(paired_comparisons, aes(compturn_end - compturn_start, overlap_end - overlap_start)) + geom_point() + onetoone + xlab("Species. > 0 means end is more similar than start") + geom_hline(yintercept = 0) + geom_vline(xintercept = 0)
-
 ```
+
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+ggplot(paired_comparisons, aes(compturn_end, overlap_end)) + geom_point() + onetoone + xlim(.4, 1) + ylim(.4, 1)
+```
+
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+
+``` r
+ggplot(paired_comparisons, aes(compturn_end - compturn_start, overlap_end - overlap_start)) + geom_point() + onetoone + xlab("Species. > 0 means end is more similar than start") + geom_hline(yintercept = 0) + geom_vline(xintercept = 0)
+```
+
+![](explore_betadiv_files/figure-gfm/unnamed-chunk-6-3.png)<!-- -->

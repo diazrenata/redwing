@@ -65,15 +65,9 @@ starts2 <- starts2 %>%
 
 library(ggplot2)
 
-ggplot(filter(starts, ncovered >0 ), aes(timecovered, ncovered, color = nbcr_covered)) +
-  geom_point() +
-  scale_color_viridis_c(option = "turbo", begin = .1, end = .9)
-
-
 ggplot(filter(starts2, ncovered >0 ), aes(timecovered, ncovered, color = nbcr_covered)) +
   geom_point() +
   scale_color_viridis_c(option = "turbo", begin = .1, end = .9)
-
 
 # For now I will work with 1988-2018. This gives 528 sites with complete coverage, or 1174 sites if we allow for 5/7 years in the start and end chunks.
 # My data end in 2018.
