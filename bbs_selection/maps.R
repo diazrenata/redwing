@@ -41,8 +41,18 @@ ggplot(loc, aes(as.factor(location.bcr))) +
 # ggplot() + geom_sf(data = routes_sf, aes(color = as.factor(location.bcr))) + theme(legend.position = "none")
 #
 
+noholes <- read.csv("bbs_holes.csv") %>%
+  filter(complete)
+
+working <- read.csv("working_routes.csv")
+
 loc <- loc %>%
-  mutate(rown = row_number())
+  mutate(rown = row_number()) %>%
+  left_join(select(working, route, region, matssname), by = c("location.route" = "route", "location.statenum" = "region"))
+
+loc <- loc %>%
+  filter(matssname %in% noholes$matssname)
+
 
 allcomps <- expand.grid(r1 = loc$rown, r2 = loc$rown) %>%
   filter(r1 != r2) %>%
@@ -58,3 +68,15 @@ allcomps <- expand.grid(r1 = loc$rown, r2 = loc$rown) %>%
 allcomps <- allcomps %>%
   group_by_all() %>%
   mutate(haver = geosphere::distHaversine(p1 = c(location.longitude.x, location.latitude.x), p2 = c(location.longitude.y, location.latitude.y)))
+
+hist(allcomps$haver)
+
+  cstring <- '+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0'
+
+routes_sf <- st_as_sf(loc, coords = c("location.longitude", "location.latitude"), crs = cstring)
+
+ggplot() + geom_sf(data = routes_sf, aes(color = as.factor(location.bcr))) + theme(legend.position = "none")
+
+ggplot(loc, aes(location.bcr)) +
+  geom_bar(stat = "count") +
+  geom_hline(yintercept = 2)
