@@ -1,0 +1,115 @@
+---
+title: "Comparisons"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(drake)
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-neon.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+loadd(allComps, cache = cache)
+
+DBI::dbDisconnect(db)
+rm(cache)
+
+sites <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_processed_rata.csv")) %>%
+  select(siteID, domainID) %>%
+  distinct()
+
+allComps <- left_join(allComps, sites, by  = c("site.x" = "siteID")) %>%
+  left_join(sites, by = c("site.y" = "siteID")) %>%
+  mutate(same_domain = domainID.x == domainID.y)
+
+```
+
+```{r}
+
+allCompsObs <- filter(allComps, sim  < 0)
+
+allCompsNull <- filter(allComps, sim > 0)
+
+allCompsCompare <- allCompsNull %>%
+  left_join(
+    select(
+    rename(
+      allCompsObs, obs_isd_overlap = isd_overlap
+    ),
+    -sim, -shuffle_seed
+    )
+  )
+
+allCompsPerc <- allCompsCompare %>%
+  group_by(
+    site.x, site.y
+  ) %>%
+  mutate(nlower = sum(isd_overlap < obs_isd_overlap),
+         nlowerinc = sum(isd_overlap <= obs_isd_overlap), # there are no ties so far
+         nsims = length(unique(sim))) %>%
+  mutate(percentile = nlower / nsims) %>%
+  ungroup() %>%
+  select(-isd_overlap, -sim, -shuffle_seed) %>%
+  distinct()
+
+ggplot(allCompsPerc, aes(percentile)) +
+  geom_histogram() +
+  geom_vline(xintercept = c(.95)) 
+
+ggplot(allCompsPerc, aes(percentile)) +
+  geom_histogram() +
+  geom_vline(xintercept = c(.95)) +
+  facet_wrap(vars(same_domain), scales = "free_y")
+
+
+ggplot(allCompsPerc, aes(haver, percentile, color = same_domain)) +
+  geom_point() 
+```
+
+
+```{r}
+
+ggplot(allCompsObs, aes(species_overlap, isd_overlap)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  ylim(0,1) +
+  xlim(0,1)
+
+
+ggplot(allCompsPerc, aes(species_overlap, obs_isd_overlap, color = percentile > .95)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  ylim(0,1) +
+  xlim(0,1)
+
+ggplot(allCompsObs, aes(haver, isd_overlap)) +
+  geom_point() 
+
+ggplot(allCompsObs, aes(haver, species_overlap)) +
+  geom_point()
+
+
+ggplot(allCompsObs, aes(haver, bcd)) +
+  geom_point()
+
+```
+
+```{r}
+
+allCompsConserved <- filter(allCompsPerc, percentile > .95)
+
+```
+
+
+
+ISDs overlap too much | species overlap about 20% of the time (compared to 5% at random). No obvious relationship with distance (great-circle) or domain-domain (but very few within-domain comparisons).
+
+Maybe the similarity of sites along other axes? Maybe distance isn't nuanced enough, maybe other environmental covariates.
+
+A little creeped out by possible species richness effects, etc. Not sure yet on the intuition there. 
