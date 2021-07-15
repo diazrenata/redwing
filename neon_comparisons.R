@@ -20,7 +20,7 @@ sites <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisiona
   select(siteID) %>%
   distinct()
 
-neon_pairs <- make_pairs(all_neon)
+#neon_pairs <- make_pairs(all_neon)
 
 sims <- c(1:50)
 
