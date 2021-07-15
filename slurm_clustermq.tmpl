@@ -10,6 +10,6 @@
 
 source /etc/profile
 
-ulimit -v $(( 1440 * {{ memory | 4096 }} ))
+ulimit -v $(( 1440 * {{ memory | 2048 }} ))
 module load R              # Uncomment if R is an environment module.
 CMQ_AUTH={{ auth }} Rscript -e 'clustermq:::worker("{{ master }}")'
