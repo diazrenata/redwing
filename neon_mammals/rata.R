@@ -237,6 +237,8 @@ while(any(captured_individuals_interpolated$weight_to_use < 0)) {
 
 
 write.csv(captured_individuals_interpolated, here::here("neon_mammals", "provisional_rata_use", "provisional_processed_rata.csv"), row.names = F)
+write.csv(species_dat, here::here("neon_mammals", "provisional_rata_use", "provisional_sd_table.csv"))
+
 
 ggplot(captured_individuals_interpolated, aes(log(weight_to_use))) +
   geom_density() +
