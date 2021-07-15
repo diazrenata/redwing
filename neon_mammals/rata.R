@@ -1,11 +1,24 @@
+####' Provisional script for downloading & processing NEON small mammal data.
+####' Renata Diaz, July 15, 2021
+####'
+
 library(neonUtilities)
 library(dplyr)
 library(ggplot2)
 
-#rata <- loadByProduct("DP1.10072.001")
-zipsByProduct("DP1.10072.001", release = "RELEASE-2021", savepath = here::here("neon_mammals"))
-stackByTable(here::here("neon_mammals", "filesToStack10072"))
+#### Download and prep data per neonUtilities ####
+# Don't run; takes a long time
+#
+# zipsByProduct("DP1.10072.001", release = "RELEASE-2021", savepath = here::here("neon_mammals", "provisional_rata_raw"))
+# stackByTable(here::here("neon_mammals", "provisional_rata_raw", "filesToStack10072"))
 
+#### Get only captures ####
+# mam_pertrapnight is the primary captures data file. As downloaded it is 450.3MB, too big for git. Filtering out non-captures reduces it to 63.4 MB.
+# mam_pertrapnight <- read.csv(here::here("neon_mammals", "provisional_rata_raw", "filesToStack10072", "stackedFiles", "mam_pertrapnight.csv"))
+# mam_pertrapnight_captures <- mam_pertrapnight %>%
+#  filter(trapStatus == "5 - capture")
+#
+#write.csv(mam_pertrapnight_captures, here::here("neon_mammals", "provisional_rata_use", "raw_captures.csv"), row.names = F)
 
 site_plot_nights <- mam_perplotnight %>%
   filter(is.na(remarks)) %>%
