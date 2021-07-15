@@ -22,7 +22,7 @@ sites <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisiona
 
 #neon_pairs <- make_pairs(all_neon)
 
-sims <- c(1:50)
+sims <- c(1:1000)
 
 setup <- drake::drake_plan(
   all_neon = target(read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_processed_rata.csv"))),
