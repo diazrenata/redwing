@@ -4,12 +4,12 @@ library(rwar)
 library(drake)
 
 R.utils::sourceDirectory(here::here("neon_mammals", "fxns"))
-
-all_neon <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_processed_rata.csv"))
-
-mammal_sds <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_sd_table.csv"))
-
-all_neon_counts <- make_counts(all_neon)
+#
+# all_neon <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_processed_rata.csv"))
+#
+# mammal_sds <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_sd_table.csv"))
+#
+# all_neon_counts <- make_counts(all_neon)
 
 # neon_sites <- unique(all_neon_counts$siteID)
 #
@@ -22,7 +22,7 @@ sites <- read.csv(here::here("neon_mammals", "provisional_rata_use", "provisiona
 
 neon_pairs <- make_pairs(all_neon)
 
-sims <- c(1:1)
+sims <- c(1:50)
 
 setup <- drake::drake_plan(
   all_neon = target(read.csv(here::here("neon_mammals", "provisional_rata_use", "provisional_processed_rata.csv"))),
