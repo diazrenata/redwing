@@ -6,7 +6,7 @@ library(drake)
 
 R.utils::sourceDirectory(here::here("neon_mammals", "fxns"))
 
-sites <- read.csv(here::here("working_routes.csv"))[1:100, ]
+sites <- read.csv(here::here("working_routes_max10.csv"))
 
 sims <- c(1:50)
 
