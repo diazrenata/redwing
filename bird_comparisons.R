@@ -6,9 +6,9 @@ library(drake)
 
 R.utils::sourceDirectory(here::here("neon_mammals", "fxns"))
 
-sites <- read.csv(here::here("working_routes.csv"))[1:3, ]
+sites <- read.csv(here::here("working_routes.csv"))[1:100, ]
 
-sims <- c(1:2)
+sims <- c(1:50)
 
 datasets <- MATSS::build_bbs_datasets_plan()
 
