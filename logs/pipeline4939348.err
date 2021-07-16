@@ -1,0 +1,15 @@
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Error in select(all_neon, siteID, decimalLatitude, decimalLongitude) : 
+  object 'all_neon' not found
+Calls: make_pairs ... select -> filter -> ungroup -> mutate -> group_by -> select
+Execution halted
