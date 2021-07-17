@@ -110,7 +110,16 @@ if(grepl("ufhpc", nodename)) {
 
 }
 
+loadd(allComps, cache = cache)
 
+write.csv(allComps, "all_bird_comps.csv", row.names =F)
+
+rm(allComps)
+
+loadd(comps, cache = cache)
+write.csv(comps, "real_bird_comps.csv", row.names = F)
+
+rm(comps)
 #
 # DBI::dbDisconnect(db)
 # rm(cache)

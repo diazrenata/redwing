@@ -49,3 +49,6 @@ drake-cache-neon.sqlite
 
 # mammals raw trap nights
 neon_mammals/provisional_rata_raw/filesToStack10072/stackedFiles/mam_pertrapnight.csv
+
+# bird comparisons - will be huge
+all_bird_comps.csv
