@@ -14,7 +14,6 @@ sites <- read.csv(here::here("portal_nulls", "eighties.csv")) %>%
 sims <- c(1:5)
 
 setup <- drake::drake_plan(
-  all_portal = target(read.csv(here::here("portal_nulls", "eighties.csv"))),
   mammal_sds = target(read.csv(here::here("portal_nulls", "eighties_splist.csv"))),
   portal_pairs = target(data.frame(
     site.x = "control",
@@ -23,8 +22,7 @@ setup <- drake::drake_plan(
 )
 
 real <- drake::drake_plan(
-  real_counts = target(make_counts(all_portal))
-)
+  real_counts = target(read.csv(here::here("portal_nulls", "eighties.csv"))))
 
 sim_splists <- drake::drake_plan(
   sim_splist = target(shuffle_neon_species(all_rats_counts = real_counts, shuffle_number = sim_number),
@@ -39,7 +37,7 @@ shuffled <- drake::drake_plan(
 all_counts <- bind_rows(real, shuffled)
 
 describe <- drake::drake_plan(
-  siteDescs = target(describe_site(siteID, sd_table = mammal_sds, all_rats_counts = ratcounts, max_G = 3),
+  siteDescs = target(describe_site(siteID, sd_table = mammal_sds, all_rats_counts = ratcounts, max_G = 15),
                      transform = cross(
                        siteID = !!sites$siteID,
                        ratcounts = !!rlang::syms(all_counts$target)
