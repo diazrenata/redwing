@@ -27,17 +27,15 @@ The thinking is that:
     species turnover.
 
   - However, either of these could be not-what-happens because of
-
-  - other changes along the size spectrum (idk, reithros or something)
-
-  - the ISD being inherently kind of….squishy and conserved.
-
-  - species pool effects - haven’t thought these through completely
-
-  - this null model seems to give prety broad 95% intervals/it seems
-    pretty hard to deviate from this null. Part of the purpose of this
-    is to gauge if - even in scenarios that **I** think are Definitely
-    Size Structured - deviations don’t show up.
+    
+      - other changes along the size spectrum (idk, reithros or
+        something)
+      - the ISD being inherently kind of….squishy and conserved.
+      - species pool effects - haven’t thought these through completely
+      - this null model seems to give prety broad 95% intervals/it seems
+        pretty hard to deviate from this null. Part of the purpose of
+        this is to gauge if - even in scenarios that **I** think are
+        Definitely Size Structured - deviations don’t show up.
 
 # Early 1980s
 
@@ -50,7 +48,9 @@ cache$del(key = "lock", namespace = "session")
 
 loadd(siteDescs_exclosure_real_counts, cache = cache)
 loadd(siteDescs_control_real_counts, cache = cache)
-loadd(cache = cache)
+loadd(siteDescs_control_shuffled_counts_sim_splist_5L, cache = cache)
+loadd(siteDescs_exclosure_shuffled_counts_sim_splist_5L, cache = cache)
+loadd(allComps, cache = cache)
 ```
 
 ``` r
@@ -63,43 +63,42 @@ ggplot(eighties_isd_gmms, aes(mass, density, color = trt)) +
 ![](pn_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
-eighties_isd_sim_gmms <- list(control = siteDescs_control_shuffled_counts_sim_splist_4L$gmm, exclosure = siteDescs_exclosure_shuffled_counts_sim_splist_4L$gmm) %>%
+eighties_isd_sim_gmms <- list(control = siteDescs_control_shuffled_counts_sim_splist_5L$gmm, exclosure = siteDescs_exclosure_shuffled_counts_sim_splist_5L$gmm) %>%
   bind_rows(.id = "trt")
-
-
 ggplot(eighties_isd_sim_gmms, aes(mass, density, color = trt)) + 
-  geom_line() +
-  facet_wrap(vars(trt), scale = "free_y")
+  geom_line() 
 ```
 
 ![](pn_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
 
 ``` r
-eighties_isd_sim_isds <- list(control = siteDescs_control_shuffled_counts_sim_splist_4L$isd, exclosure = siteDescs_exclosure_shuffled_counts_sim_splist_4L$isd) %>%
-  bind_rows(.id = "trt")
-
-
-ggplot(eighties_isd_sim_isds, aes(log(mass), color = trt)) + 
-  geom_histogram(bins = 10) +
-  facet_wrap(vars(trt), ncol = 1)
+ggplot(filter(allComps, sim > 0), aes(isd_overlap)) +
+  geom_histogram() +
+  geom_point(data = filter(allComps, sim < 0), aes(isd_overlap, 0), color = "red", size = 5)
 ```
 
-![](pn_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-WELP.
+![](pn_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-There is something up with the GMMs.
+``` r
+simComps <- filter(allComps, sim > 0)
+realComp <- filter(allComps, sim < 0)
 
-For fairly similar distributions, it fits some as Extremely Pointy and
-some as Extremely Not Pointy.
+# percentile
 
-One possibility might be to circumvent the GMMs entirely.
+sum(simComps$isd_overlap > realComp$isd_overlap[1]) / nrow(simComps)
+```
 
-1.  You could discretize the ISD and do it as nind in body size classes.
-2.  Or you could leverage the fact that (esp for BBS) you are generating
-    ISDs via the weighted sum of many normal distributions.
+    ## [1] 0.99
 
-<!-- end list -->
+``` r
+# ses 
+
+(realComp$isd_overlap[1] - mean(simComps$isd_overlap)) / sd(simComps$isd_overlap)
+```
+
+    ## [1] -1.823809
 
 ``` r
 DBI::dbDisconnect(db)

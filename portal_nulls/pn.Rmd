@@ -27,10 +27,10 @@ The thinking is that:
 - Contrasting with EE v CC in the early 2000s, when PB was dominant on EE plots. At that time, the biggest difference - from our perspective - is that DM/DO are in that size class on CC, but PB is dominating that size class on EE plots. Which I would think constitutes pretty good size-structured replacement (although note that PB is slightly smaller than the krats). So the thinking is that that comparison would be on the **high** end of ISD similarity | species turnover. 
 
 - However, either of these could be not-what-happens because of
-- other changes along the size spectrum (idk, reithros or something)
-- the ISD being inherently kind of....squishy and conserved. 
-- species pool effects - haven't thought these through completely
-- this null model seems to give prety broad 95% intervals/it seems pretty hard to deviate from this null. Part of the purpose of this is to gauge if - even in scenarios that **I** think are Definitely Size Structured - deviations don't show up. 
+    - other changes along the size spectrum (idk, reithros or something)
+    - the ISD being inherently kind of....squishy and conserved. 
+    - species pool effects - haven't thought these through completely
+    - this null model seems to give prety broad 95% intervals/it seems pretty hard to deviate from this null. Part of the purpose of this is to gauge if - even in scenarios that **I** think are Definitely Size Structured - deviations don't show up. 
 
 
 # Early 1980s
@@ -46,8 +46,9 @@ cache$del(key = "lock", namespace = "session")
 
 loadd(siteDescs_exclosure_real_counts, cache = cache)
 loadd(siteDescs_control_real_counts, cache = cache)
-loadd(cache = cache)
-
+loadd(siteDescs_control_shuffled_counts_sim_splist_2L, cache = cache)
+loadd(siteDescs_exclosure_shuffled_counts_sim_splist_2L, cache = cache)
+loadd(allComps, cache = cache)
 
 ```
 
@@ -59,75 +60,33 @@ eighties_isd_gmms <- list(control = siteDescs_control_real_counts$gmm, exclosure
 ggplot(eighties_isd_gmms, aes(mass, density, color = trt)) + 
   geom_line()
 
-eighties_isd_sim_gmms <- list(control = siteDescs_control_shuffled_counts_sim_splist_5L$gmm, exclosure = siteDescs_exclosure_shuffled_counts_sim_splist_5L$gmm) %>%
+eighties_isd_sim_gmms <- list(control = siteDescs_control_shuffled_counts_sim_splist_2L$gmm, exclosure = siteDescs_exclosure_shuffled_counts_sim_splist_2L$gmm) %>%
   bind_rows(.id = "trt")
 ggplot(eighties_isd_sim_gmms, aes(mass, density, color = trt)) + 
-  geom_line() +
-  facet_wrap(vars(trt), scale = "free_y")
+  geom_line() 
 
 ```
 
-
-
-WELP.
-
-There is something up with the GMMs. 
-
-For fairly similar distributions, it fits some as Extremely Pointy and some as Extremely Not Pointy. 
-
-One possibility might be to circumvent the GMMs entirely. 
-
-1. You could discretize the ISD and do it as nind in body size classes.
-2. Or you could leverage the fact that (esp for BBS) you are generating ISDs via the weighted sum of many normal distributions. 
-
-## Idealized ISD
-
 ```{r}
 
-head(real_counts)
+ggplot(filter(allComps, sim > 0), aes(isd_overlap)) +
+  geom_histogram() +
+  geom_point(data = filter(allComps, sim < 0), aes(isd_overlap, 0), color = "red", size = 5)
 
-control_counts <- filter(real_counts, siteID == "control")
+simComps <- filter(allComps, sim > 0)
+realComp <- filter(allComps, sim < 0)
 
-control_counts_sp <- left_join(control_counts, mammal_sds)
+# percentile
 
-eval_points <- exp(siteDescs_control_real_counts$gmm$mass)
+sum(simComps$isd_overlap > realComp$isd_overlap[1]) / nrow(simComps)
 
-sp_densities <- list()
+# ses 
 
-for(i in 1:nrow(control_counts_sp)) {
-  
-  sp_densities[[i]] <- data.frame(
-    mass = eval_points,
-    density = dnorm(eval_points, mean = control_counts_sp$mean_wgt[i],
-                             sd = control_counts_sp$sd_to_use[i]),
-    rel_weight = control_counts_sp$abund[i] / sum(control_counts_sp$abund)) #%>%
- #   mutate(density = density / sum(density))
-  
-}
+(realComp$isd_overlap[1] - mean(simComps$isd_overlap)) / sd(simComps$isd_overlap)
 
-all_spp_densities <- bind_rows(sp_densities, .id = "Sp")
+filter(simComps, isd_overlap < realComp$isd_overlap[1])
 
-ggplot(all_spp_densities, aes(mass, density)) + geom_line() + facet_wrap(vars(Sp))
-
-idealized_isd <- all_spp_densities %>%
-  mutate(weighted_density = density * rel_weight) %>%
-  group_by(mass) %>%
-  summarize(summed_density = sum(weighted_density)) %>%
-  ungroup()
-
-ggplot(idealized_isd, aes(mass, summed_density)) +
-  geom_line()
-
-ggplot(siteDescs_control_real_counts$isd, aes(mass)) + geom_density(bw = 5) + xlim(0, 150)
-
-```
-
-
-```{r}
-
-
-control_counts_highn = control_counts %>%
-  mutate()
+loadd(sim_splist_93L, cache = cache)
 
 ```
 

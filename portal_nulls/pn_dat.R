@@ -74,4 +74,4 @@ thous_counts <- thous %>%
 write.csv(eighties_counts, here::here("portal_nulls", "eighties.csv"), row.names = F)
 write.csv(eighties_splist, here::here("portal_nulls", "eighties_splist.csv"), row.names = F)
 write.csv(thous_counts, here::here("portal_nulls", "thous.csv"), row.names =F)
-write.csv(eighties_splist, here::here("portal_nulls", "thous_splist.csv"), row.names = F)
+write.csv(thous_splist, here::here("portal_nulls", "thous_splist.csv"), row.names = F)

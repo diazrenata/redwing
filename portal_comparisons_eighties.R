@@ -11,7 +11,7 @@ sites <- read.csv(here::here("portal_nulls", "eighties.csv")) %>%
 
 #neon_pairs <- make_pairs(all_neon)
 
-sims <- c(1:5)
+sims <- c(1:100)
 
 setup <- drake::drake_plan(
   mammal_sds = target(read.csv(here::here("portal_nulls", "eighties_splist.csv"))),
