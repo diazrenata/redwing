@@ -75,3 +75,11 @@ write.csv(eighties_counts, here::here("portal_nulls", "eighties.csv"), row.names
 write.csv(eighties_splist, here::here("portal_nulls", "eighties_splist.csv"), row.names = F)
 write.csv(thous_counts, here::here("portal_nulls", "thous.csv"), row.names =F)
 write.csv(thous_splist, here::here("portal_nulls", "thous_splist.csv"), row.names = F)
+
+
+thous_splist_manip <- thous_splist %>%
+  group_by_all() %>%
+  mutate(mean_wgt = ifelse(scientificName == "PB", 45, mean_wgt),
+         sd_to_use = ifelse(scientificName == "PB", 7, sd_to_use)) %>%
+  ungroup()
+write.csv(thous_splist_manip, here::here("portal_nulls", "thous_splist_MANIP.csv"), row.names = F)

@@ -11,7 +11,6 @@ library(BBSsize)
 library(portalr)
 library(dplyr)
 library(ggplot2)
-R.utils::sourceDirectory(here::here("neon_mammals", "fxns"))
 library(drake)
 
 ```
@@ -86,7 +85,6 @@ sum(simComps$isd_overlap > realComp$isd_overlap[1]) / nrow(simComps)
 
 filter(simComps, isd_overlap < realComp$isd_overlap[1])
 
-loadd(sim_splist_93L, cache = cache)
 
 ```
 
@@ -97,5 +95,62 @@ loadd(sim_splist_93L, cache = cache)
 
 DBI::dbDisconnect(db)
 rm(cache)
+rm(list =ls())
+```
+
+# Early 2000s
+
+
+```{r}
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-pn-t.sqlite"), synchronous = NULL)
+cache <- storr::storr_dbi("datatable", "keystable", db)
+
+cache$del(key = "lock", namespace = "session")
+
+loadd(siteDescs_exclosure_real_counts, cache = cache)
+loadd(siteDescs_control_real_counts, cache = cache)
+loadd(siteDescs_control_shuffled_counts_sim_splist_2L, cache = cache)
+loadd(siteDescs_exclosure_shuffled_counts_sim_splist_2L, cache = cache)
+loadd(allComps, cache = cache)
+
+```
+
+
+```{r}
+
+thous_isd_gmms <- list(control = siteDescs_control_real_counts$gmm, exclosure = siteDescs_exclosure_real_counts$gmm) %>%
+  bind_rows(.id = "trt")
+ggplot(thous_isd_gmms, aes(mass, density, color = trt)) + 
+  geom_line()
+
+thous_isd_sim_gmms <- list(control = siteDescs_control_shuffled_counts_sim_splist_2L$gmm, exclosure = siteDescs_exclosure_shuffled_counts_sim_splist_2L$gmm) %>%
+  bind_rows(.id = "trt")
+ggplot(thous_isd_sim_gmms, aes(mass, density, color = trt)) + 
+  geom_line() 
+
+```
+
+```{r}
+
+ggplot(filter(allComps, sim > 0), aes(isd_overlap)) +
+  geom_histogram() +
+  geom_point(data = filter(allComps, sim < 0), aes(isd_overlap, 0), color = "red", size = 5)
+
+simComps <- filter(allComps, sim > 0)
+realComp <- filter(allComps, sim < 0)
+
+# percentile
+
+sum(simComps$isd_overlap < realComp$isd_overlap[1]) / nrow(simComps)
+
+# ses 
+
+(realComp$isd_overlap[1] - mean(simComps$isd_overlap)) / sd(simComps$isd_overlap)
+
+filter(simComps, isd_overlap < realComp$isd_overlap[1])
+
 
 ```
