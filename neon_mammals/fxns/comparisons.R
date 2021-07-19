@@ -7,13 +7,13 @@ pull_pairs <- function(site.x, site.y, all_rats_counts) {
 
 }
 
-describe_site <- function(site, sd_table, all_rats_counts) {
+describe_site <- function(site, sd_table, all_rats_counts, max_G = 15) {
 
   thisSite <- filter(all_rats_counts, siteID == site)
   max_mamm_size <- max(sd_table$mean_wgt) * 1.5
 
   thisISD = sim_neon_isd(thisSite, sd_table)
-  thisGMM = add_gmm(thisISD, max_size = max_mamm_size)
+  thisGMM = add_gmm(thisISD, max_size = max_mamm_size, max_G = max_G)
   counts = all_rats_counts %>%
     select(scientificName) %>%
     distinct() %>%

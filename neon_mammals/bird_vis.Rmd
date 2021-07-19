@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 
-allComps <- read.csv(here::here("bird_comps.csv"))
+allComps <- read.csv(here::here("all_bird_comps.csv"))
 
 ```
 
@@ -41,7 +41,7 @@ allCompsPerc <- allCompsCompare %>%
   distinct()
 
 ggplot(allCompsPerc, aes(percentile)) +
-  geom_histogram() +
+  geom_histogram(bins = 100) +
   geom_vline(xintercept = c(.95)) 
 
 ggplot(allCompsPerc, aes(percentile)) +
@@ -64,7 +64,7 @@ ggplot(allCompsObs, aes(species_overlap, isd_overlap)) +
   xlim(0,1)
 
 
-ggplot(allCompsPerc, aes(species_overlap, obs_isd_overlap, color = percentile > .95)) +
+ggplot(allCompsPerc, aes(species_overlap, obs_isd_overlap, color = percentile < .025)) +
   geom_point() +
   geom_abline(intercept = 0, slope = 1) +
   ylim(0,1) +
@@ -80,11 +80,55 @@ ggplot(allCompsObs, aes(haver, species_overlap)) +
 ggplot(allCompsObs, aes(haver, bcd)) +
   geom_point()
 
+
+ggplot(allCompsObs, aes(species_overlap)) +
+  geom_histogram()
+
+ggplot(allCompsObs, aes(isd_overlap)) +
+  geom_histogram()
+
+allCompsNullMeans <- allCompsNull %>%
+  group_by(route.x, region.x, route.y, region.y) %>%
+  summarize(mean_isd_overlap = mean(isd_overlap),
+            sd_isd_overlap = sd(isd_overlap)) %>%
+  ungroup() %>%
+  left_join(((allCompsObs))) %>%
+  mutate(ses = (isd_overlap - mean_isd_overlap) / sd_isd_overlap)
+
+
+ggplot(allCompsNullMeans, aes(species_overlap, mean_isd_overlap)) +
+  geom_point(alpha = .2) +
+  geom_point(data = allCompsObs, aes(species_overlap, isd_overlap), color = "blue", alpha = .1)
+
+ggplot(allCompsNullMeans, aes(ses)) +
+  geom_histogram() +
+  geom_vline(xintercept = c(-1.96, 1.96))
+
+
+ggplot(allCompsNullMeans, aes(haver, ses, color = abs(ses) > 1.96)) + geom_point()
+
+ggplot(allCompsNullMeans, aes(haver, ses, color = (ses) < -1.96)) + geom_point()
+
+
+mean(abs(allCompsNullMeans$ses) > 1.96)
+
+mean(allCompsNullMeans$ses < -1.96)
+mean(allCompsNullMeans$ses > 1.96)
+
 ```
 
 ```{r}
 
-allCompsConserved <- filter(allCompsPerc, percentile > .95)
+mean(allCompsPerc$percentile < 0.025)
+
+```
+
+
+```{r}
+ggplot(filter(allCompsNullMeans, location.bcr.x == location.bcr.y), aes(ses)) +
+  geom_histogram() +
+  facet_wrap(vars(location.bcr.x), scales = "free_y") +
+  geom_vline(xintercept = c(-1.96, 1.96))
 
 ```
 

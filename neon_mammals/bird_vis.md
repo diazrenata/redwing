@@ -33,11 +33,9 @@ allCompsPerc <- allCompsCompare %>%
   distinct()
 
 ggplot(allCompsPerc, aes(percentile)) +
-  geom_histogram() +
+  geom_histogram(bins = 100) +
   geom_vline(xintercept = c(.95)) 
 ```
-
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
 ![](bird_vis_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
@@ -70,7 +68,7 @@ ggplot(allCompsObs, aes(species_overlap, isd_overlap)) +
 ![](bird_vis_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
-ggplot(allCompsPerc, aes(species_overlap, obs_isd_overlap, color = percentile > .95)) +
+ggplot(allCompsPerc, aes(species_overlap, obs_isd_overlap, color = percentile < .025)) +
   geom_point() +
   geom_abline(intercept = 0, slope = 1) +
   ylim(0,1) +
@@ -101,7 +99,89 @@ ggplot(allCompsObs, aes(haver, bcd)) +
 ![](bird_vis_files/figure-gfm/unnamed-chunk-2-5.png)<!-- -->
 
 ``` r
-allCompsConserved <- filter(allCompsPerc, percentile > .95)
+ggplot(allCompsObs, aes(species_overlap)) +
+  geom_histogram()
 ```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](bird_vis_files/figure-gfm/unnamed-chunk-2-6.png)<!-- -->
+
+``` r
+ggplot(allCompsObs, aes(isd_overlap)) +
+  geom_histogram()
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](bird_vis_files/figure-gfm/unnamed-chunk-2-7.png)<!-- -->
+
+``` r
+allCompsNullMeans <- allCompsNull %>%
+  group_by(route.x, region.x, route.y, region.y) %>%
+  summarize(mean_isd_overlap = mean(isd_overlap),
+            sd_isd_overlap = sd(isd_overlap)) %>%
+  ungroup() %>%
+  left_join(((allCompsObs))) %>%
+  mutate(ses = (isd_overlap - mean_isd_overlap) / sd_isd_overlap)
+```
+
+    ## `summarise()` has grouped output by 'route.x', 'region.x', 'route.y'. You can override using the `.groups` argument.
+
+    ## Joining, by = c("route.x", "region.x", "route.y", "region.y")
+
+``` r
+ggplot(allCompsNullMeans, aes(species_overlap, mean_isd_overlap)) +
+  geom_point(alpha = .2) +
+  geom_point(data = allCompsObs, aes(species_overlap, isd_overlap), color = "blue", alpha = .1)
+```
+
+![](bird_vis_files/figure-gfm/unnamed-chunk-2-8.png)<!-- -->
+
+``` r
+ggplot(allCompsNullMeans, aes(ses)) +
+  geom_histogram() +
+  geom_vline(xintercept = c(-1.96, 1.96))
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](bird_vis_files/figure-gfm/unnamed-chunk-2-9.png)<!-- -->
+
+``` r
+ggplot(allCompsNullMeans, aes(haver, ses, color = abs(ses) > 1.96)) + geom_point()
+```
+
+![](bird_vis_files/figure-gfm/unnamed-chunk-2-10.png)<!-- -->
+
+``` r
+ggplot(allCompsNullMeans, aes(haver, ses, color = (ses) < -1.96)) + geom_point()
+```
+
+![](bird_vis_files/figure-gfm/unnamed-chunk-2-11.png)<!-- -->
+
+``` r
+mean(abs(allCompsNullMeans$ses) > 1.96)
+```
+
+    ## [1] 0.06169556
+
+``` r
+mean(allCompsNullMeans$ses < -1.96)
+```
+
+    ## [1] 0.03496082
+
+``` r
+mean(allCompsNullMeans$ses > 1.96)
+```
+
+    ## [1] 0.02673474
+
+``` r
+mean(allCompsPerc$percentile < 0.025)
+```
+
+    ## [1] 0.05290217
 
 Birds are bang-on random.
