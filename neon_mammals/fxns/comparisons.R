@@ -7,6 +7,14 @@ pull_pairs <- function(site.x, site.y, all_rats_counts) {
 
 }
 
+add_energy <- function(isd) {
+
+  energy <- isd %>%
+    mutate(energy = 5.69 * (isd$mass^0.75))
+
+  return(energy)
+}
+
 describe_site <- function(site, sd_table, all_rats_counts, max_G = 15) {
 
   thisSite <- filter(all_rats_counts, siteID == site)
@@ -21,6 +29,8 @@ describe_site <- function(site, sd_table, all_rats_counts, max_G = 15) {
     group_by_all() %>%
     mutate(abund = ifelse(is.na(abund), 0, abund)) %>%
     ungroup()
+  thisEnergy = add_energy(thisISD)
+
 
   thisAllRel <- counts %>%
     mutate(totalAbund = sum(abund)) %>%
@@ -38,6 +48,7 @@ describe_site <- function(site, sd_table, all_rats_counts, max_G = 15) {
     siteID = site,
     isd = thisISD,
     gmm = thisGMM,
+    energy_use = thisEnergy,
     allCounts = thisAllCounts,
     allRel = thisAllRel,
     metaInfo = thisMeta
@@ -79,12 +90,18 @@ compare_neon_pairs <- function(siteList.x, siteList.y) {
 
   bcd = vegan::vegdist(counts_matrix, "bray")[[1]]
 
+  e_change = abs(log(sum(siteList.x$energy_use$energy) / sum(siteList.y$energy_use$energy)))
+
+  n_change =  abs(log(nrow(siteList.x$energy_use) / nrow(siteList.y$energy_use)))
+
   return(data.frame(
     site.x = siteList.x$siteID,
     site.y = siteList.y$siteID,
     isd_overlap = isd_overlap,
     species_overlap = species_overlap,
-    bcd = bcd
+    bcd = bcd,
+    n_logr = n_change,
+    e_logr = e_change
   ) %>%
     bind_cols(siteList.x$metaInfo)
   )

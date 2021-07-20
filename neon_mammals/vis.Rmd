@@ -9,7 +9,7 @@ library(dplyr)
 library(ggplot2)
 library(drake)
 
-
+theme_set(theme_bw())
 ## Set up the cache and config
 db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-neon.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
@@ -39,10 +39,10 @@ allCompsNull <- filter(allComps, sim > 0)
 allCompsCompare <- allCompsNull %>%
   left_join(
     select(
-    rename(
-      allCompsObs, obs_isd_overlap = isd_overlap
-    ),
-    -sim, -shuffle_seed
+      rename(
+        allCompsObs, obs_isd_overlap = isd_overlap
+      ),
+      -sim, -shuffle_seed
     )
   )
 
@@ -52,8 +52,11 @@ allCompsPerc <- allCompsCompare %>%
   ) %>%
   mutate(nlower = sum(isd_overlap < obs_isd_overlap),
          nlowerinc = sum(isd_overlap <= obs_isd_overlap), # there are no ties so far
-         nsims = length(unique(sim))) %>%
-  mutate(percentile = nlower / nsims) %>%
+         nsims = length(unique(sim)),
+         mean_isd_overlap = mean(isd_overlap),
+         sd_isd_overlap = sd(isd_overlap))%>%
+  mutate(percentile = nlower / nsims,
+         ses = (obs_isd_overlap - mean_isd_overlap) / sd_isd_overlap) %>%
   ungroup() %>%
   select(-isd_overlap, -sim, -shuffle_seed) %>%
   distinct()
@@ -62,43 +65,21 @@ ggplot(allCompsPerc, aes(percentile)) +
   geom_histogram() +
   geom_vline(xintercept = c(.95)) 
 
-ggplot(allCompsPerc, aes(percentile)) +
+ggplot(allCompsPerc, aes(ses)) +
   geom_histogram() +
+  geom_vline(xintercept = c(-1.96, 1.96)) 
+
+ggplot(allCompsPerc, aes(percentile)) +
+  geom_histogram(bins =20) +
   geom_vline(xintercept = c(.95)) +
-  facet_wrap(vars(same_domain), scales = "free_y")
+  facet_wrap(vars(haver < 1000*1000), scales = "free_y")
 
 
 ggplot(allCompsPerc, aes(haver, percentile, color = same_domain)) +
-  geom_point() 
+  geom_point() +
+  geom_vline(xintercept = 1000* 1000)
 ```
 
-
-```{r}
-
-ggplot(allCompsObs, aes(species_overlap, isd_overlap)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  ylim(0,1) +
-  xlim(0,1)
-
-
-ggplot(allCompsPerc, aes(species_overlap, obs_isd_overlap, color = percentile > .95)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  ylim(0,1) +
-  xlim(0,1)
-
-ggplot(allCompsObs, aes(haver, isd_overlap)) +
-  geom_point() 
-
-ggplot(allCompsObs, aes(haver, species_overlap)) +
-  geom_point()
-
-
-ggplot(allCompsObs, aes(haver, bcd)) +
-  geom_point()
-
-```
 
 ```{r}
 
@@ -107,9 +88,42 @@ allCompsConserved <- filter(allCompsPerc, percentile > .95)
 ```
 
 
+```{r, fig.dim  = c(10,10)}
 
-ISDs overlap too much | species overlap about 20% of the time (compared to 5% at random). No obvious relationship with distance (great-circle) or domain-domain (but very few within-domain comparisons).
+bySite <- list()
+sites <- unique(c(allComps$site.x, allComps$site.y))
 
-Maybe the similarity of sites along other axes? Maybe distance isn't nuanced enough, maybe other environmental covariates.
+for(i in 1:length(sites)) {
+  
+  site = sites[i]
+  this_site_involved <- filter(allCompsPerc, site.x == site | site.y == site )
+  
+  this_site_info <- data.frame(
+    site = site,
+    ncomps = nrow(this_site_involved),
+    prop_high_perc = mean(this_site_involved$percentile > .95),
+    prop_high_ses = mean(this_site_involved$ses > 1.96)
+    
+  ) 
+  
+  bySite[[i]] <- this_site_info
+  
+  
+}
 
-A little creeped out by possible species richness effects, etc. Not sure yet on the intuition there. 
+
+bysites <- bind_rows(bySite)
+
+
+ggplot(filter(allCompsPerc)) +
+  geom_segment(aes(y = decimalLatitude.x, x =decimalLongitude.x, yend = decimalLatitude.y, xend = decimalLongitude.y, color = percentile >.95)) +  geom_label(aes(y = decimalLatitude.x, x = decimalLongitude.x, label = site.x)) + geom_label(aes(y = decimalLatitude.y, x=decimalLongitude.y, label = site.y))
+
+site.md <- read.csv(here::here("neon_mammals", "NEON_Field_Site_Metadata_20210226_0.csv"))
+
+
+bysites <- left_join(bysites, site.md, by = c("site" = "field_site_id"))
+
+filter(bysites, prop_high_ses > .15)
+filter(bysites, prop_high_ses < .15)
+
+```
