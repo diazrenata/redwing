@@ -8,7 +8,7 @@ R.utils::sourceDirectory(here::here("neon_mammals", "fxns"))
 
 sites <- read.csv(here::here("working_routes_max10.csv"))
 
-sims <- c(1:50)
+sims <- c(1:100)
 
 datasets <- MATSS::build_bbs_datasets_plan()
 
@@ -30,12 +30,12 @@ pulled_datasets <- drake::drake_plan(
 
 real <- drake::drake_plan(
   real_counts = target(get_bird_counts(matss_dataset = ds),
-                       transform = map(ds = !!rlang::syms(not_datasets$target)))
+                       transform = map(ds = !!rlang::syms(pulled_datasets$target)))
 )
 
 real_splists <- drake::drake_plan(
   sp = target(pull_bird_sp(matss_dataset = ds),
-              transform = map(ds = !!rlang::syms(not_datasets$target))),
+              transform = map(ds = !!rlang::syms(pulled_datasets$target))),
   all_sp = target(dplyr::distinct(dplyr::bind_rows(sp)),
                   transform = combine(sp))
 )
@@ -74,6 +74,7 @@ combine_comps <- drake::drake_plan(
 
 plan <- bind_rows(
   datasets,
+  not_datasets,
   bp,
   pulled_datasets,
   real,
@@ -117,12 +118,12 @@ if(grepl("ufhpc", nodename)) {
 
 loadd(allComps, cache = cache)
 
-write.csv(allComps, "all_bird_comps.csv", row.names =F)
+write.csv(allComps, "all_bird_comps_nt.csv", row.names =F)
 
 rm(allComps)
 
 loadd(comps, cache = cache)
-write.csv(comps, "real_bird_comps.csv", row.names = F)
+write.csv(comps, "real_bird_comps_nt.csv", row.names = F)
 
 rm(comps)
 #
