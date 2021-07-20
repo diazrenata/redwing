@@ -236,6 +236,32 @@ compare_bird_pairs <- function(birdList.x, birdList.y) {
 
 }
 
+remove_transients <- function(matss_dataset, transient_threshold = 2/3) {
+
+  abundance_binary <- matss_dataset$abundance > 0
+
+  nobs <- colSums(abundance_binary)
+
+  prop_obs <- nobs / nrow(abundance_binary)
+
+  not_transient_spp <- which(prop_obs > transient_threshold)
+  not_transient_spp_names <- names(prop_obs)[which(prop_obs > transient_threshold)]
+
+
+  not_abundance <- matss_dataset$abundance[ ,not_transient_spp]
+  not_metadata <- matss_dataset$metadata
+
+  not_metadata$species_table <- not_metadata$species_table %>%
+    dplyr::filter(id %in% not_transient_spp_names)
+
+  not_dataset <- list(
+    abundance = not_abundance,
+    covariates = matss_dataset$covariates,
+    metadata = not_metadata
+  )
+
+  return(not_dataset)
+}
 
 make_all_bird_comparisons <- function(pairs_df, siteDescriptions) {
 
