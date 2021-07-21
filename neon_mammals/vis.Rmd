@@ -16,6 +16,8 @@ cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
 loadd(allComps, cache = cache)
+loadd(all_neon, cache = cache)
+loadd(mammal_sds, cache = cache)
 
 DBI::dbDisconnect(db)
 rm(cache)
@@ -125,5 +127,22 @@ bysites <- left_join(bysites, site.md, by = c("site" = "field_site_id"))
 
 filter(bysites, prop_high_ses > .15)
 filter(bysites, prop_high_ses < .15)
+
+```
+
+```{r}
+
+
+ggplot(mammal_sds, aes(mean_wgt)) + geom_histogram()
+
+
+site_sbsds <- all_neon  %>%
+  select(scientificName, siteID) %>%
+  distinct() %>%
+  left_join(mammal_sds)
+
+
+ggplot(site_sbsds, aes(mean_wgt)) + geom_histogram() + facet_wrap(vars(siteID), scales = "free_y")
+
 
 ```

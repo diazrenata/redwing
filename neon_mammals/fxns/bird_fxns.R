@@ -35,7 +35,62 @@ make_bird_pairs <- function(all_datasets) {
 
 }
 
+make_bird_pairs_temporal <- function(all_datasets) {
+
+  dataset_info <- select(all_datasets,
+                         matssname,
+                         route,
+                         region,
+                         location.bcr,
+                         location.routename)
+
+  site_pairs <- data.frame(
+    site.x = unique(all_datasets$matssname),
+    site.y = unique(all_datasets$matssname)
+  ) %>%
+    mutate(site.x = paste0(site.x, "_start"),
+           site.y = paste0(site.y, "_end"))
+
+  return(site_pairs)
+
+}
+
 pull_bird_dat <- function(matss_dataset, years = c(2014:2018), timedesc = NA) {
+
+  yearRows <- which(matss_dataset$covariates$year %in% years)
+
+  new_dataset <- matss_dataset
+
+  new_dataset$abundance <- matss_dataset$abundance[yearRows,]
+  new_dataset$covariates <- matss_dataset$covariates[ yearRows, ]
+  new_dataset$metadata$years = years
+  new_dataset$metadata$timeperiod = timedesc
+
+  these_species <- colnames(new_dataset$abundance)
+  nonzero_species <- which(colSums(new_dataset$abundance) > 0)
+
+  these_species <- these_species[ nonzero_species]
+
+  new_dataset$abundance <- new_dataset$abundance[ , nonzero_species]
+
+  new_dataset$metadata$species_table <- new_dataset$metadata$species_table %>%
+    filter(id %in% these_species)
+
+
+  return(new_dataset)
+
+}
+
+
+pull_bird_dat_temporal <- function(matss_dataset, timechunk = "end") {
+
+  if(timechunk == "end") {
+    years = c(2014:2018)
+    timedesc = "end"
+  } else {
+    years = c(1988:1992)
+    timedesc = "start"
+  }
 
   yearRows <- which(matss_dataset$covariates$year %in% years)
 
@@ -174,6 +229,57 @@ describe_bird_counts <- function(bird_counts, sd_table = BBSsize::sd_table, shuf
   ))
 }
 
+describe_bird_counts_temporal <- function(bird_counts, sd_table = BBSsize::sd_table, shuffled_sp = NULL, all_bird_spp) {
+
+  if(!is.null(shuffled_sp)) {
+    bird_counts <- change_bird_species(bird_counts, shuffled_sp)
+  }
+
+  bird_counts_nooldID <- bird_counts %>%
+    select(-oldID)
+
+  thisISD = BBSsize::simulate_isd(bird_counts_nooldID, sd_table)
+  thisGMM = rwar::add_gmm(thisISD)
+  thisEnergy = add_bird_energy(thisISD)
+
+  counts = all_bird_spp %>%
+    select(id) %>%
+    distinct() %>%
+    left_join(select(bird_counts, id, abundance)) %>%
+    group_by_all() %>%
+    mutate(abundance = ifelse(is.na(abundance), 0, abundance)) %>%
+    ungroup()
+
+  thisAllRel <- counts %>%
+    mutate(totalAbund = sum(abundance)) %>%
+    mutate(relAbund = abundance / totalAbund)  %>%
+    select(id, relAbund)
+
+  thisAllCounts <- counts %>%
+    tidyr::pivot_wider(names_from = id, values_from = abundance)
+
+  thisMeta <- bird_counts  %>%
+    select(-route, -region, -id, -oldID, -abundance, -location.bcr, -location.longitude, -location.latitude) %>%
+    distinct()
+
+  thisSite <- bird_counts %>%
+    select(route, region, location.bcr, location.longitude, location.latitude, timeperiod, years) %>%
+    distinct() %>%
+    mutate(site = paste0("bbs_rtrg_", route, "_", region))
+
+  siteID = paste0("bbs_rtrg_", thisSite$route, "_", thisSite$region, "_", thisSite$timeperiod)
+
+  return(list(
+    siteID = siteID,
+    isd = thisISD,
+    gmm = thisGMM,
+    energy_use = thisEnergy,
+    allCounts = thisAllCounts,
+    allRel = thisAllRel,
+    metaInfo = thisMeta,
+    siteInfo = thisSite
+  ))
+}
 
 compare_bird_pairs <- function(birdList.x, birdList.y) {
 
@@ -211,6 +317,10 @@ compare_bird_pairs <- function(birdList.x, birdList.y) {
 
   haver = geosphere::distHaversine(p1 = c(birdList.x$siteInfo$location.longitude, birdList.x$siteInfo$location.latitude), p2 = c(birdList.y$siteInfo$location.longitude, birdList.y$siteInfo$location.latitude))
 
+  e_change = (log(sum(birdList.x$energy_use$energy) / sum(birdList.y$energy_use$energy)))
+
+  n_change =  (log(nrow(birdList.x$energy_use) / nrow(birdList.y$energy_use)))
+
   add_x <- function(cn) {
     return(paste0(cn, ".x"))
   }
@@ -227,6 +337,8 @@ compare_bird_pairs <- function(birdList.x, birdList.y) {
     isd_overlap = isd_overlap,
     species_overlap = species_overlap,
     bcd = bcd,
+    n_logr = n_change,
+    e_logr = e_change,
     haver = haver
   ) %>%
     bind_cols(birdList.x$metaInfo) %>%
@@ -261,6 +373,15 @@ remove_transients <- function(matss_dataset, transient_threshold = 2/3) {
   )
 
   return(not_dataset)
+}
+
+
+add_bird_energy <- function(isd) {
+
+  energy <- isd %>%
+    mutate(energy = rwar::estimate_b(mass))
+
+  return(energy)
 }
 
 make_all_bird_comparisons <- function(pairs_df, siteDescriptions) {

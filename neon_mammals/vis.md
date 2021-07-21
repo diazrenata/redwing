@@ -865,3 +865,28 @@ filter(bysites, prop_high_ses < .15)
     ## 16                         4
     ## 17                         6
     ## 18                         4
+
+``` r
+ggplot(mammal_sds, aes(mean_wgt)) + geom_histogram()
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](vis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+site_sbsds <- all_neon  %>%
+  select(scientificName, siteID) %>%
+  distinct() %>%
+  left_join(mammal_sds)
+```
+
+    ## Joining, by = "scientificName"
+
+``` r
+ggplot(site_sbsds, aes(mean_wgt)) + geom_histogram() + facet_wrap(vars(siteID), scales = "free_y")
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](vis_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
