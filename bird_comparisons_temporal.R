@@ -36,7 +36,7 @@ real <- drake::drake_plan(
 
 real_splists <- drake::drake_plan(
   sp = target(pull_bird_sp(matss_dataset = ds),
-              transform = map(ds = !!rlang::syms(nt$target))),
+              transform = map(ds = !!rlang::syms(datasets$target))),
   all_sp = target(dplyr::distinct(dplyr::bind_rows(sp)),
                   transform = combine(sp))
 )
