@@ -127,7 +127,7 @@ if(grepl("ufhpc", nodename)) {
 # write.csv(comps, "real_bird_comps_nt.csv", row.names = F)
 #
 # rm(comps)
-#
-# DBI::dbDisconnect(db)
-# rm(cache)
-# print("Completed OK")
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
