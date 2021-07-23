@@ -1,0 +1,129 @@
+---
+title: "Temporal change"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+        toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.dim = c(4,3))
+library(dplyr)
+library(ggplot2)
+theme_set(theme_bw())
+library(multipanelfigure)
+
+allComps <- read.csv(here::here("all_bird_comps_temporal_continental.csv"))
+
+obs <- filter(allComps, sim < 0)
+
+```
+
+# 1. Observed dynamics
+
+## State variables (E and N)
+
+```{r, fig.dim = c(4,9)}
+
+quantile(obs$e_logr, probs = c(.025, .5, .975))
+
+elr_hist <- ggplot(obs, aes(exp(e_logr))) +
+  geom_histogram() +
+  scale_x_log10()
+nlr_hist <- ggplot(obs, aes(exp(n_logr))) +
+  geom_histogram() +
+  scale_x_log10()
+e_n_l <- ggplot(obs, aes(n_logr, e_logr)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0)
+
+lr_hists <- multi_panel_figure(columns = 1, rows =3) %>%
+  fill_panel(elr_hist) %>%
+  fill_panel(nlr_hist) %>%
+  fill_panel(e_n_l)
+
+lr_hists
+
+summary(lm(e_logr ~ n_logr, obs))
+```
+
+* Total E skews weakly towards increasing (median = ```r exp(.2)```, 95% interval ```r exp(c(-.58, .85))```; ```r mean(obs$e_logr > 0)``` increase. 
+* Most changes are not dramatic (only 10% of **increases** are more than a doubling; only 3% of **decreases** are less than halving) 
+* These figures represent just raw values. You could repeat with a t-test comparing first 5 and last 5 years, or a linear model across the whole timeseries. I lean **against** a hierarchical model, because I am more interested in the heterogeneity of slopes than in an "overall" slope. But hey, you could do it.
+* Change in E is strongly predicted by change in N; r2 = .78
+
+
+## ISD and species compositonal overlap
+
+```{r}
+
+ggplot(obs, aes(isd_overlap)) +
+  geom_histogram()
+
+ggplot(obs, aes(species_overlap, isd_overlap)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0)
+
+summary(obs$isd_overlap)
+
+quantile(obs$isd_overlap, probs = c(.025, .5, .975))
+
+summary(lm(isd_overlap ~ species_overlap, obs))
+
+```
+
+
+* ISDs are highly conserved (median .8, 95% interval .63 - .88)
+* Change in the ISD is strongly related to change in species composition (linear model r2 = .66, p << 0.01)
+* ISDs are almost always more conserved than species overlap. This is to some extent expected; the ISD can't be (much) less conserved than species overlap. (I'm 99% sure exceptions occur because of intraspecific variation, in this case introduced via sampling).
+
+* I think the increasing E means that there is probably a weak overrepresentation of sites where the mean body size increases over time, but I'm not sure how strong that will be because
+    * The slopes are heterogeneous
+    * Mass and energy don't scale 1:1, and averaging can be tricky on the intuition
+    
+
+
+# 2. Relative to a continental-scale null model
+
+Here we have shuffled species' identities across all species ever observed across all the routes in this analysis.
+
+
+```{r}
+
+allCompsSummary <- allComps %>%
+  filter(sim > 0) %>%
+  left_join(select(obs, region.x, route.x, isd_overlap, e_logr) %>% rename(obs_isd_overlap = isd_overlap, obs_e_logr = e_logr)) %>%
+  group_by(site.x, route.x, region.x, location.bcr.x, location.longitude.x, location.latitude.x) %>%
+  summarize(
+    isd_ses = (obs_isd_overlap - mean(isd_overlap)) / sd(isd_overlap),
+    e_logr_ses = (obs_e_logr - mean(e_logr)) / sd(e_logr),
+    isd_percentile = sum(obs_isd_overlap > isd_overlap) / dplyr::n(),
+    e_logr_percentile = sum(obs_e_logr > e_logr) / dplyr::n()
+  ) %>%
+  ungroup() %>%
+  distinct()
+
+ggplot(allCompsSummary, aes(e_logr_percentile)) +
+  geom_histogram()
+
+
+ggplot(allCompsSummary, aes(isd_percentile)) +
+  geom_histogram()
+
+mean(allCompsSummary$e_logr_percentile > .95)
+mean(allCompsSummary$e_logr_percentile < .05)
+
+mean(allCompsSummary$isd_percentile > .95)
+mean(allCompsSummary$isd_percentile < .05)
+
+ggplot(allCompsSummary, aes(e_logr_ses)) +
+  geom_histogram()
+
+
+ggplot(allCompsSummary, aes(isd_ses)) +
+  geom_histogram()
+```
+
+These don't deviate at all from a null model shuffling species at a continental scale. 
+
