@@ -42,7 +42,7 @@ The thinking is that:
 
 ``` r
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-pn.sqlite"), synchronous = NULL)
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-pn-not.sqlite"), synchronous = NULL)
 cache <- storr::storr_dbi("datatable", "keystable", db)
 
 cache$del(key = "lock", namespace = "session")
@@ -99,16 +99,16 @@ sum(simComps$isd_overlap > realComp$isd_overlap[1]) / nrow(simComps)
 (realComp$isd_overlap[1] - mean(simComps$isd_overlap)) / sd(simComps$isd_overlap)
 ```
 
-    ## [1] -1.823809
+    ## [1] -2.034198
 
 ``` r
 filter(simComps, isd_overlap < realComp$isd_overlap[1])
 ```
 
-    ##    site.x    site.y isd_overlap species_overlap      bcd    n_logr   e_logr sim
-    ## 1 control exclosure   0.2012215       0.1667444 0.803003 0.8602013 1.009521  93
-    ##   shuffle_seed
-    ## 1    654633838
+    ##    site.x    site.y isd_overlap species_overlap       bcd    n_logr   e_logr
+    ## 1 control exclosure   0.1875573       0.1664131 0.8032589 0.8735886 2.067708
+    ##   sim shuffle_seed
+    ## 1  56    755755185
 
 ``` r
 DBI::dbDisconnect(db)

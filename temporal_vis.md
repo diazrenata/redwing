@@ -1,7 +1,7 @@
 Temporal change
 ================
 Renata Diaz
-2021-07-22
+2021-08-06
 
   - [1. Observed dynamics](#observed-dynamics)
       - [State variables (E and N)](#state-variables-e-and-n)

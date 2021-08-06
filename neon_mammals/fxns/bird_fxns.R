@@ -321,6 +321,8 @@ compare_bird_pairs <- function(birdList.x, birdList.y) {
 
   n_change =  (log(nrow(birdList.x$energy_use) / nrow(birdList.y$energy_use)))
 
+  mean_size_change = log(mean(log(birdList.x$isd$mass)) / mean(log(birdList.y$isd$mass)))
+
   add_x <- function(cn) {
     return(paste0(cn, ".x"))
   }
@@ -339,6 +341,7 @@ compare_bird_pairs <- function(birdList.x, birdList.y) {
     bcd = bcd,
     n_logr = n_change,
     e_logr = e_change,
+    mean_m_logr = mean_size_change,
     haver = haver
   ) %>%
     bind_cols(birdList.x$metaInfo) %>%
