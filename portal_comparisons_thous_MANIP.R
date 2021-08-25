@@ -9,7 +9,6 @@ sites <- read.csv(here::here("portal_nulls", "thous.csv")) %>%
   select(siteID) %>%
   distinct()
 
-#neon_pairs <- make_pairs(all_neon)
 
 sims <- c(1:100)
 

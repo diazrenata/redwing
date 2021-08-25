@@ -31,6 +31,8 @@ obs <- filter(allComps, sim < 0)
 
 ```
 
+Red dots are for Portal from 1978-1982 compared to 2000-2004 (approximately the window in the White 2004 paper.)
+
 # Change in E vs. change in N
 
 ```{r}
@@ -52,12 +54,27 @@ e_v_n_scatter <- ggplot(obs, aes(n_logr, e_logr)) +
   geom_vline(xintercept = 0, size = .2) +
   geom_abline(intercept = 0, slope = 1) +
   xlab("Change in total abundance (log ratio)") +
-  ylab("Change in total energy use (log ratio)")
+  ylab("Change in total energy use (log ratio)") +
+  geom_point(aes(.57, .1), color = "red") +
+  geom_point(aes(.21, .32), color = "blue") +
+  geom_point(aes(.21, .37), color = "green")
 
 
 e_v_n_scatter
 
 hist(obspred$difference)
+
+obs <- obs %>%
+  mutate(mean_e_logr = log((exp(e_logr) / exp(n_logr))))
+
+ggplot(obs, aes(exp(mean_e_logr))) +
+  geom_histogram() +
+  geom_vline(xintercept = 1)
+
+ggplot(obs, aes(exp(mean_m_logr))) + geom_histogram() +
+  geom_vline(xintercept = 1)
+
+ggplot(obs, aes(mean_m_logr, mean_e_logr)) + geom_point() + geom_line(aes(y = mean_m_logr))
 
 # 
 # 
@@ -95,7 +112,10 @@ isd_vs_spp_scatter <- ggplot(obs, aes(1 - species_overlap, 1 - isd_overlap)) +
   ylim(0,1)+
   geom_abline(slope = 1,intercept = 0) +
   xlab("Species turnover") +
-  ylab("Size structure turnover")
+  ylab("Size structure turnover") +
+  geom_point(aes(1-.411, 1-.588), color = "red") + # portal over time
+  geom_point(aes(1-.67, 1-.86), color = "blue") + # 2000s manipulated so PB is closer in size to krats
+  geom_point(aes(1-.67, 1-.77), color = "green") # 2000s real
 
 isd_vs_spp_scatter
 
@@ -116,7 +136,9 @@ allCompsSummary <- allComps %>%
     isd_percentile = sum(obs_isd_overlap > isd_overlap) / dplyr::n(),
     e_logr_percentile = sum(obs_e_logr > e_logr) / dplyr::n(),
     mean_m_logr_percentile = sum(obs_mean_m_logr > mean_m_logr) / dplyr::n(),
-    median_mean_change = quantile(mean_m_logr, probs = .5)
+    median_mean_change = quantile(mean_m_logr, probs = .5),
+    high_isd_turn = quantile(isd_overlap, probs = .025),
+    low_isd_turn = quantile(isd_overlap, probs = .975)
   ) %>%
   ungroup() %>%
   distinct() %>%
@@ -129,6 +151,16 @@ isd_percentile_hist <- ggplot(allCompsSummary, aes(isd_percentile)) +
   geom_hline(yintercept = 238/20, linetype = 2)
 
 isd_percentile_hist
+
+isd_constraint_envelope <- ggplot(allCompsSummary, aes(species_overlap, isd_overlap)) +
+  geom_point() +
+geom_errorbar(aes(ymin = high_isd_turn, ymax = low_isd_turn), alpha = .3) +
+ # geom_point(aes(y = low_isd_turn), shape = 3) +
+   # geom_point(aes(y =high_isd_turn), shape = 3) +
+
+  geom_abline(intercept = 0, slope = 1)
+
+isd_constraint_envelope
 ```
 
 ```{r, fig.dim = c(12,4)}

@@ -127,8 +127,8 @@ write.csv(thous_splist, here::here("portal_nulls", "thous_splist.csv"), row.name
 
 thous_splist_manip <- thous_splist %>%
   group_by_all() %>%
-  mutate(mean_wgt = ifelse(scientificName == "PB", 45, mean_wgt),
-         sd_to_use = ifelse(scientificName == "PB", 7, sd_to_use)) %>%
+  mutate(mean_wgt = ifelse(scientificName == "PB", 40, mean_wgt),
+         sd_to_use = ifelse(scientificName == "PB", 5.8, sd_to_use)) %>%
   ungroup()
 write.csv(thous_splist_manip, here::here("portal_nulls", "thous_splist_MANIP.csv"), row.names = F)
 
