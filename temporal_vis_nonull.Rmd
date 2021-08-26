@@ -1,0 +1,127 @@
+---
+title: "Temporal change"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+        toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.dim = c(4,3))
+library(dplyr)
+library(ggplot2)
+theme_set(theme_bw())
+library(multipanelfigure)
+
+#allComps <- read.csv(here::here("all_bird_comps_temporal_continental.csv"))
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-bird-pairs-temporal.sqlite"), synchronous = NULL)
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+allComps <- drake::readd(allComps, cache = cache)
+
+
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
+obs <- filter(allComps, sim < 0)
+
+```
+
+# 1. Observed dynamics
+
+## State variables (E and N)
+
+```{r, fig.dim = c(4,9)}
+
+quantile(obs$e_logr, probs = c(.025, .5, .975))
+
+
+
+mlr_hist <- ggplot(obs, aes(exp(mean_m_logr))) +
+  geom_histogram() +
+  scale_x_log10()
+elr_hist <- ggplot(obs, aes(exp(e_logr))) +
+  geom_histogram() +
+  scale_x_log10()
+nlr_hist <- ggplot(obs, aes(exp(n_logr))) +
+  geom_histogram() +
+  scale_x_log10()
+e_n_l <- ggplot(obs, aes(n_logr, e_logr)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0)
+
+lr_hists <- multi_panel_figure(columns = 1, rows =4) %>%
+  fill_panel(mlr_hist) %>%
+  fill_panel(elr_hist) %>%
+  fill_panel(nlr_hist) %>%
+  fill_panel(e_n_l)
+
+lr_hists
+
+summary(lm(e_logr ~ n_logr, obs))
+```
+
+* Total E skews weakly towards increasing (median = ```r exp(.2)```, 95% interval ```r exp(c(-.58, .85))```; ```r mean(obs$e_logr > 0)``` increase. 
+* Most changes are not dramatic (only 10% of **increases** are more than a doubling; only 3% of **decreases** are less than halving) 
+* These figures represent just raw values. You could repeat with a t-test comparing first 5 and last 5 years, or a linear model across the whole timeseries. I lean **against** a hierarchical model, because I am more interested in the heterogeneity of slopes than in an "overall" slope. But hey, you could do it.
+* Change in E is strongly predicted by change in N; r2 = .78
+
+
+## ISD and species compositonal overlap
+
+```{r}
+
+ggplot(obs, aes(isd_overlap)) +
+  geom_histogram()
+
+ggplot(obs, aes(species_overlap, isd_overlap)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0)
+
+summary(obs$isd_overlap)
+
+quantile(obs$isd_overlap, probs = c(.025, .5, .975))
+
+summary(lm(isd_overlap ~ species_overlap, obs))
+
+```
+
+
+* ISDs are highly conserved (median .8, 95% interval .63 - .88)
+* Change in the ISD is strongly related to change in species composition (linear model r2 = .66, p << 0.01)
+* ISDs are almost always more conserved than species overlap. This is to some extent expected; the ISD can't be (much) less conserved than species overlap. (I'm 99% sure exceptions occur because of intraspecific variation, in this case introduced via sampling).
+
+* I think the increasing E means that there is probably a weak overrepresentation of sites where the mean body size increases over time, but I'm not sure how strong that will be because
+    * The slopes are heterogeneous
+    * Mass and energy don't scale 1:1, and averaging can be tricky on the intuition
+    
+
+```{r}
+
+ggplot(obs, aes(1- species_overlap, abs(mean_m_logr))) + geom_point()
+
+ggplot(obs, aes(1- isd_overlap, (mean_m_logr))) + geom_point()
+
+
+```
+
+
+# Residuals
+
+```{r}
+
+e_n_lm <- (lm(e_logr ~ n_logr, obs))
+
+obs_resid <- obs %>%
+  mutate(res = resid(e_n_lm))
+
+ggplot(obs_resid, aes(n_logr, e_logr, color = abs(res))) + geom_point()+ scale_color_viridis_c(option = "turbo")
+
+
+ggplot(obs_resid, aes(1-isd_overlap, abs(res))) + geom_point()
+
+```

@@ -14,8 +14,19 @@ library(ggplot2)
 theme_set(theme_bw())
 library(multipanelfigure)
 
-allComps <- read.csv(here::here("all_bird_comps_temporal_continental.csv"))
+#allComps <- read.csv(here::here("all_bird_comps_temporal_continental.csv"))
 
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-bird-pairs-temporal.sqlite"), synchronous = NULL)
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+allComps <- drake::readd(allComps, cache = cache)
+
+
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
 obs <- filter(allComps, sim < 0)
 
 ```
@@ -28,6 +39,11 @@ obs <- filter(allComps, sim < 0)
 
 quantile(obs$e_logr, probs = c(.025, .5, .975))
 
+
+
+mlr_hist <- ggplot(obs, aes(exp(mean_m_logr))) +
+  geom_histogram() +
+  scale_x_log10()
 elr_hist <- ggplot(obs, aes(exp(e_logr))) +
   geom_histogram() +
   scale_x_log10()
@@ -38,7 +54,8 @@ e_n_l <- ggplot(obs, aes(n_logr, e_logr)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0)
 
-lr_hists <- multi_panel_figure(columns = 1, rows =3) %>%
+lr_hists <- multi_panel_figure(columns = 1, rows =4) %>%
+  fill_panel(mlr_hist) %>%
   fill_panel(elr_hist) %>%
   fill_panel(nlr_hist) %>%
   fill_panel(e_n_l)
@@ -93,19 +110,37 @@ Here we have shuffled species' identities across all species ever observed acros
 
 allCompsSummary <- allComps %>%
   filter(sim > 0) %>%
-  left_join(select(obs, region.x, route.x, isd_overlap, e_logr) %>% rename(obs_isd_overlap = isd_overlap, obs_e_logr = e_logr)) %>%
+  left_join(select(obs, region.x, route.x, isd_overlap, e_logr, mean_m_logr) %>% rename(obs_isd_overlap = isd_overlap, obs_e_logr = e_logr, obs_mean_m_logr = mean_m_logr)) %>%
   group_by(site.x, route.x, region.x, location.bcr.x, location.longitude.x, location.latitude.x) %>%
   summarize(
     isd_ses = (obs_isd_overlap - mean(isd_overlap)) / sd(isd_overlap),
     e_logr_ses = (obs_e_logr - mean(e_logr)) / sd(e_logr),
     isd_percentile = sum(obs_isd_overlap > isd_overlap) / dplyr::n(),
-    e_logr_percentile = sum(obs_e_logr > e_logr) / dplyr::n()
+    e_logr_percentile = sum(obs_e_logr > e_logr) / dplyr::n(),
+    mean_m_logr_percentile = sum(obs_mean_m_logr > mean_m_logr) / dplyr::n(),
+    median_mean_change = quantile(mean_m_logr, probs = .5)
   ) %>%
   ungroup() %>%
   distinct()
 
 ggplot(allCompsSummary, aes(e_logr_percentile)) +
   geom_histogram()
+
+ggplot(allCompsSummary, aes(mean_m_logr_percentile)) +
+  geom_histogram()
+
+ggplot(allCompsSummary, aes(median_mean_change)) +
+  geom_histogram() +
+  geom_vline(xintercept = quantile(obs$mean_m_logr, probs = .5))
+
+ggplot(filter(allComps, sim > 0), aes(mean_m_logr, group = sim)) + geom_density() + geom_density(data = obs, color = "green")
+
+
+ggplot(filter(allComps, sim > 0), aes(isd_overlap, group = sim)) + geom_density() + geom_density(data = obs, color = "green")
+
+
+
+ggplot(filter(allComps, sim > 0), aes(e_logr, group = sim)) + geom_density() + geom_density(data = obs, color = "green")
 
 
 ggplot(allCompsSummary, aes(isd_percentile)) +
@@ -116,6 +151,11 @@ mean(allCompsSummary$e_logr_percentile < .05)
 
 mean(allCompsSummary$isd_percentile > .95)
 mean(allCompsSummary$isd_percentile < .05)
+
+mean(allCompsSummary$mean_m_logr_percentile < .95)
+
+mean(allCompsSummary$median_mean_change < median(obs$mean_m_logr))
+
 
 ggplot(allCompsSummary, aes(e_logr_ses)) +
   geom_histogram()

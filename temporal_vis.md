@@ -1,7 +1,7 @@
 Temporal change
 ================
 Renata Diaz
-2021-08-06
+2021-08-20
 
   - [1. Observed dynamics](#observed-dynamics)
       - [State variables (E and N)](#state-variables-e-and-n)
@@ -30,6 +30,12 @@ Renata Diaz
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
     ## Setting row to 3
+
+    ## Setting column to 1
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Setting row to 4
 
     ## Setting column to 1
 
@@ -131,6 +137,14 @@ observed across all the routes in this analysis.
 
 ![](temporal_vis_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
 
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](temporal_vis_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->![](temporal_vis_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->![](temporal_vis_files/figure-gfm/unnamed-chunk-3-5.png)<!-- -->![](temporal_vis_files/figure-gfm/unnamed-chunk-3-6.png)<!-- -->
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](temporal_vis_files/figure-gfm/unnamed-chunk-3-7.png)<!-- -->
+
     ## [1] 0.01680672
 
     ## [1] 0.05042017
@@ -139,13 +153,17 @@ observed across all the routes in this analysis.
 
     ## [1] 0.04621849
 
+    ## [1] 0.9495798
+
+    ## [1] 0.9201681
+
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](temporal_vis_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
+![](temporal_vis_files/figure-gfm/unnamed-chunk-3-8.png)<!-- -->
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](temporal_vis_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->
+![](temporal_vis_files/figure-gfm/unnamed-chunk-3-9.png)<!-- -->
 
 These don’t deviate at all from a null model shuffling species at a
 continental scale.
