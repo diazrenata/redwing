@@ -163,6 +163,82 @@ geom_errorbar(aes(ymin = high_isd_turn, ymax = low_isd_turn), alpha = .3) +
 isd_constraint_envelope
 ```
 
+What's up in the extremes?
+
+```{r}
+
+isd_greater_than_species <- filter(allCompsSummary, isd_overlap < species_overlap)
+
+# Super weird one is bbs_rtrg_139_14
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-bird-pairs-temporal.sqlite"), synchronous = NULL)
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+drake::loadd(siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start, cache = cache)
+drake::loadd(siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end, cache = cache)
+
+
+times_isds <- list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$isd,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$isd
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod')
+
+ggplot(times_isds, aes(log(mass), color = timeperiod)) + geom_histogram() + facet_wrap(vars(timeperiod))
+
+times <- list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$gmm,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$gmm
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod')
+
+
+ggplot(times, aes(mass, density, color = timeperiod)) + geom_line() + scale_x_continuous(n.breaks = 20)
+
+
+# Now I'm wondering if it's not the big N thing, but something about the rescaling of the species?
+
+times_rawcounts <- list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$allCounts,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$allCounts
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod') %>%
+  tidyr::pivot_longer(-timeperiod, names_to = "id", values_to = "abund")
+
+
+times_counts <-  list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$allRel,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$allRel
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod')
+
+times_sp <- times_counts %>%
+  group_by(id) %>%
+  summarize(minRel = min(relAbund)) %>%
+  ungroup() 
+
+sum(times_sp$minRel)
+
+ggplot(times_counts, aes(id, relAbund, color = timeperiod)) + geom_point() + geom_col(data = times_sp, aes(x = id, y = minRel), inherit.aes =F)
+
+
+rel_v_raw <- left_join(times_counts, times_rawcounts)
+
+nonzero_sp <- rel_v_raw %>%
+  filter(abund > 0) %>%
+  select(id) 
+  
+filter(rel_v_raw, id %in% nonzero_sp$id) %>%
+  tidyr::pivot_wider(values_from = c("relAbund", "abund"), id_cols = id, names_from = timeperiod)
+
+
+ggplot(rel_v_raw, aes(abund, relAbund, color = timeperiod)) + geom_point()
+```
+
+
 ```{r, fig.dim = c(12,4)}
 
 all_figs = multi_panel_figure(rows = 1, columns = 3) %>%
@@ -172,4 +248,9 @@ all_figs = multi_panel_figure(rows = 1, columns = 3) %>%
 
 
 all_figs
+```
+
+```{r}
+c2 <- c2 %>% group_by(id) %>% mutate(minRel = min(relAbund_start, relAbund_end)) %>% ungroup()
+ggplot(c2, aes(logm, minRel)) + geom_col() + scale_x_continuous(n.breaks= 25, limits = c(0,10))
 ```
