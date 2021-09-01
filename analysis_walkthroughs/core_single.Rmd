@@ -33,7 +33,7 @@ end_years <- c(2014:2018)
 
 ```{r}
 
-d_isd <- BBSsize::simulate_isd_ts(d, isd_seed = 1977)
+d_isd <- BBSsize::simulate_isd_ts(d, isd_seed = 1994)
 
 names(d_isd)
 
