@@ -2,6 +2,7 @@ library(dplyr)
 library(rwar)
 library(drake)
 library(MATSS)
+library(BBSsize)
 
 expose_imports(rwar)
 
@@ -12,14 +13,16 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
+#datasets <- datasets[1:2, ]
 
 
 methods <- drake_plan(
-  results = target(all_core_analyses(dataset, beginyears = c(1988:1992), endyears = c(2014:2018)),
+  results = target(all_core_analyses(dataset, begin_years = c(1988:1992), end_years = c(2014:2018)),
              transform = map(
                dataset = !!rlang::syms(datasets$target))),
-  all_results = target(dplyr::combine(results),
-                           transform = combine(results))
+  ar = target(dplyr::combine(results),
+                           transform = combine(results)),
+  all_results = target(dplyr::bind_rows(ar))
 )
 
 all = bind_rows(datasets, methods)
