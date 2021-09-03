@@ -1,0 +1,29 @@
+---
+title: "playing w something"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+      toc: true
+      df_print: kable
+
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(drake)
+theme_set(theme_bw())
+library(BBSsize)
+
+```
+
+
+```{r}
+h<- hartland
+h_isd <- simulate_isd_ts(h)
+h_svs <- ann
+
+
+
+```
