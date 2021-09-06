@@ -1,0 +1,109 @@
+---
+title: "Actual results"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+      toc: true
+      df_print: kable
+
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(drake)
+theme_set(theme_bw())
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+loadd(all_results, cache = cache)
+
+DBI::dbDisconnect(db)
+rm(cache)
+rm(db)
+
+max10 <- read.csv(here::here("working_routes_max10.csv"))
+
+all_results <- all_results %>%
+  mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) %>%
+  filter(matssname %in% max10$matssname)
+
+
+onetoone <- geom_abline(slope = 1, intercept = 0)
+```
+
+# State variable change
+
+```{r}
+
+ggplot(all_results, aes(overall_p)) +geom_histogram()
+
+all_results <- all_results %>%
+  group_by_all() %>%
+  mutate(any_terms_sig = all(overall_p < .05, any(
+    `Pr(>|t|)_timeperiodend:currencybiomass` < .05,
+    `Pr(>|t|)_timeperiodend:currencyenergy` < .05,
+    `Pr(>|t|)_timeperiodend` < .05
+  ))) %>%
+  ungroup()
+
+mean(all_results$any_terms_sig)
+
+
+
+
+
+
+sig_model <- all_results %>% 
+  filter(any_terms_sig)%>%
+  group_by_all() %>%
+  mutate(all_together = all(
+    `Pr(>|t|)_timeperiodend:currencybiomass` > .05,
+    `Pr(>|t|)_timeperiodend:currencyenergy` > .05,
+    `Pr(>|t|)_timeperiodend` < .05
+  )) %>%
+  ungroup()
+
+
+all_together <- filter(sig_model, all_together)
+
+ggplot(all_together, aes(fitted_ratio_caps_abundance)) + geom_histogram()
+
+ggplot(all_together, aes(fitted_ratio_caps_energy)) + geom_histogram()
+
+ggplot(all_together, aes(fitted_ratio_caps_biomass)) + geom_histogram()
+
+summary(all_together$fitted_ratio_caps_abundance)
+summary(all_together$fitted_ratio_caps_energy)
+summary(all_together$fitted_ratio_caps_biomass)
+
+
+ggplot(sig_model, aes(fitted_ratio_caps_energy / fitted_ratio_caps_abundance)) + geom_histogram() + facet_wrap(vars(`Pr(>|t|)_timeperiodend:currencyenergy` < .05))
+
+ggplot(all_results, aes(fitted_ratio_caps_abundance, fitted_ratio_caps_energy, color =`Pr(>|t|)_timeperiodend:currencyenergy` < .05)) + geom_point() + onetoone + theme(legend.position = "bottom")
+
+
+ggplot(sig_model, aes(fitted_ratio_caps_biomass / fitted_ratio_caps_abundance)) + geom_histogram() + facet_wrap(vars(`Pr(>|t|)_timeperiodend:currencybiomass` < .05))
+
+ggplot(all_results, aes(fitted_ratio_caps_abundance, fitted_ratio_caps_biomass, color =`Pr(>|t|)_timeperiodend:currencybiomass` < .05)) + geom_point() + onetoone + theme(legend.position = "bottom")
+
+
+```
+
+
+```{r}
+
+ggplot(all_results, aes(isd_turnover)) + geom_histogram()
+
+ggplot(sig_model, aes(isd_turnover)) + geom_histogram() + facet_wrap(vars(`Pr(>|t|)_timeperiodend:currencybiomass` < .05))
+
+ggplot(all_results, aes(sp_turnover)) + geom_histogram()
+
+ggplot(all_results, aes(sp_turnover, isd_turnover)) + geom_point() + onetoone
+
+```
