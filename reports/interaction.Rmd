@@ -72,9 +72,9 @@ db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
-loadd(bbs_rtrg_153_14, cache = cache)
+loadd(bbs_rtrg_119_68, cache = cache)
 
-gh <- bbs_rtrg_153_14
+gh <- bbs_rtrg_119_68
 
 library(BBSsize)
 
@@ -83,17 +83,28 @@ gh_isd <- simulate_isd_ts(gh)
 library(rwar)
 
 gh_sv <- get_annual_svs(gh_isd$isd) %>%
-  filter(year %in% c(1988:2018))
+  filter(year %in% c(1988:2018))  
 
 ggplot(gh_sv, aes(year, abundance)) + geom_line() 
+
 ggplot(gh_sv, aes(year, energy)) + geom_line() 
 
-gh_caps <- pull_caps(gh_sv, c(1988:1992), c(2014:2018))
+rangescale <- function(vect) {
+  
+  vectrange <- max(vect) - min(vect)
+  
+  vect = (vect - min(vect)) / vectrange
+  
+  vect
+  
+}
+
+gh_caps <- pull_caps(gh_sv, c(1988:1992), c(2014:2018))%>%
+  mutate(energy = rangescale((energy)),
+        abundance = rangescale((abundance)),
+        biomass = rangescale(biomass))
 
 gh_caps_long <- gh_caps %>%
-  mutate(energy = scale((energy)),
-        abundance = scale((abundance)),
-        biomass = scale(biomass)) %>%
   tidyr::pivot_longer(c(-year, -timeperiod), names_to = "currency", values_to = "val")
 
 gh_caps_forlm <- gh_caps_long %>%
@@ -104,48 +115,36 @@ ggplot(gh_caps_long, aes(timeperiod, val, color = currency)) + geom_point()+ fac
 gh_lm <- lm(val ~ timeperiod * currency, data = gh_caps_forlm)
 
 summary(gh_lm)
+```
 
+```{r}
 gh_lm_fit <- gh_caps_forlm %>%
   mutate(lm_fit = gh_lm$fitted.values)
 
 ggplot(gh_lm_fit, aes(year, val, color = currency)) + geom_point() + geom_point(aes(y = lm_fit), shape = 3) + facet_wrap(vars(currency))
 
 ```
-```{r} 
-
-sp <- readd(bbs_rtrg_37_46, cache = cache)
 
 
-sp_isd <- simulate_isd_ts(sp)
+So not going further down the nlme cul-de-sac at the moment.
+
+```{r}
+
+gh_lm
+
+gh_lm_results <- summary(gh_lm)
+
+gh_lm_ps <- gh_lm_results$coefficients
 
 
-sp_sv <- get_annual_svs(sp_isd$isd) %>%
-  filter(year %in% c(1988:2018))
+gh_p <- pf(gh_lm_results$fstatistic[1], gh_lm_results$fstatistic[2], gh_lm_results$fstatistic[3], lower.tail = F)
+gh_lm_results_wide <- gh_lm_ps %>%
+  as.data.frame() %>%
+  mutate(coef_name = row.names(.)) %>%
+  tidyr::pivot_wider(names_from = coef_name, values_from = c("Estimate", "Std. Error", "t value", "Pr(>|t|)")) %>%
+  mutate(overall_p = gh_p,
+         overall_r2 = gh_lm_results$r.squared)
+gh_lm_results_wide
 
-ggplot(sp_sv, aes(year, abundance)) + geom_line() 
-ggplot(sp_sv, aes(year, energy)) + geom_line() 
-
-sp_caps <- pull_caps(sp_sv, c(1988:1992), c(2014:2018))
-
-sp_caps_long <- sp_caps %>%
-  mutate(energy = scale((energy)),
-        abundance = scale((abundance)),
-        biomass = scale(biomass)) %>%
-  tidyr::pivot_longer(c(-year, -timeperiod), names_to = "currency", values_to = "val")
-
-sp_caps_forlm <- sp_caps_long %>%
-  filter(currency %in% c("energy", "abundance", "biomass"))
-
-ggplot(sp_caps_long, aes(timeperiod, val, color = currency)) + geom_point()+ facet_wrap(vars(currency), scales = "free_y")
-
-sp_lm <- lm(val ~ timeperiod * currency, data = sp_caps_forlm)
-
-summary(sp_lm)
-
-sp_lm_fit <- sp_caps_forlm %>%
-  mutate(lm_fit = sp_lm$fitted.values)
-
-ggplot(sp_lm_fit, aes(year, val, color = currency)) + geom_point() + geom_point(aes(y = lm_fit), shape = 3) + facet_wrap(vars(currency))
 
 ```
-
