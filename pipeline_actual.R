@@ -13,7 +13,7 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-#datasets <- datasets[1:2, ]
+#datasets <- datasets[1:5, ]
 
 
 methods <- drake_plan(
@@ -29,7 +29,7 @@ all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual1.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
@@ -52,7 +52,7 @@ if(grepl("ufhpc", nodename)) {
 
 
   # Run the pipeline on multiple local cores
-  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean"))
+  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
 }
