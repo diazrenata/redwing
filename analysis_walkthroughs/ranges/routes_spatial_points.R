@@ -31,7 +31,7 @@ state_info <- data.frame(
 states_sh <- states_sh %>%
   mutate(NAME = toupper(NAME))
 
-# demonstrates that the routes all land in the right states.
+# demonstrates that the routes all land in the right states. takes about half an hour on my MBA.
 
 for(i in 1:length(state_names)) {
 #for(i in 1:10) {
