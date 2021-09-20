@@ -1,31 +1,31 @@
-Local null model
+Regional null model
 ================
 
-For the local-scale null model we rearrange the species IDs **of species
-that have been recorded along a route**.
-
-# Get some data
-
 ``` r
-g <- BBSsize::granby
+g <- granby
 
-startyears <- 1988:1992
-endyears <- 2014:2018
-isd_seed = 1977
+g_locationdat <- g$metadata$location
+
+g_speciesoverlap <- dplyr::left_join(g_locationdat, route_intersections)
 ```
 
-# Rearrange species
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
 
 ``` r
+overlapping_spp <- g_speciesoverlap$id
+encountered_spp <- g$metadata$species_table$id
+
+overlap_rich = length(overlapping_spp)
+encountered_rich = length(encountered_spp)
+overlap_not_in_encountered = sum(!(overlapping_spp %in% encountered_spp))
+all_g_species=c(overlapping_spp,encountered_spp) %>% unique()
+orig_g_species <- colnames(g$abundance)
 set.seed(1994)
-
-orig_species <- colnames(g$abundance)
-
-shuffled_species <- sample(orig_species, size = length(orig_species), replace = F)
+new_g_species <- sample(all_g_species, size = length(orig_g_species), replace = F)
 
 g_shuffled <- g
 
-colnames(g_shuffled$abundance) <- shuffled_species
+colnames(g_shuffled$abundance) <- new_g_species
 ```
 
 # Run analyses
@@ -161,11 +161,15 @@ isds <- bind_rows(list(actual = ts_isd_actual$isd, shuffled =ts_isd_shuffled$isd
 ggplot(isds, aes(log(mass), fill = year > 2000)) + geom_density(alpha = .5) + facet_wrap(vars(source))
 ```
 
-![](local_files/figure-gfm/unnamed-chunk-4-1.png)<!-- --> \# Repeatedly
-for a null model
+![](regional_files/figure-gfm/unnamed-chunk-3-1.png)<!-- --> \#
+Repeatedly for a null model
 
 ``` r
-local_null_model <- function(ts_dat, null_mod_seed = NULL, begin_years = NULL, end_years = NULL, isd_seed = NULL) {
+regional_null_model <- function(ts_dat, ranges_dat = NULL, null_mod_seed = NULL, begin_years = NULL, end_years = NULL, isd_seed = NULL) {
+  
+  if(is.null(ranges_dat)) {
+    stop("Need range data")
+  }
   
   if(is.null(null_mod_seed)) {
     set.seed(NULL)
@@ -173,32 +177,48 @@ local_null_model <- function(ts_dat, null_mod_seed = NULL, begin_years = NULL, e
   }
   
   
-  orig_species <- colnames(ts_dat$abundance)
+  ts_locationdat <- ts_dat$metadata$location
   
+  ts_speciesoverlap <- dplyr::left_join(ts_locationdat, ranges_dat)
+  
+  overlapping_spp <- ts_speciesoverlap$id
+  encountered_spp <- ts_dat$metadata$species_table$id
+  all_ts_spp = c(overlapping_spp, encountered_spp) %>% unique()
+  
+  overlap_rich = length(overlapping_spp)
+  encountered_rich = length(encountered_spp)
+  overlap_not_in_encountered = sum(!(overlapping_spp %in% encountered_spp))
+
   set.seed(null_mod_seed)
   
-  shuffled_species <- sample(orig_species, size = length(orig_species), replace = F)
+  new_ts_species <- sample(all_ts_spp, size = encountered_rich, replace = F)
   
   shuffled_dat <- ts_dat
   
-  colnames(shuffled_dat$abundance) <- shuffled_species
+  colnames(shuffled_dat$abundance) <- new_ts_species
   
   results <- all_core_analyses(shuffled_dat, begin_years, end_years, isd_seed)
   
   results <- results %>%
     dplyr::mutate(
-      null_mod_type = "local",
-      null_mod_seed = null_mod_seed
+      null_mod_type = "regional",
+      null_mod_seed = null_mod_seed,
+      overlap_richness = overlap_rich,
+      local_richness = encountered_rich,
+      regionally_added = overlap_not_in_encountered
     )
   
- 
+  
   results 
 }
-
-
-r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), simplify = FALSE)
 ```
 
+``` r
+r3 <- replicate(50, regional_null_model(g, route_intersections, NULL, startyears, endyears, isd_seed), simplify = FALSE)
+```
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -217,6 +237,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -235,6 +258,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -253,6 +279,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -271,6 +300,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -289,6 +321,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -307,6 +342,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -325,6 +363,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -343,6 +384,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -361,6 +405,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -379,6 +426,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -397,6 +447,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -415,6 +468,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -433,6 +489,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -451,6 +510,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -469,6 +531,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -487,6 +552,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -505,6 +573,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -523,6 +594,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -541,6 +615,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -559,6 +636,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -577,6 +657,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -595,6 +678,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -613,6 +699,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -631,6 +720,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -649,6 +741,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -667,6 +762,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -685,6 +783,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -703,6 +804,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -721,6 +825,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -739,6 +846,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -757,6 +867,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -775,6 +888,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -793,6 +909,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -811,6 +930,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -829,6 +951,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -847,6 +972,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -865,6 +993,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -883,6 +1014,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -901,6 +1035,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -919,6 +1056,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -937,6 +1077,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -955,6 +1098,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -973,6 +1119,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -991,6 +1140,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -1009,6 +1161,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -1027,6 +1182,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -1045,6 +1203,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -1063,6 +1224,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -1081,6 +1245,9 @@ r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), s
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+
+    ## Joining, by = c("countrynum", "statenum", "route", "routename", "active", "latitude", "longitude", "stratum", "bcr", "routetypeid", "routetypedetailid", "regionname")
+
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
@@ -1121,7 +1288,7 @@ head(nulls$bcd)
 head(nulls$null_mod_seed)
 ```
 
-    ## [1] 771934063 400808126   5128299 183874448 706388990 960487782
+    ## [1] 724874048 661397071 903248688   6143789 298299975 835417057
 
 ``` r
 ggplot(nulls, aes(isd_turnover)) + geom_histogram() + geom_vline(xintercept = g_analyses$isd_turnover)
@@ -1129,4 +1296,4 @@ ggplot(nulls, aes(isd_turnover)) + geom_histogram() + geom_vline(xintercept = g_
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](local_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](regional_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
