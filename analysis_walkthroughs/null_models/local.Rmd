@@ -19,7 +19,11 @@ For the local-scale null model we rearrange the species IDs **of species that ha
 
 ```{r}
 
-h <- BBSsize::hartland
+g <- BBSsize::granby
+
+startyears <- 1988:1992
+endyears <- 2014:2018
+isd_seed = 1977
 
 ```
 
@@ -28,13 +32,13 @@ h <- BBSsize::hartland
 ```{r}
 set.seed(1994)
 
-orig_species <- colnames(h$abundance)
+orig_species <- colnames(g$abundance)
 
 shuffled_species <- sample(orig_species, size = length(orig_species), replace = F)
 
-h_shuffled <- h
+g_shuffled <- g
 
-colnames(h_shuffled$abundance) <- shuffled_species
+colnames(g_shuffled$abundance) <- shuffled_species
 
 ```
 
@@ -43,45 +47,45 @@ colnames(h_shuffled$abundance) <- shuffled_species
 ```{r}
 library(BBSsize)
 
-h_analyses <- all_core_analyses(h, 1994:1998, 2014:2018, 1977)
+g_analyses <- all_core_analyses(g, startyears, endyears, isd_seed)
 
-h_shuffled_analyses <- all_core_analyses(h_shuffled, 1994:1998, 2014:2018, 1977)
+g_shuffled_analyses <- all_core_analyses(g_shuffled, startyears, endyears, isd_seed)
 
-two <- bind_rows(h_analyses, h_shuffled_analyses)
+two <- bind_rows(g_analyses, g_shuffled_analyses)
 
 
 ```
 
 ## step by step
 
-```{r, eval = F}
+```{r, eval = T}
 
-ts_isd_actual <- BBSsize::simulate_isd_ts(h, isd_seed = 1977)
+ts_isd_actual <- BBSsize::simulate_isd_ts(g, isd_seed = isd_seed)
 ts_svs_actual <- get_annual_svs(ts_isd_actual$isd)
 ts_lms_actual <- fit_all_timeseries_lms(ts_svs_actual)
-caps_svs_actual <- pull_caps(ts_svs_actual, 1994:1998, 2014:2018)
+caps_svs_actual <- pull_caps(ts_svs_actual, startyears, endyears)
 caps_lms_actual <- fit_all_caps_lms(caps_svs_actual)
 i_lms_actual <- interaction_lms(caps_svs_actual)
 raw_ratios_actual <-  compute_raw_sv_change(caps_svs_actual)
-set.seed(1977)
-isd_turn_actual <- compare_isds(ts_isd_actual$isd, 1994:1998, 2014:2018)
-comp_turn_actual <- compare_species_composition(h, 1994:1998, 2014:2018)
+set.seed(isd_seed)
+isd_turn_actual <- compare_isds(ts_isd_actual$isd, startyears, endyears)
+comp_turn_actual <- compare_species_composition(g, startyears, endyears)
 
-ts_isd_shuffled <- BBSsize::simulate_isd_ts(h_shuffled, isd_seed = 1977)
+ts_isd_shuffled <- BBSsize::simulate_isd_ts(g_shuffled, isd_seed = isd_seed)
 ts_svs_shuffled <- get_annual_svs(ts_isd_shuffled$isd)
 ts_lms_shuffled <- fit_all_timeseries_lms(ts_svs_shuffled)
-caps_svs_shuffled <- pull_caps(ts_svs_shuffled, 1994:1998, 2014:2018)
+caps_svs_shuffled <- pull_caps(ts_svs_shuffled, startyears, endyears)
 caps_lms_shuffled <- fit_all_caps_lms(caps_svs_shuffled)
 i_lms_shuffled <- interaction_lms(caps_svs_shuffled)
 raw_ratios_shuffled <-  compute_raw_sv_change(caps_svs_shuffled)
-set.seed(1977)
-isd_turn_shuffled <- compare_isds(ts_isd_shuffled$isd, 1994:1998, 2014:2018)
-comp_turn_shuffled <- compare_species_composition(h_shuffled, 1994:1998, 2014:2018)
+set.seed(1994)
+isd_turn_shuffled <- compare_isds(ts_isd_shuffled$isd, startyears, endyears)
+comp_turn_shuffled <- compare_species_composition(g_shuffled, startyears, endyears)
 
 
 isds <- bind_rows(list(actual = ts_isd_actual$isd, shuffled =ts_isd_shuffled$isd), .id = "source")
 
-ggplot(isds, aes(log(mass), fill = year > 2000)) + geom_density() + facet_wrap(vars(source))
+ggplot(isds, aes(log(mass), fill = year > 2000)) + geom_density(alpha = .5) + facet_wrap(vars(source))
 
 ```
 # Repeatedly for a null model
@@ -119,13 +123,26 @@ local_null_model <- function(ts_dat, null_mod_seed = NULL, begin_years = NULL, e
 }
 
 
-r3 <- replicate(5, local_null_model(h, NULL, 1994:1998, 2014:2018, 1977), simplify = FALSE)
+r3 <- replicate(50, local_null_model(g, NULL, startyears, endyears, isd_seed), simplify = FALSE)
 
-five_nulls <- bind_rows(r3)
+nulls <- bind_rows(r3)
 
 ```
 
 Always want to check that:
 
-- Results for total abundance and speices turnover remain the same
+- Results for total abundance and species turnover remain the same
 - Multiple, different null_mod_seeds in multiple runs
+
+```{r}
+
+head(nulls$bcd)
+head(nulls$null_mod_seed)
+
+```
+
+```{r}
+
+ggplot(nulls, aes(isd_turnover)) + geom_histogram() + geom_vline(xintercept = g_analyses$isd_turnover)
+
+```
