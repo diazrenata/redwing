@@ -15,7 +15,7 @@ working_datasets <- read.csv(here::here("working_routes.csv"))
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 #datasets <- datasets[1:5, ]
 
-nsims = 50
+nsims = 100
 
 
 methods <- drake_plan(
