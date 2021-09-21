@@ -13,9 +13,9 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-datasets <- datasets[1:5, ]
+#datasets <- datasets[1:5, ]
 
-nsims = 2
+nsims = 100
 
 methods <- drake_plan(
   ranges = target(read.csv(here::here("route_species_lists.csv"))),
