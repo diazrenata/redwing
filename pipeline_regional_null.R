@@ -17,9 +17,10 @@ datasets <- datasets[1:5, ]
 
 nsims = 5
 
+ranges <- read.csv(here::here("route_species_lists.csv"))
 
 methods <- drake_plan(
-  results = target(local_null_model_wrapper(dataset, begin_years = c(1988:1992), end_years = c(2014:2018), nsims = !!nsims),
+  results = target(regional_null_model_wrapper(dataset, ranges_dat = !!ranges, begin_years = c(1988:1992), end_years = c(2014:2018), nsims = !!nsims),
              transform = map(
                dataset = !!rlang::syms(datasets$target))),
   ar = target(dplyr::combine(results),
@@ -31,7 +32,7 @@ all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-localn.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-regionaln.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
