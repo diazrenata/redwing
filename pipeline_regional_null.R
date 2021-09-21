@@ -15,12 +15,11 @@ working_datasets <- read.csv(here::here("working_routes.csv"))
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 datasets <- datasets[1:5, ]
 
-nsims = 5
-
-ranges <- read.csv(here::here("route_species_lists.csv"))
+nsims = 2
 
 methods <- drake_plan(
-  results = target(regional_null_model_wrapper(dataset, ranges_dat = !!ranges, begin_years = c(1988:1992), end_years = c(2014:2018), nsims = !!nsims),
+  ranges = target(read.csv(here::here("route_species_lists.csv"))),
+  results = target(regional_null_model_wrapper(dataset, ranges_dat = ranges, begin_years = c(1988:1992), end_years = c(2014:2018), nsims = !!nsims),
              transform = map(
                dataset = !!rlang::syms(datasets$target))),
   ar = target(dplyr::combine(results),
