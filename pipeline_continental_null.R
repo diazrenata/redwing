@@ -13,9 +13,9 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-datasets <- datasets[1:5, ]
+#datasets <- datasets[1:5, ]
 
-nsims = 2
+nsims = 100
 
 methods <- drake_plan(
   results = target(continental_null_model_wrapper(dataset,  begin_years = c(1988:1992), end_years = c(2014:2018), nsims = !!nsims),
