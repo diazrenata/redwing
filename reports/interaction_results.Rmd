@@ -44,6 +44,21 @@ This whole approach bugs me because of the sheer number of comparisons being mad
 
 ggplot(all_results, aes(overall_p)) +geom_histogram()
 
+all_results_adj <- all_results %>%
+  select(overall_p, `Pr(>|t|)_timeperiodend:currencybiomass`, `Pr(>|t|)_timeperiodend:currencyenergy`, `Pr(>|t|)_timeperiodend`, matssname) %>%
+  tidyr::pivot_longer(-matssname, names_to = "comparison", values_to = "p") %>%
+  mutate(padj = p.adjust(p, "fdr")) %>%
+  tidyr::pivot_wider(id_cols = matssname, names_from = comparison, values_from = c(p, padj))
+
+
+mean(all_results_adj$padj_overall_p < .05)
+
+all_results_adj_sig <- filter(all_results_adj, padj_overall_p < .05)
+
+mean(all_results_adj_sig$`padj_Pr(>|t|)_timeperiodend` < .05)
+mean(all_results_adj_sig$`padj_Pr(>|t|)_timeperiodend:currencyenergy` < .05)
+mean(all_results_adj_sig$`padj_Pr(>|t|)_timeperiodend:currencybiomass` < .05)
+
 all_results <- all_results %>%
   group_by_all() %>%
   mutate(any_terms_sig = all(overall_p < .05, any(

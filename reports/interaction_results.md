@@ -1,7 +1,7 @@
 Actual results
 ================
 Renata Diaz
-2021-09-07
+2021-10-02
 
 This whole approach bugs me because of the sheer number of comparisons
 being made and the .05 threshold. So, don’t overinterpret in any single
@@ -29,18 +29,48 @@ all_results <- all_results %>%
     biomass_contrastp.value < .05
   ),
   abundance_up = abundance_raw_ratio >=1,
-         biomass_up = biomass_raw_ratio >=1,
-         energy_up = energy_raw_ratio >=1) %>%
+  biomass_up = biomass_raw_ratio >=1,
+  energy_up = energy_raw_ratio >=1) %>%
   ungroup()
 ```
 
 ``` r
-mean(all_results$any_terms_sig)
+mean(all_results$overall_sig)
+```
+
+    ## [1] 0.5662879
+
+``` r
+mean(all_results$overall_sig_rs)
+```
+
+    ## [1] 0.6231061
+
+``` r
+mean(all_results$change_sig)
+```
+
+    ## [1] 0.5340909
+
+``` r
+mean(all_results$change_sig_rs)
 ```
 
     ## [1] 0.5757576
 
-So 0.5757576 percent of the time we have both the overall lm significant
+``` r
+mean(filter(all_results, change_sig)$currency_slopes_different)
+```
+
+    ## [1] 0.1453901
+
+``` r
+mean(filter(all_results, change_sig_rs)$currency_slopes_different_rs)
+```
+
+    ## [1] 0.2368421
+
+So 0.5340909 percent of the time we have both the overall lm significant
 and at least one **slope** term is significant. (There are 25 (in the
 full dataset/16 in the max-10 subset) routes where the overall model is
 significant but it’s either the intercept or one of the currency
@@ -48,7 +78,7 @@ intercepts).
 
 ``` r
 sig_model <- all_results %>% 
-  filter(any_terms_sig)%>%
+  filter(change_sig)%>%
   group_by_all() %>%
   mutate(all_together = all(
     `Pr(>|t|)_timeperiodend:currencybiomass` > .05,
@@ -62,10 +92,10 @@ sig_model <- all_results %>%
 mean(sig_model$all_together)
 ```
 
-    ## [1] 0.7631579
+    ## [1] 0.8546099
 
 Of the models that are significant overall and have a significant slope,
-0.7631579 of them have a significant time slope but not a significant
+0.8546099 of them have a significant time slope but not a significant
 interaction of time x currency. Meaning that biomass, energy use, and
 abundance have all *changed* but have not changed *differently from each
 other*.
@@ -103,27 +133,27 @@ summary(all_together$abundance_raw_ratio)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.1645  0.5697  0.7171  0.9125  1.3059  2.5352
+    ##  0.1645  0.5661  0.7031  0.8970  1.2828  2.5352
 
 ``` r
 summary(all_together$energy_raw_ratio)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.2004  0.5725  0.7225  0.9540  1.3202  3.8107
+    ##  0.2004  0.5754  0.7162  0.9408  1.2856  3.8107
 
 ``` r
 summary(all_together$biomass_raw_ratio)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.2383  0.6115  0.7772  1.0629  1.3951  4.6937
+    ##  0.2383  0.6306  0.7762  1.0526  1.3627  4.6937
 
 ``` r
 mean(all_together$abundance_up)
 ```
 
-    ## [1] 0.3491379
+    ## [1] 0.3319502
 
 It’s usually a decrease - 65/35 decrease/increase. The median is for end
 to be 75% of begin.
@@ -145,8 +175,8 @@ not_together %>%
 
 | abundance\_up | e\_up | b\_up | totaln |
 | :------------ | ----: | ----: | -----: |
-| FALSE         |    25 |    44 |     59 |
-| TRUE          |     7 |     5 |     13 |
+| FALSE         |    20 |    32 |     34 |
+| TRUE          |     3 |     2 |      7 |
 
 </div>
 
