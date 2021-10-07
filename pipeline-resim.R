@@ -14,14 +14,14 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-#datasets <- datasets[1:2, ]
+datasets <- datasets[1:100, ]
 
 
 methods <- drake_plan(
   sgmms = target(construct_sampling_gmm(dataset),
                    transform = map(
                      dataset = !!rlang::syms(datasets$target))),
-  sims = target(draw_communities_wrapper(ts_comp = dataset, sampling_gmms = sgmms, ndraws =2),
+  sims = target(draw_communities_wrapper(ts_comp = dataset, sampling_gmms = sgmms, ndraws =100),
                 transform = map(
                   sgmms
                 )),
@@ -41,26 +41,26 @@ cache$del(key = "lock", namespace = "session")
 
 ## Run the pipeline
 nodename <- Sys.info()["nodename"]
-if(grepl("ufhpc", nodename)) {
-  print("I know I am on the HiPerGator!")
-  library(clustermq)
-  options(clustermq.scheduler = "slurm", clustermq.template = "slurm_clustermq.tmpl")
-  ## Run the pipeline parallelized for HiPerGator
-  make(all,
-       force = TRUE,
-       cache = cache,
-       verbose = 1,
-       parallelism = "clustermq",
-       jobs = 20,
-       caching = "main", memory_strategy = "autoclean") # Important for DBI caches!
-} else {
-
+# if(grepl("ufhpc", nodename)) {
+#   print("I know I am on the HiPerGator!")
+#   library(clustermq)
+#   options(clustermq.scheduler = "slurm", clustermq.template = "slurm_clustermq.tmpl")
+#   ## Run the pipeline parallelized for HiPerGator
+#   make(all,
+#        force = TRUE,
+#        cache = cache,
+#        verbose = 1,
+#        parallelism = "clustermq",
+#        jobs = 20,
+#        caching = "main", memory_strategy = "autoclean") # Important for DBI caches!
+# } else {
+#
 
   # Run the pipeline on multiple local cores
   system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
-}
+#}
 
 
 
