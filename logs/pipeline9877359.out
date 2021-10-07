@@ -1,0 +1,4 @@
+[1] ".Rprofile loaded"
+<environment: R_GlobalEnv>
+[1] "I know I am on the HiPerGator!"
+[1] "#!/bin/sh\n# From https://github.com/mschubert/clustermq/wiki/SLURM\n#SBATCH --job-name=cmq9958           # job name\n#SBATCH --qos=ewhite-b\n#SBATCH --output=logs/workers/dat_pipeline%a.out # you can add .%a for array index\n#SBATCH --error=logs/workers/dat_pipeline%a.err  # log file\n#SBATCH --mem-per-cpu=4096   # memory\n#SBATCH --array=1-20              # job array\n#SBATCH --time=1440\n\nsource /etc/profile\n\nulimit -v $(( 1440 * 4096 ))\nmodule load R              # Uncomment if R is an environment module.\nCMQ_AUTH=seysd Rscript -e 'clustermq:::worker(\"tcp://c0700a-s1.ufhpc:9958\")'\n"
