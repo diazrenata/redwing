@@ -8,8 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(BBSsize)
 library(rwar)
 library(ggplot2)
-g <- granby
-begin_years = c(1988:1992)
+g <- hartland
+begin_years = c(1994:1998)
 end_years = c(2014:2018)
 isd_seed = 1977
 ```
@@ -25,27 +25,27 @@ g_isds_df <- g_isds$isd
 g_isd_begin <- dplyr::filter(g_isds_df, year %in% begin_years)
 
 g_isd_end <- dplyr::filter(g_isds_df, year %in% end_years)
+
 add_gmm2 <- function(isd, max_size = 15000, max_G = 15) {
 
-  isd <- isd %>%
-    dplyr::mutate(logmass = log(mass))
+  # isd <- isd %>%
+  #   dplyr::mutate(logmass = log(mass))
 
-  gmm <- fit_gmm(isd$logmass, max_G)
+  gmm <- fit_gmm(isd$mass, max_G)
 
 
-  gmm_isd <- data.frame(logmass = seq(0, log(max_size), length.out = 100000))
-  gmm_isd$dens <- predict(gmm, newdata = gmm_isd$logmass)
+  gmm_isd <- data.frame(mass = seq(0, (max_size), length.out = 100000))
+  gmm_isd$dens <- predict(gmm, newdata = gmm_isd$mass)
 
 
   isd_gmm <- data.frame(
-    mass = gmm_isd$logmass,
+    mass = gmm_isd$mass,
     density = (gmm_isd$dens)/ sum(gmm_isd$dens)
   )
 
   return(isd_gmm)
 
 }
-
 g_gmm_begin <- add_gmm2(g_isd_begin)
 
 g_gmm_end <- add_gmm2(g_isd_end)

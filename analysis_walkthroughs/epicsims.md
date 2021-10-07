@@ -23,6 +23,13 @@ g_isds <- simulate_isd_ts(g, isd_seed = isd_seed)
     ## Joining, by = "id"
     ## Joining, by = "id"
     ## Joining, by = "id"
+    ## Joining, by = "id"
+    ## Joining, by = "id"
+    ## Joining, by = "id"
+    ## Joining, by = "id"
+    ## Joining, by = "id"
+    ## Joining, by = "id"
+    ## Joining, by = "id"
 
 ``` r
 g_isds_df <- g_isds$isd
@@ -254,21 +261,21 @@ summary(lm(totalmass ~ timeperiod * source, data = both))
     ## lm(formula = totalmass ~ timeperiod * source, data = both)
     ## 
     ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -8751.7  -924.9  1814.7  2765.4  4073.1 
+    ##    Min     1Q Median     3Q    Max 
+    ## -18307  -6241  -1295   3666  34110 
     ## 
     ## Coefficients:
-    ##                          Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                 35372       2053  17.232 9.38e-12 ***
-    ## timeperiodend                1493       2903   0.514    0.614    
-    ## sourcereal                      0       2903   0.000    1.000    
-    ## timeperiodend:sourcereal     5939       4105   1.447    0.167    
+    ##                            Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)               4.926e+04  4.932e+03   9.989 9.08e-09 ***
+    ## timeperiodend            -6.093e+03  7.315e+03  -0.833  0.41576    
+    ## sourcereal               -1.551e-11  6.974e+03   0.000  1.00000    
+    ## timeperiodend:sourcereal  3.905e+04  1.034e+04   3.775  0.00139 ** 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 4590 on 16 degrees of freedom
-    ## Multiple R-squared:  0.3578, Adjusted R-squared:  0.2373 
-    ## F-statistic: 2.971 on 3 and 16 DF,  p-value: 0.06314
+    ## Residual standard error: 12080 on 18 degrees of freedom
+    ## Multiple R-squared:  0.6462, Adjusted R-squared:  0.5872 
+    ## F-statistic: 10.96 on 3 and 18 DF,  p-value: 0.0002526
 
 ``` r
 ggplot(allits, aes(year, totalmass, color = as.factor(iteration), group = as.factor(iteration))) + geom_smooth(method = "lm", se = F) + facet_wrap(vars(source))
@@ -289,21 +296,21 @@ summary(a_lm)
     ## lm(formula = totalmass ~ timeperiod * source, data = allits)
     ## 
     ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -13819.4  -2960.7     60.3   2669.1  16863.3 
+    ##    Min     1Q Median     3Q    Max 
+    ## -31482  -7414  -1117   5883  52822 
     ## 
     ## Coefficients:
     ##                            Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)               3.482e+04  2.537e+02 137.256  < 2e-16 ***
-    ## timeperiodend             1.489e+03  3.587e+02   4.151 3.59e-05 ***
-    ## sourcereal               -1.979e-11  3.587e+02   0.000        1    
-    ## timeperiodend:sourcereal  7.226e+03  5.073e+02  14.244  < 2e-16 ***
+    ## (Intercept)               4.971e+04  6.370e+02  78.031  < 2e-16 ***
+    ## timeperiodend            -4.768e+03  9.448e+02  -5.047 5.26e-07 ***
+    ## sourcereal                1.580e-11  9.009e+02   0.000        1    
+    ## timeperiodend:sourcereal  1.923e+04  1.336e+03  14.395  < 2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 4011 on 996 degrees of freedom
-    ## Multiple R-squared:  0.4486, Adjusted R-squared:  0.4469 
-    ## F-statistic: 270.1 on 3 and 996 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 11030 on 1096 degrees of freedom
+    ## Multiple R-squared:  0.283,  Adjusted R-squared:  0.281 
+    ## F-statistic: 144.2 on 3 and 1096 DF,  p-value: < 2.2e-16
 
 ``` r
 # 
@@ -352,22 +359,22 @@ summary(a_glm)
     ## totalmass ~ timeperiod * source + s(fyear, bs = "re")
     ## 
     ## Parametric coefficients:
-    ##                            Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)               1.045e+01  3.726e-02 280.621   <2e-16 ***
-    ## timeperiodend             4.246e-02  5.269e-02   0.806    0.421    
-    ## sourcereal               -2.745e-15  6.856e-03   0.000    1.000    
-    ## timeperiodend:sourcereal  1.816e-01  9.693e-03  18.734   <2e-16 ***
+    ##                          Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)              10.80973    0.05641 191.629   <2e-16 ***
+    ## timeperiodend            -0.10818    0.08367  -1.293    0.196    
+    ## sourcereal                0.00000    0.01285   0.000    1.000    
+    ## timeperiodend:sourcereal  0.35534    0.01905  18.651   <2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Approximate significance of smooth terms:
     ##            edf Ref.df     F p-value    
-    ## s(fyear) 7.932      8 116.1  <2e-16 ***
+    ## s(fyear) 8.882      9 75.16  <2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## R-sq.(adj) =  0.695   Deviance explained =   71%
-    ## -REML = 9404.5  Scale est. = 0.006527  n = 1000
+    ## R-sq.(adj) =  0.543   Deviance explained = 56.5%
+    ## -REML =  11475  Scale est. = 0.027594  n = 1100
 
 ``` r
 library(gratia)
@@ -416,37 +423,13 @@ a_brm <- brm(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
 
     ## Compiling Stan program...
 
-    ## Trying to compile a simple C file
-
-    ## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
-    ## clang -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/unsupported"  -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/StanHeaders/include/"  -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppParallel/include/"  -I"/Library/Frameworks/R.framework/Versions/4.0/Resources/library/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DBOOST_NO_AUTO_PTR  -include '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/usr/local/include   -fPIC  -Wall -g -O2  -c foo.c -o foo.o
-    ## In file included from <built-in>:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.0/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/Eigen/Dense:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/Eigen/Core:88:
-    ## /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:1: error: unknown type name 'namespace'
-    ## namespace Eigen {
-    ## ^
-    ## /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:16: error: expected ';' after top level declarator
-    ## namespace Eigen {
-    ##                ^
-    ##                ;
-    ## In file included from <built-in>:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.0/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/Eigen/Dense:1:
-    ## /Library/Frameworks/R.framework/Versions/4.0/Resources/library/RcppEigen/include/Eigen/Core:96:10: fatal error: 'complex' file not found
-    ## #include <complex>
-    ##          ^~~~~~~~~
-    ## 3 errors generated.
-    ## make: *** [foo.o] Error 1
-
     ## Start sampling
 
     ## 
-    ## SAMPLING FOR MODEL '18b9f8a120812cf89de396a19354f1ec' NOW (CHAIN 1).
+    ## SAMPLING FOR MODEL 'efe850f6aa7ef7a5f2abdd49dfe0af17' NOW (CHAIN 1).
     ## Chain 1: 
-    ## Chain 1: Gradient evaluation took 0.000131 seconds
-    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.31 seconds.
+    ## Chain 1: Gradient evaluation took 0.000255 seconds
+    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.55 seconds.
     ## Chain 1: Adjust your expectations accordingly!
     ## Chain 1: 
     ## Chain 1: 
@@ -463,15 +446,15 @@ a_brm <- brm(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
     ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
     ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
     ## Chain 1: 
-    ## Chain 1:  Elapsed Time: 11.8271 seconds (Warm-up)
-    ## Chain 1:                5.74355 seconds (Sampling)
-    ## Chain 1:                17.5707 seconds (Total)
+    ## Chain 1:  Elapsed Time: 6.27136 seconds (Warm-up)
+    ## Chain 1:                2.11882 seconds (Sampling)
+    ## Chain 1:                8.39017 seconds (Total)
     ## Chain 1: 
     ## 
-    ## SAMPLING FOR MODEL '18b9f8a120812cf89de396a19354f1ec' NOW (CHAIN 2).
+    ## SAMPLING FOR MODEL 'efe850f6aa7ef7a5f2abdd49dfe0af17' NOW (CHAIN 2).
     ## Chain 2: 
-    ## Chain 2: Gradient evaluation took 0.000138 seconds
-    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.38 seconds.
+    ## Chain 2: Gradient evaluation took 5.7e-05 seconds
+    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.57 seconds.
     ## Chain 2: Adjust your expectations accordingly!
     ## Chain 2: 
     ## Chain 2: 
@@ -488,15 +471,15 @@ a_brm <- brm(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
     ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
     ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
     ## Chain 2: 
-    ## Chain 2:  Elapsed Time: 22.0952 seconds (Warm-up)
-    ## Chain 2:                4.08151 seconds (Sampling)
-    ## Chain 2:                26.1767 seconds (Total)
+    ## Chain 2:  Elapsed Time: 5.86531 seconds (Warm-up)
+    ## Chain 2:                2.17685 seconds (Sampling)
+    ## Chain 2:                8.04216 seconds (Total)
     ## Chain 2: 
     ## 
-    ## SAMPLING FOR MODEL '18b9f8a120812cf89de396a19354f1ec' NOW (CHAIN 3).
+    ## SAMPLING FOR MODEL 'efe850f6aa7ef7a5f2abdd49dfe0af17' NOW (CHAIN 3).
     ## Chain 3: 
-    ## Chain 3: Gradient evaluation took 8.4e-05 seconds
-    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.84 seconds.
+    ## Chain 3: Gradient evaluation took 7.2e-05 seconds
+    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.72 seconds.
     ## Chain 3: Adjust your expectations accordingly!
     ## Chain 3: 
     ## Chain 3: 
@@ -513,15 +496,15 @@ a_brm <- brm(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
     ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
     ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
     ## Chain 3: 
-    ## Chain 3:  Elapsed Time: 13.7165 seconds (Warm-up)
-    ## Chain 3:                3.96508 seconds (Sampling)
-    ## Chain 3:                17.6816 seconds (Total)
+    ## Chain 3:  Elapsed Time: 4.63553 seconds (Warm-up)
+    ## Chain 3:                1.98301 seconds (Sampling)
+    ## Chain 3:                6.61854 seconds (Total)
     ## Chain 3: 
     ## 
-    ## SAMPLING FOR MODEL '18b9f8a120812cf89de396a19354f1ec' NOW (CHAIN 4).
+    ## SAMPLING FOR MODEL 'efe850f6aa7ef7a5f2abdd49dfe0af17' NOW (CHAIN 4).
     ## Chain 4: 
-    ## Chain 4: Gradient evaluation took 6e-05 seconds
-    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.6 seconds.
+    ## Chain 4: Gradient evaluation took 7.1e-05 seconds
+    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.71 seconds.
     ## Chain 4: Adjust your expectations accordingly!
     ## Chain 4: 
     ## Chain 4: 
@@ -538,9 +521,9 @@ a_brm <- brm(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
     ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
     ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
     ## Chain 4: 
-    ## Chain 4:  Elapsed Time: 14.3825 seconds (Warm-up)
-    ## Chain 4:                5.03948 seconds (Sampling)
-    ## Chain 4:                19.4219 seconds (Total)
+    ## Chain 4:  Elapsed Time: 6.58613 seconds (Warm-up)
+    ## Chain 4:                2.27036 seconds (Sampling)
+    ## Chain 4:                8.85648 seconds (Total)
     ## Chain 4:
 
 ``` r
@@ -550,31 +533,83 @@ summary(a_brm)
     ##  Family: gaussian 
     ##   Links: mu = identity; sigma = identity 
     ## Formula: totalmass ~ timeperiod * source + (1 | fyear) 
-    ##    Data: allits (Number of observations: 1000) 
+    ##    Data: allits (Number of observations: 1100) 
     ##   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
     ##          total post-warmup draws = 4000
     ## 
     ## Group-Level Effects: 
-    ## ~fyear (Number of levels: 10) 
+    ## ~fyear (Number of levels: 11) 
     ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)  3369.47    930.60  2076.75  5683.68 1.00     1236     2191
+    ## sd(Intercept)  8037.03   2126.54  5060.91 13110.77 1.00     1183     1758
     ## 
     ## Population-Level Effects: 
-    ##                          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
-    ## Intercept                34829.57   1509.59 31839.03 37719.43 1.00     1530
-    ## timeperiodend             1459.29   2203.13 -2894.18  6126.66 1.00     1266
-    ## sourcereal                  -2.81    272.48  -537.88   519.43 1.00     2803
-    ## timeperiodend:sourcereal  7223.51    387.25  6482.29  7990.22 1.00     2683
+    ##                          Estimate Est.Error  l-95% CI u-95% CI Rhat Bulk_ESS
+    ## Intercept                49479.87   3331.80  42968.60 56289.04 1.00     1136
+    ## timeperiodend            -4421.48   5125.08 -14316.24  5790.91 1.00     1266
+    ## sourcereal                   7.36    718.24  -1406.03  1432.41 1.00     2651
+    ## timeperiodend:sourcereal 19239.55   1069.84  17154.39 21293.97 1.00     2782
     ##                          Tail_ESS
-    ## Intercept                    2017
-    ## timeperiodend                1653
-    ## sourcereal                   2496
-    ## timeperiodend:sourcereal     2428
+    ## Intercept                    1597
+    ## timeperiodend                1583
+    ## sourcereal                   2536
+    ## timeperiodend:sourcereal     2442
     ## 
     ## Family Specific Parameters: 
     ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sigma  2985.53     66.44  2858.35  3119.19 1.00     3543     2116
+    ## sigma  8872.24    196.13  8502.02  9274.94 1.00     2978     1998
     ## 
     ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
     ## and Tail_ESS are effective sample size measures, and Rhat is the potential
     ## scale reduction factor on split chains (at convergence, Rhat = 1).
+
+``` r
+library(lme4)
+```
+
+    ## Loading required package: Matrix
+
+    ## 
+    ## Attaching package: 'lme4'
+
+    ## The following object is masked from 'package:brms':
+    ## 
+    ##     ngrps
+
+    ## The following object is masked from 'package:nlme':
+    ## 
+    ##     lmList
+
+``` r
+a_lmer <- lmer(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
+
+summary(a_lmer)
+```
+
+    ## Linear mixed model fit by REML ['lmerMod']
+    ## Formula: totalmass ~ timeperiod * source + (1 | fyear)
+    ##    Data: allits
+    ## 
+    ## REML criterion at convergence: 23095.1
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.4526 -0.6330 -0.1543  0.4682  4.9797 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  fyear    (Intercept) 52597020 7252    
+    ##  Residual             78540394 8862    
+    ## Number of obs: 1100, groups:  fyear, 11
+    ## 
+    ## Fixed effects:
+    ##                            Estimate Std. Error t value
+    ## (Intercept)               4.971e+04  3.005e+03   16.54
+    ## timeperiodend            -4.768e+03  4.457e+03   -1.07
+    ## sourcereal                5.265e-12  7.236e+02    0.00
+    ## timeperiodend:sourcereal  1.923e+04  1.073e+03   17.92
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) tmprdn sorcrl
+    ## timeperidnd -0.674              
+    ## sourcereal  -0.120  0.081       
+    ## tmprdnd:src  0.081 -0.120 -0.674
