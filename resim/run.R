@@ -140,7 +140,7 @@ td_routes <- td %>%
          routename = (unlist(strsplit(term, ":")[1])[[3]])) %>% # third routename
   ungroup()  %>%
   group_by_all() %>%
-  mutate(si = ifelse(grepl("begin", timeperiod), "intercept", "slope"), # all the "begin" terms are the intercept offsets for each route. if not "begin", is "end", or the amount of change we add (to the baseline change) for this route.
+  mutate(si = ifelse(grepl("begin", timeperiod), "intercept", "change"), # all the "begin" terms are the intercept offsets for each route. if not "begin", is "end", or the amount of change we add (to the baseline change) for this route.
          sa = ifelse(grepl("sim", source), "sim", "actual")) %>% # sim and actual terms. at this level the bifurcate.
   mutate(varname = paste0(sa, "_", si)) %>%
   ungroup() %>%
@@ -152,19 +152,19 @@ td_routes <- td %>%
 td_baseline <- td %>%
   select(b_Intercept, b_timeperiodend, b_sourcesim, `b_timeperiodend:sourcesim`, rowindex) %>%
   mutate(baseline_actual_intercept = b_Intercept,
-         baseline_actual_slope = b_timeperiodend,
+         baseline_actual_change = b_timeperiodend,
          baseline_sim_intercept = b_sourcesim,
-         baseline_sim_slope = `b_timeperiodend:sourcesim`) %>%
-  select(rowindex, baseline_actual_intercept, baseline_actual_slope, baseline_sim_intercept, baseline_sim_slope)
+         baseline_sim_change = `b_timeperiodend:sourcesim`) %>%
+  select(rowindex, baseline_actual_intercept, baseline_actual_change, baseline_sim_intercept, baseline_sim_change)
 
 # The first route has its route-level values estimated as the baseline values. To get estimates for it, creating a dummy dataframe with route-level parameters set to zero.
 
 td_route1 <- data.frame (
   rowindex = td_baseline$rowindex,
   actual_intercept = 0,
-  actual_slope = 0,
+  actual_change = 0,
   sim_intercept = 0,
-  sim_slope = 0,
+  sim_change = 0,
   routename = "first")
 
 # Then binding the dummy dataframe for the baseline route to the route-level estimates for all the other routes
@@ -244,20 +244,28 @@ coe$baseline_actual_intercept + coe$baseline_actual_change + coe$sim_change + co
 td_route_ests <- td_together %>%
   group_by_all() %>%
   mutate(
-    estimated_actual_intercept = sum(actual_intercept, baseline_actual_intercept), # estimated beginning value
-    estimated_actual_slope = sum(actual_slope, baseline_actual_slope), # this is the amount of (biomass or energy) added to the beginning value to get the end value, using the actual end isd
-    estimated_sim_intercept = sum(sim_intercept, baseline_actual_intercept, baseline_sim_intercept), # estimated beginning value from sims. we expect this to be equal to the estimated beginning value, any change is just sampling error.
-    estimated_sim_slope = sum(sim_slope, baseline_actual_slope), # this is the amount of (biomass or energy) added to the beginning (sim, but we hope it doesn't matter) value to get to the end value, simulated using the BEGINNING isd - i.e. as if there was no change in the size structure over time
-    estimated_actual_change_ratio = estimated_actual_slope / estimated_actual_intercept, # this is a measure of the magnitude of the change from beginning to end. the sign is going to be increase (positive) or decrease. the magnitude is the % increase. so .1 = added 10% of starting (biomass or energy) to get to the end. -.2 = lost 20% of starting (biomass or energy) between begin and end.
-    estimated_sim_change_ratio = estimated_sim_slope / estimated_sim_intercept # same measure but having drawn the end values using the beginning isd. this is the amount of change expected due only to changes in the numbers of individuals observed in each time period. by comparing estimated_actual_change_ratio to estimated_sim_change_ratio, I believe we get an estimate of both the significance and magnitude of decoupling of (biomass or energy) and numerical abundance due to changes in the size spectrum.
+    estimated_actual_begin = sum(actual_intercept, baseline_actual_intercept), # estimated beginning value
+    estimated_actual_end = sum(actual_change, baseline_actual_change, baseline_actual_intercept), # estimated end value
+    estimated_sim_begin = sum(sim_intercept, baseline_actual_intercept, baseline_sim_intercept), # estimated beginning value from sims. we expect this to be equal to the estimated beginning value, any change is just sampling error.
+    estimated_sim_end = sum(baseline_actual_intercept, baseline_actual_change, baseline_sim_change, baseline_sim_intercept, sim_change),
+    estimated_actual_change_ratio = (estimated_actual_end - estimated_actual_begin) / estimated_actual_begin, # this is a measure of the magnitude of the change from beginning to end. the sign is going to be increase (positive) or decrease. the magnitude is the % increase. so .1 = added 10% of starting (biomass or energy) to get to the end. -.2 = lost 20% of starting (biomass or energy) between begin and end.
+    estimated_sim_change_ratio = (estimated_sim_end - estimated_sim_begin) / estimated_sim_begin, # same measure but having drawn the end values using the beginning isd. this is the amount of change expected due only to changes in the numbers of individuals observed in each time period. by comparing estimated_actual_change_ratio to estimated_sim_change_ratio, I believe we get an estimate of both the significance and magnitude of decoupling of (biomass or energy) and numerical abundance due to changes in the size spectrum.
+    estimated_actual_change = estimated_actual_end - estimated_actual_begin, # the "slope" assuming x = 0 or 1 for begin or end.
+    estimated_sim_change = estimated_sim_end - estimated_sim_begin
   ) %>%
   ungroup()
 
-ggplot(td_route_ests, aes(estimated_actual_slope)) + geom_density() + geom_density(aes(x = estimated_sim_slope), color = "green") +
+
+ggplot(td_route_ests, aes(estimated_actual_begin)) + geom_density() + geom_density(aes(x = estimated_sim_begin), color = "green") +
   facet_wrap(vars(routename))
 
-ggplot(td_route_ests, aes(estimated_actual_intercept)) + geom_density() + geom_density(aes(x = estimated_sim_intercept), color = "green") +
+ggplot(td_route_ests, aes(estimated_actual_end)) + geom_density() + geom_density(aes(x = estimated_sim_end), color = "green") +
   facet_wrap(vars(routename))
+
+
+ggplot(td_route_ests, aes(estimated_actual_change)) + geom_density() + geom_density(aes(x = estimated_sim_change), color = "green") +
+  facet_wrap(vars(routename))
+
 
 ggplot(td_route_ests, aes(estimated_actual_change_ratio)) + geom_density() + geom_density(aes(x = estimated_sim_change_ratio), color = "green") +
   facet_wrap(vars(routename))
@@ -279,10 +287,34 @@ td_route_ests_summary <- td_route_ests %>%
   ungroup()
 
 
-ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_actual_change_ratio_mean)) +
+ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_actual_change_ratio_mean, color= routename)) +
   geom_point() +
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0)+
   geom_abline(intercept = 0, slope = 1) +
   geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper, y = estimated_actual_change_ratio_mean), height = .005) +
-  geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005)
+  geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005) +
+  scale_color_viridis_d(option='mako', begin = .2, end =.8)
+
+
+
+ggplot(td_route_ests_summary, aes(estimated_sim_change_mean, estimated_actual_change_mean, color= routename)) +
+  geom_point() +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0)+
+  geom_abline(intercept = 0, slope = 1) +
+  geom_errorbarh(aes(xmin = estimated_sim_change_lower, xmax = estimated_sim_change_upper, y = estimated_actual_change_mean), height = .005) +
+  geom_errorbar(aes(ymin = estimated_actual_change_lower, ymax = estimated_actual_change_upper, x = estimated_sim_change_mean), width = .005) +
+  scale_color_viridis_d(option='mako', begin = .2, end =.8)
+
+
+# I bet you can do this with predict............
+
+dummy_newdat <- predvals %>%
+  select(-preds)
+
+ests_sim <- replicate(100, mutate(dummy_newdat, pred = predict(tbrm, newdata = dummy_newdat)), simplify = F)
+names(ests_sim) <- 1:100
+ests_sim <- bind_rows(ests_sim, .id = "sim_id")
+
+# and go from there
