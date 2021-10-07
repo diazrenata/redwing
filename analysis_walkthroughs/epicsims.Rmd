@@ -1,0 +1,162 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(BBSsize)
+library(rwar)
+library(ggplot2)
+g <- granby
+begin_years = c(1988:1992)
+end_years = c(2014:2018)
+isd_seed = 1977
+```
+
+
+
+```{r}
+
+g_isds <- simulate_isd_ts(g, isd_seed = isd_seed)
+
+g_isds_df <- g_isds$isd
+
+g_isd_begin <- dplyr::filter(g_isds_df, year %in% begin_years)
+
+g_isd_end <- dplyr::filter(g_isds_df, year %in% end_years)
+add_gmm2 <- function(isd, max_size = 15000, max_G = 15) {
+
+  isd <- isd %>%
+    dplyr::mutate(logmass = log(mass))
+
+  gmm <- fit_gmm(isd$logmass, max_G)
+
+
+  gmm_isd <- data.frame(logmass = seq(0, log(max_size), length.out = 100000))
+  gmm_isd$dens <- predict(gmm, newdata = gmm_isd$logmass)
+
+
+  isd_gmm <- data.frame(
+    mass = gmm_isd$logmass,
+    density = (gmm_isd$dens)/ sum(gmm_isd$dens)
+  )
+
+  return(isd_gmm)
+
+}
+
+g_gmm_begin <- add_gmm2(g_isd_begin)
+
+g_gmm_end <- add_gmm2(g_isd_end)
+
+its <- list()
+
+for(i in 1:50) {
+  
+set.seed(NULL)
+
+g_isd_begin_sim <- g_isd_begin %>%
+  dplyr::mutate(mass_sim = exp(sample(g_gmm_begin$mass, size = nrow(g_isd_begin), prob = g_gmm_begin$density, replace= T))) %>%
+  dplyr::mutate(timeperiod = "begin")
+
+
+g_isd_end_sim <- g_isd_end %>%
+  dplyr::mutate(
+    mass_sim_end = exp(sample(g_gmm_end$mass, size = nrow(g_isd_end), prob = g_gmm_end$density, replace = T)),
+    mass_sim_begin = exp(sample(g_gmm_begin$mass, size = nrow(g_isd_end), prob = g_gmm_begin$density, replace = T))
+  ) %>%
+  dplyr::mutate(timeperiod = "end")
+
+library(dplyr)
+actual <- g_isd_end_sim %>%
+  select(year, timeperiod, mass_sim_end) %>%
+  rename(mass = mass_sim_end) %>%
+  bind_rows(
+    rename(
+      select(
+      g_isd_begin_sim, year, timeperiod, mass_sim
+    ),
+    mass = mass_sim
+  )
+  ) %>%
+  group_by(year, timeperiod) %>%
+  summarize(totalmass = sum(mass),
+                        totalabund = dplyr::n()) %>%
+  ungroup() %>%
+  mutate(source = "real")
+scaling <- g_isd_end_sim %>%
+  select(year, timeperiod, mass_sim_begin) %>%
+  rename(mass = mass_sim_begin) %>%
+  bind_rows(
+    rename(
+      select(
+      g_isd_begin_sim, year, timeperiod, mass_sim
+    ),
+    mass = mass_sim
+  )
+  ) %>%
+  group_by(year, timeperiod) %>%
+  summarize(totalmass = sum(mass),
+            totalabund = dplyr::n()) %>%
+  ungroup() %>%
+  mutate(source = "draw")
+
+both <- bind_rows(actual, scaling) %>%
+  mutate(iteration = i)
+
+its[[i]] <- both
+}
+
+allits <- bind_rows(its)
+
+ggplot(both, aes(year, totalmass, color = source)) + geom_point()
+ggplot(both, aes(year, totalabund, color = source)) + geom_point()
+
+summary(lm(totalmass ~ timeperiod * source, data = both))
+
+
+ggplot(allits, aes(year, totalmass, color = as.factor(iteration), group = as.factor(iteration))) + geom_smooth(method = "lm", se = F) + facet_wrap(vars(source))
+
+a_lm <- lm(totalmass ~ timeperiod * source, data = allits)
+
+summary(a_lm)
+# 
+# library(brms)
+# 
+# a_brm <- brm(totalmass ~ timeperiod * source + (1|year), data = allits)
+# 
+# summary(a_brm)
+
+library(mgcv)
+
+allits <- allits %>%
+  mutate(fsource = as.ordered(source),
+         fyear = as.factor(year))
+
+a_glm <- gam(totalmass ~ timeperiod * source + s(fyear, bs = "re"), data = allits, family = "tw")
+
+summary(a_glm)
+
+library(gratia)
+
+allits_fitted <- add_fitted(allits, a_glm, exclude = "s(fyear)")
+
+ggplot(allits_fitted, aes(year, .value, color = source)) + geom_point()
+
+# 
+# 
+library(brms)
+
+a_brm <- brm(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
+
+summary(a_brm)
+
+library(lme4)
+
+a_lmer <- lmer(totalmass ~ timeperiod * source + (1 | fyear), data = allits)
+
+summary(a_lmer)
+
+
+```

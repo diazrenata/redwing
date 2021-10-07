@@ -13,6 +13,7 @@ output:
 library(dplyr)
 library(ggplot2)
 library(drake)
+library(multipanelfigure)
 theme_set(theme_bw())
 knitr::opts_chunk$set(echo = F)
 
@@ -66,6 +67,8 @@ all_results_use <- all_results %>%
   select(energy_raw_ratio,
          biomass_raw_ratio,
          abundance_raw_ratio,
+         mean_energy_raw_ratio,
+         mean_biomass_raw_ratio,
          isd_turnover,
          sp_turnover,
          bcd,
@@ -167,13 +170,46 @@ summary(all_results_sig_only$biomass_raw_ratio)
 
 # Relationship between currencies
 
-```{r}
+```{r, fig.dim = c(5, 10)}
 
-ggplot(all_results_use, aes(abundance_raw_ratio, biomass_raw_ratio, color = abundance_significant)) + geom_point(shape = 1) + pretty + onetoone + scale_y_log10() + scale_x_log10() + geom_point(data = filter(all_results_use, biomass_interaction_significant), shape = 16) + theme(legend.position = "bottom") + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+all_results_use <- all_results_use %>%
+  mutate(b_sigscale = ifelse(
+    biomass_interaction_significant,
+    "time:biomass interaction",
+    ifelse(
+      abundance_significant,
+      "time trend",
+      "non significant"
+    )
+  ),
+  e_sigscale = ifelse(
+    energy_interaction_significant,
+    "time:energy interaction",
+    ifelse(
+      abundance_significant,
+      "time trend",
+      "non significant"
+    )
+  )
+    
+    )
+
+# biomass_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, biomass_raw_ratio, shape = abundance_significant, color = abundance_significant))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + geom_point(data = filter(all_results_use, biomass_interaction_significant), color = "purple") + theme(legend.position = "bottom") + xlab("Ratio of end:start abundance") + ylab("Ratio of end:start biomass") + ggtitle("Biomass") + geom_point(data = filter(all_results_use, !biomass_interaction_significant)) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+biomass_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, biomass_raw_ratio, shape = abundance_significant, color = b_sigscale))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + theme(legend.position = "bottom", legend.direction = "vertical") + xlab("Ratio of end:start abundance") + ylab("Ratio of end:start biomass") + ggtitle("Biomass") + geom_point(data = all_results_use) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+
+# 
+# energy_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, energy_raw_ratio, shape = abundance_significant, color = abundance_significant))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + geom_point(data = filter(all_results_use, energy_interaction_significant), color = "purple") + theme(legend.position = "bottom")+ xlab("Ratio of end:start abundance") + ylab("Ratio of end:start energy use") + ggtitle("Energy use") + geom_point(data = filter(all_results_use, !energy_interaction_significant), alpha = .8) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3) 
+energy_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, energy_raw_ratio, shape = abundance_significant, color = e_sigscale))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + theme(legend.position = "bottom", legend.direction = "vertical") + xlab("Ratio of end:start abundance") + ylab("Ratio of end:start energy use") + ggtitle("Energy use") + geom_point(data = all_results_use) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+
+
+all_panels <- multi_panel_figure(columns = 1, rows =2) %>%
+  fill_panel(biomass_scatter_plot) %>%
+  fill_panel(energy_scatter_plot)
+
+all_panels
+
 
 summary(all_results_use$biomass_raw_ratio / all_results_use$abundance_raw_ratio)
-
-ggplot(all_results_use, aes(abundance_raw_ratio, energy_raw_ratio, color = abundance_significant)) + geom_point(shape = 1) + pretty + onetoone + scale_y_log10() + scale_x_log10() + geom_point(data = filter(all_results_use, energy_interaction_significant), shape = 16) + theme(legend.position = "bottom")+ geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
 
 summary(all_results_use$energy_raw_ratio / all_results_use$abundance_raw_ratio)
 
@@ -185,6 +221,25 @@ summary(all_results_use$energy_raw_ratio / all_results_use$abundance_raw_ratio)
 - There is more scatter for biomass than energy.
 - The scatter is disproportionately in the direction of increasing body size resulting in a less negative slope.
 - However, rarely does that shift come out as a statistically significant decoupling of energy/biomass from abundance. 
+
+## Change in ISD v change in E v N
+
+```{r}
+
+ggplot(all_results_use, aes(isd_turnover, (mean_energy_raw_ratio), color = abundance_significant)) + geom_point(shape = 1) + pretty + geom_point(data = filter(all_results_use, energy_interaction_significant), shape = 16) + theme(legend.position = "bottom")
+
+
+summary(lm(mean_biomass_raw_ratio ~ isd_turnover, all_results_use))
+
+
+ggplot(all_results_use, aes(isd_turnover, biomass_raw_ratio / abundance_raw_ratio, color = abundance_significant)) + geom_point(shape = 1) + pretty  + scale_y_log10() + scale_x_log10() + geom_point(data = filter(all_results_use, biomass_interaction_significant), shape = 16) + theme(legend.position = "bottom") + geom_hline(yintercept = 1, linetype = 3)
+
+```
+
+
+There isn't a strong relationship where you get the major interactions, or even drastic differences in the deviations between abundance/energy use, as the amount of isd_turnover increases. Various lms() I've run, using different routes to defining the "difference" between change in abundance and change in energy, come out as *significant* with a slight positive slope but explaining less than 5% of variation. And I'm not sure how much I trust that positive slope because ratios are weirdly bounded.
+
+This in contrast to something you could see, where change in the ISD translates directly into a shift in mean body size decoupling things. Rather, what I think is happening here is, most of the change that happens in the ISD is nondirectional.
 
 
 

@@ -1,7 +1,7 @@
 Actual results
 ================
 Renata Diaz
-2021-10-05
+2021-10-06
 
   - [False discovery rate](#false-discovery-rate)
   - [Prevalence of significant changes &
@@ -12,7 +12,9 @@ Renata Diaz
           - [Energy](#energy)
           - [Biomass](#biomass)
   - [Relationship between currencies](#relationship-between-currencies)
-      - [linear model dump](#linear-model-dump)
+      - [Change in ISD v change in E v
+        N](#change-in-isd-v-change-in-e-v-n)
+          - [linear model dump](#linear-model-dump)
 
 # False discovery rate
 
@@ -164,12 +166,18 @@ summary(all_results_sig_only$biomass_raw_ratio)
 
 # Relationship between currencies
 
+    ## Setting row to 1
+
+    ## Setting column to 1
+
+    ## Setting row to 2
+
+    ## Setting column to 1
+
 ![](interaction_results_adj_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ##  0.4070  0.9662  1.1689  1.2441  1.4402  2.8040
-
-![](interaction_results_adj_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ##  0.5250  0.9435  1.0532  1.0827  1.1925  1.7780
@@ -182,11 +190,50 @@ summary(all_results_sig_only$biomass_raw_ratio)
   - However, rarely does that shift come out as a statistically
     significant decoupling of energy/biomass from abundance.
 
+## Change in ISD v change in E v N
+
+![](interaction_results_adj_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+    ## 
+    ## Call:
+    ## lm(formula = mean_biomass_raw_ratio ~ isd_turnover, data = all_results_use)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.84399 -0.28012 -0.07553  0.19457  1.56089 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)   1.23072    0.06324   19.46   <2e-16 ***
+    ## isd_turnover  0.06594    0.29918    0.22    0.826    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.4014 on 526 degrees of freedom
+    ## Multiple R-squared:  9.234e-05,  Adjusted R-squared:  -0.001809 
+    ## F-statistic: 0.04857 on 1 and 526 DF,  p-value: 0.8256
+
+![](interaction_results_adj_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+
+There isn’t a strong relationship where you get the major interactions,
+or even drastic differences in the deviations between abundance/energy
+use, as the amount of isd\_turnover increases. Various lms() I’ve run,
+using different routes to defining the “difference” between change in
+abundance and change in energy, come out as *significant* with a slight
+positive slope but explaining less than 5% of variation. And I’m not
+sure how much I trust that positive slope because ratios are weirdly
+bounded.
+
+This in contrast to something you could see, where change in the ISD
+translates directly into a shift in mean body size decoupling things.
+Rather, what I think is happening here is, most of the change that
+happens in the ISD is nondirectional.
+
 ##### linear model dump
 
     ## Joining, by = "matssname"
 
-![](interaction_results_adj_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](interaction_results_adj_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
     ## 
     ## Call:
@@ -272,7 +319,7 @@ summary(all_results_sig_only$biomass_raw_ratio)
 
 </div>
 
-![](interaction_results_adj_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+![](interaction_results_adj_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
     ## $model
     ## [1] 0.8972984
