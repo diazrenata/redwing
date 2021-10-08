@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=redwing-actualrs   # Job name
+#SBATCH --job-name=redwing-actualrsh   # Job name
 #SBATCH --mail-type=ALL               # Mail events (NONE, BEGIN, END, FAIL, AL$
 #SBATCH --mail-user=diaz.renata@ufl.edu   # Where to send mail
 #SBATCH --account=ewhite
@@ -13,4 +13,4 @@
 
 #This is a generic R submission script
 module load R
-Rscript pipeline-resim.R
+Rscript pipeline-resim-hasty.R
