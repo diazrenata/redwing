@@ -18,10 +18,10 @@ datasets <- datasets[1:20, ]
 
 
 methods <- drake_plan(
-  sgmms = target(construct_sampling_gmm(dataset, n_isd_draws = 1),
+  sgmms = target(construct_sampling_gmm(dataset, n_isd_draws = 5),
                    transform = map(
                      dataset = !!rlang::syms(datasets$target))),
-  sims = target(draw_communities_wrapper(ts_comp = dataset, sampling_gmms = sgmms, ndraws =2),
+  sims = target(draw_communities_wrapper(ts_comp = dataset, sampling_gmms = sgmms, ndraws =100),
                 transform = map(
                   sgmms
                 )),
