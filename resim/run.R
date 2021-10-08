@@ -313,8 +313,43 @@ ggplot(td_route_ests_summary, aes(estimated_sim_change_mean, estimated_actual_ch
 dummy_newdat <- predvals %>%
   select(-preds)
 
-ests_sim <- replicate(100, mutate(dummy_newdat, pred = predict(tbrm, newdata = dummy_newdat)), simplify = F)
-names(ests_sim) <- 1:100
+ests_sim <- replicate(4000, mutate(dummy_newdat, pred = predict(tbrm, newdata = dummy_newdat)), simplify = F)
+ests_sim_raw <- ests_sim
+
+names(ests_sim) <- 1:4000
 ests_sim <- bind_rows(ests_sim, .id = "sim_id")
 
 # and go from there
+
+ests_sim$pred <- ests_sim[,"pred"]$pred[,1]
+
+ests_sim_wide <- tidyr::pivot_wider(ests_sim, id_cols = c(sim_id, routename), names_from = c(source, timeperiod), values_from = pred)
+
+ggplot(ests_sim_wide, aes(actual_begin)) + geom_density() + geom_density(aes( sim_begin), color = "green") + facet_wrap(vars(routename), scales = "free")
+
+ggplot(ests_sim_wide, aes(actual_end)) + geom_density() + geom_density(aes( sim_end), color = "green") + facet_wrap(vars(routename), scales = "free")
+
+ests_sim_wide <- ests_sim_wide %>%
+  mutate(actual_change = actual_end - actual_begin,
+         sim_change = sim_end - sim_begin,
+         sim_offset = sim_begin - actual_begin,
+         actual_change_ratio = actual_change / actual_begin,
+         sim_change_ratio = sim_change / sim_begin,
+         routename = ifelse(routename == "GRANBY", "first", "routenameNEWHARTFORD"))
+
+ggplot(ests_sim_wide, aes(actual_change_ratio)) + geom_density() + facet_wrap(vars(routename)) + geom_density(aes(sim_change_ratio), color = "green")
+
+
+ggplot(ests_sim_wide, aes(sim_offset)) + geom_density() + facet_wrap(vars(routename))
+
+
+ggplot(ests_sim_wide, aes(actual_change_ratio)) + geom_density() + facet_wrap(vars(routename), scales = "free") + geom_density(data = td_route_ests, aes(x = estimated_actual_change_ratio), color = "green")
+
+
+ggplot(ests_sim_wide, aes(actual_change)) + geom_density() + facet_wrap(vars(routename), scales = "free") + geom_density(data = td_route_ests, aes(x = estimated_actual_change), color = "green")
+# using the posterior draws - rather than the estimate from predict - is wider.
+
+# I suspect this is because predict is doing some level of sampling + averaging.
+# I am inclined to use the draws.
+
+
