@@ -52,7 +52,7 @@ nodename <- Sys.info()["nodename"]
        cache = cache,
        verbose = 1,
        parallelism = "clustermq",
-       jobs = 4,
+       jobs = 20,
        caching = "main", memory_strategy = "autoclean") )# Important for DBI caches!
 #}# else {
 #
