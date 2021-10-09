@@ -12,7 +12,7 @@ loadd(all_results, cache= cache)
 
 all_results <- all_results %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) %>%
-  filter(matssname %in% unique(matssname)[1:50])
+  filter(matssname %in% unique(matssname)[1:100])
 
 
 
@@ -27,7 +27,7 @@ short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
 print("starting e short")
 print(Sys.time())
 
-e_brm_short <- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 10000, thin = 100)
+e_brm_short <- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2000, thin = 1)
 print(Sys.time())
 
 save(e_brm_short, file= "e_brm_short.Rds")
@@ -38,7 +38,7 @@ print('e_short')
 
 print("starting b short")
 print(Sys.time())
-b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 10000, thin = 100)
+b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2200, thin = 1)
 
 save(b_brm_short, file= "b_brm_short.Rds")
 print(Sys.time())
@@ -51,7 +51,7 @@ print('b_short')
 print("starting e full")
 print(Sys.time())
 
-e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 10000, thin = 100)
+e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 2000, thin = 1)
 
 save(e_brm_full, file= "e_brm_full.Rds")
 print(Sys.time())
@@ -62,7 +62,7 @@ print('e_full')
 print(Sys.time())
 print("starting b full")
 
-b_brm_full <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 10000, thin = 100)
+b_brm_full <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 2000, thin = 1)
 
 save(b_brm_full, file= "b_brm_full.Rds")
 print(Sys.time())
