@@ -27,10 +27,10 @@ short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
 print("starting e short")
 print(Sys.time())
 
-e_brm_short <- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4)
+e_brm_short <- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 3000)
 print(Sys.time())
 
-save(e_brm_short, "e_brm_short.Rds")
+save(e_brm_short, file= "e_brm_short.Rds")
 
 rm(e_brm_short)
 
@@ -40,7 +40,7 @@ print("starting b short")
 print(Sys.time())
 b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4)
 
-save(b_brm_short, "b_brm_short.Rds")
+save(b_brm_short, file= "b_brm_short.Rds")
 print(Sys.time())
 
 rm(b_brm_short)
@@ -53,7 +53,7 @@ print(Sys.time())
 
 e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = justsims, cores = 4)
 
-save(e_brm_full, "e_brm_full.Rds")
+save(e_brm_full, file= "e_brm_full.Rds")
 print(Sys.time())
 
 rm(e_brm_full)
@@ -64,7 +64,7 @@ print("starting b full")
 
 b_brm_full <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = justsims, cores = 4)
 
-save(b_brm_full, "b_brm_full.Rds")
+save(b_brm_full, file= "b_brm_full.Rds")
 print(Sys.time())
 
 rm(b_brm_full)
