@@ -1,40 +1,30 @@
-library(dplyr)
-library(ggplot2)
-library(tidybayes)
-library(brms)
+ReSims analysis
+================
 
-someres <- read.csv(here::here("provisional_resim_results.csv"))
-colnames(someres)
-ggplot(someres, aes(year, total_biomass, group = sim_iteration, color = source)) + geom_point() + facet_wrap(vars(routename))
-
+``` r
 # routename is not unique but matssname is
 someres <- someres %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum))
 
-# some exploratory plots
-ggplot(filter(someres, matssname == "bbs_rtrg_66_68"), aes(timeperiod, total_biomass, group = sim_iteration, color = source)) + geom_smooth(method = "lm", se = FALSE) + facet_wrap(vars(source))
-
-ggplot(filter(someres, matssname == "bbs_rtrg_66_68"), aes(timeperiod, total_energy, group = sim_iteration, color = source)) + geom_smooth(method = "lm", se = FALSE) + facet_wrap(vars(source))
 
 # k for analyses you want just sims
 justsims <- filter(someres, source != "raw")
 
-# one more exploratory plot :)
-ggplot(filter(justsims, matssname %in% unique(justsims$matssname)[11:16]), aes(timeperiod, total_energy, group = sim_iteration)) + geom_smooth(method = "lm", se = F) + facet_wrap(vars(matssname, source), ncol = 4)
 
-
-# running with all the sims was taking ages so trying it this way
+# This brm is from:
 short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
+# tbrm<- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims)
+#load(here::here("brm_50sims.Rds"))
 
-# #### brm ####
-# tbrm1<- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, thin = 10)
-#
-# tbrm_all <- brm(total_energy ~ (timeperiod * source) / matssname, data = justsims)
+# This brm is from:
+# e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = shortsims, cores = 4, iter = 10000, thin = 100)
 
-load("brm_50sims.Rds")
+load(here::here("e_brm_short.Rds"))
 
-# summary(tbrm) super long
+tbrm <- e_brm_short
+```
 
+``` r
 # Get all draws from the posterior and get just the terms we want
 td <- tidy_draws(tbrm) %>%
   select_at(vars(starts_with("b"))) %>%
@@ -83,7 +73,12 @@ td_allroutes <- bind_rows(td_routes, td_route1)
 
 # Then sticking the route level estimates to the baseline values
 td_together <- left_join(td_allroutes, td_baseline)
+```
 
+    ## Joining, by = "rowindex"
+
+``` r
+# Then arithmetic to get estimates for various quantities
 td_route_ests <- td_together %>%
   group_by_all() %>%
   mutate(
@@ -93,29 +88,14 @@ td_route_ests <- td_together %>%
     estimated_sim_end = sum(baseline_actual_intercept, baseline_actual_change, baseline_sim_change, baseline_sim_intercept, sim_change),
     estimated_actual_change_ratio = (estimated_actual_end - estimated_actual_begin) / estimated_actual_begin, # this is a measure of the magnitude of the change from beginning to end. the sign is going to be increase (positive) or decrease. the magnitude is the % increase. so .1 = added 10% of starting (biomass or energy) to get to the end. -.2 = lost 20% of starting (biomass or energy) between begin and end.
     estimated_sim_change_ratio = (estimated_sim_end - estimated_sim_begin) / estimated_sim_begin, # same measure but having drawn the end values using the beginning isd. this is the amount of change expected due only to changes in the numbers of individuals observed in each time period. by comparing estimated_actual_change_ratio to estimated_sim_change_ratio, I believe we get an estimate of both the significance and magnitude of decoupling of (biomass or energy) and numerical abundance due to changes in the size spectrum.
-    estimated_actual_change = estimated_actual_end - estimated_actual_begin, # the "slope" assuming x = 0 or 1 for begin or end.
-    estimated_sim_change = estimated_sim_end - estimated_sim_begin,
-    estimated_change_deviation = estimated_actual_change_ratio - estimated_sim_change_ratio
+    estimated_actual_change = estimated_actual_end - estimated_actual_begin, # the "slope" assuming x = 0 or 1 for begin or end. aka the absolute change from end to begin.
+    estimated_sim_change = estimated_sim_end - estimated_sim_begin, # absolute change from end to begin due to abundance change
+    estimated_change_ratio_deviation = estimated_actual_change_ratio - estimated_sim_change_ratio, # deviation of change ratios from 1:1
+    estimated_change_deviation = estimated_actual_change - estimated_sim_change # deviation of actual change from 1:1
   ) %>%
   ungroup()
 
-
-# These we expect to match
-ggplot(td_route_ests, aes(estimated_actual_begin)) + geom_density() + geom_density(aes(x = estimated_sim_begin), color = "green") +
-  facet_wrap(vars(matssname))
-
-# These show deviation between what is expected given abundance change and what is not
-ggplot(td_route_ests, aes(estimated_actual_end)) + geom_density() + geom_density(aes(x = estimated_sim_end), color = "green") +
-  facet_wrap(vars(matssname))
-
-# This is relevant wheter it's over 0
-ggplot(td_route_ests, aes(estimated_actual_change)) + geom_density() + geom_density(aes(x = estimated_sim_change), color = "green") +
-  facet_wrap(vars(matssname)) + geom_vline(xintercept = 0)
-
-
-ggplot(td_route_ests, aes(estimated_actual_change_ratio)) + geom_density() + geom_density(aes(x = estimated_sim_change_ratio), color = "green") +
-  facet_wrap(vars(matssname))
-
+# Summarize to get mean and 95% intervals for the above quantities
 
 lower_quantile <- function(vector) {
   as.numeric(quantile(vector, probs = .025))
@@ -132,7 +112,32 @@ td_route_ests_summary <- td_route_ests %>%
                              upper = upper_quantile)) %>%
   ungroup()
 
+# this is just to check that these estimates have the same means as if you use predict()
+# bpreds <- predict(tbrm)
+# 
+# somepreds <- short_sims %>%
+#   mutate(pred =bpreds[,1])
+# 
+# somepreds_summary <- somepreds %>%
+#   group_by(matssname, timeperiod, source) %>%
+#   summarize(mean_pred = mean(pred)) %>%
+#   ungroup() %>%
+#   tidyr::pivot_wider(c(timeperiod, source), id_cols = matssname, values_from = mean_pred) %>%
+#   mutate(matssname = paste0("matssname", matssname))
+# 
+# ests_v_pred <- left_join(td_route_ests_summary, somepreds_summary)
+# 
+# ggplot(ests_v_pred, aes(estimated_sim_end_mean, end_sim)) + geom_point() + geom_abline(slope = 1, intercept = 0)
+# 
+```
 
+# working with energy use.
+
+Estimated change due to abundance:
+
+`estimated_sim_change_ratio` mean, upper, and lower.
+
+``` r
 ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_actual_change_ratio_mean, color= matssname)) +
   geom_point() +
   geom_vline(xintercept = 0) +
@@ -142,44 +147,26 @@ ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_act
   geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005) +
   scale_color_viridis_d(option='mako', begin = .2, end =.8) +
   theme(legend.position = "none")
+```
+
+![](resims_analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+td_route_ests_summary <- td_route_ests_summary %>%
+  arrange(estimated_sim_change_ratio_mean) %>%
+  mutate(sim_change_ratio_rank = row_number()) %>%
+  mutate(omatssname = ordered(1:25, labels = matssname))
 
 
-ncloud <- ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean)) + geom_density() + xlim(-1, 1) + geom_vline(xintercept = 0)
 
-nplot <- ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, matssname)) +
+ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, omatssname)) + 
   geom_point() +
-  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper)) +
-  theme(axis.text.y = element_blank()) +
+  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper)) + 
+  geom_point(aes(x = estimated_actual_change_ratio_mean), color = "blue", alpha = .6) +
+  geom_errorbarh(aes(xmin = estimated_actual_change_ratio_lower, xmax = estimated_actual_change_ratio_upper), color = "blue", alpha = .6) + 
   geom_vline(xintercept = 0) +
-  xlim(-1,1)
+  theme_bw() +
+  theme(axis.text.y = element_blank())
+```
 
-
-
-eplot <- ggplot(td_route_ests_summary, aes(estimated_actual_change_ratio_mean, matssname)) +
-  geom_point() +
-  geom_errorbarh(aes(xmin = estimated_actual_change_ratio_lower, xmax = estimated_actual_change_ratio_upper)) +
-  theme(axis.text.y = element_blank()) +
-  geom_vline(xintercept = 0) +
-  xlim(-1,1)
-
-
-ggplot(td_route_ests_summary, aes(estimated_change_deviation_mean, matssname)) +
-  geom_point() +
-  geom_errorbarh(aes(xmin = estimated_change_deviation_lower, xmax = estimated_change_deviation_upper)) +
-  theme(axis.text.y = element_blank()) +
-  geom_vline(xintercept = 0) +
-  xlim(-1,1)
-
-gridExtra::grid.arrange(grobs = list(ncloud, nplot, eplot), ncol = 1)
-
-ggplot(td_route_ests_summary, aes(estimated_sim_change_mean, estimated_actual_change_mean, color= matssname)) +
-  geom_point() +
-  geom_vline(xintercept = 0) +
-  geom_hline(yintercept = 0)+
-  geom_abline(intercept = 0, slope = 1) +
-  geom_errorbarh(aes(xmin = estimated_sim_change_lower, xmax = estimated_sim_change_upper, y = estimated_actual_change_mean), height = .005) +
-  geom_errorbar(aes(ymin = estimated_actual_change_lower, ymax = estimated_actual_change_upper, x = estimated_sim_change_mean), width = .005) +
-  scale_color_viridis_d(option='mako', begin = .2, end =.8) +
-  theme(legend.position = "none")
-
-
+![](resims_analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->

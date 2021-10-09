@@ -12,7 +12,7 @@ loadd(all_results, cache= cache)
 
 all_results <- all_results %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) %>%
-  filter(matssname %in% unique(matssname)[1:100])
+  filter(matssname %in% unique(matssname)[1:50])
 
 
 
@@ -70,3 +70,6 @@ print(Sys.time())
 rm(b_brm_full)
 
 print('b_full')
+
+load("b_brm_full.Rds")
+load('b_brm_short.Rds')

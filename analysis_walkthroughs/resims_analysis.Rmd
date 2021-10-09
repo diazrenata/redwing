@@ -27,8 +27,14 @@ justsims <- filter(someres, source != "raw")
 # This brm is from:
 short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
 # tbrm<- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims)
+#load(here::here("brm_50sims.Rds"))
 
-load(here::here("brm_50sims.Rds"))
+# This brm is from:
+# e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = shortsims, cores = 4, iter = 10000, thin = 100)
+
+load(here::here("e_brm_short.Rds"))
+
+tbrm <- e_brm_short
 
 ```
 
@@ -145,3 +151,36 @@ Estimated change due to abundance:
 `estimated_sim_change_ratio` mean, upper, and lower.
 
 
+```{r}
+
+ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_actual_change_ratio_mean, color= matssname)) +
+  geom_point() +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0)+
+  geom_abline(intercept = 0, slope = 1) +
+  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper, y = estimated_actual_change_ratio_mean), height = .005) +
+  geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005) +
+  scale_color_viridis_d(option='mako', begin = .2, end =.8) +
+  theme(legend.position = "none")
+
+```
+
+```{r}
+
+td_route_ests_summary <- td_route_ests_summary %>%
+  arrange(estimated_sim_change_ratio_mean) %>%
+  mutate(sim_change_ratio_rank = row_number()) %>%
+  mutate(omatssname = ordered(1:25, labels = matssname))
+
+
+
+ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, omatssname)) + 
+  geom_point() +
+  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper)) + 
+  geom_point(aes(x = estimated_actual_change_ratio_mean), color = "blue", alpha = .6) +
+  geom_errorbarh(aes(xmin = estimated_actual_change_ratio_lower, xmax = estimated_actual_change_ratio_upper), color = "blue", alpha = .6) + 
+  geom_vline(xintercept = 0) +
+  theme_bw() +
+  theme(axis.text.y = element_blank())
+
+```
