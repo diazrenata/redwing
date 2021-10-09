@@ -12,7 +12,7 @@ loadd(all_results, cache= cache)
 
 all_results <- all_results %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) %>%
-  filter(matssname %in% unique(matssname)[1:25])
+  filter(matssname %in% unique(matssname)[1:100])
 
 
 
