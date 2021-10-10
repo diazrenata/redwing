@@ -47,29 +47,29 @@ rm(b_brm_short)
 
 print('b_short')
 
-
-print("starting e full")
-print(Sys.time())
-
-e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 2000, thin = 1)
-
-save(e_brm_full, file= "e_brm_full.Rds")
-print(Sys.time())
-
-rm(e_brm_full)
-
-print('e_full')
-print(Sys.time())
-print("starting b full")
-
-b_brm_full <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 2000, thin = 1)
-
-save(b_brm_full, file= "b_brm_full.Rds")
-print(Sys.time())
-
-rm(b_brm_full)
-
-print('b_full')
-
-load("b_brm_full.Rds")
-load('b_brm_short.Rds')
+#
+# print("starting e full")
+# print(Sys.time())
+#
+# e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 2000, thin = 1)
+#
+# save(e_brm_full, file= "e_brm_full.Rds")
+# print(Sys.time())
+#
+# rm(e_brm_full)
+#
+# print('e_full')
+# print(Sys.time())
+# print("starting b full")
+#
+# b_brm_full <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = justsims, cores = 4, iter = 2000, thin = 1)
+#
+# save(b_brm_full, file= "b_brm_full.Rds")
+# print(Sys.time())
+#
+# rm(b_brm_full)
+#
+# print('b_full')
+#
+# load("b_brm_full.Rds")
+# load('b_brm_short.Rds')
