@@ -12,7 +12,7 @@ loadd(all_results, cache= cache)
 
 all_results <- all_results %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) %>%
-  filter(matssname %in% unique(matssname)[1:100])
+  filter(matssname %in% unique(matssname)[1:200])
 
 
 
@@ -38,7 +38,7 @@ print('e_short')
 
 print("starting b short")
 print(Sys.time())
-b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2200, thin = 1)
+b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2000, thin = 1)
 
 save(b_brm_short, file= "b_brm_short.Rds")
 print(Sys.time())
