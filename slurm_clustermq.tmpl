@@ -11,5 +11,5 @@
 source /etc/profile
 
 ulimit -v $(( 1440 * {{ memory | 4096 }} ))
-module load R              # Uncomment if R is an environment module.
+module load R/4.0             # Uncomment if R is an environment module.
 CMQ_AUTH={{ auth }} Rscript -e 'clustermq:::worker("{{ master }}")'
