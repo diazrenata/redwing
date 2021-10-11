@@ -61,5 +61,5 @@ analysis_walkthroughs/ranges/species_in_bbs*
 
 route_species_lists.csv
 
-e_brm_short.Rds
-b_brm_short.Rds
+e_brm_*
+b_brm_*
