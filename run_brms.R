@@ -12,7 +12,7 @@ loadd(all_results, cache= cache)
 
 all_results <- all_results %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) %>%
-  filter(matssname %in% unique(matssname)[1:200])
+  filter(matssname %in% unique(matssname))
 
 
 
@@ -20,15 +20,25 @@ DBI::dbDisconnect(db)
 rm(cache)
 print("Completed OK")
 
-justsims <- filter(all_results, source != "raw")
+justsims <- filter(all_results, source != "raw")%>%
+  filter(matssname %in% unique(matssname))
 
-short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
+short_sims <- filter(justsims, as.numeric(sim_iteration) == 1)
 
 print("starting e short")
 print(Sys.time())
 
-e_brm_short <- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2000, thin = 1)
+ e_brm_short <- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, chains = 4,iter = 2000, thin = 1)
+
+#
+#  e_brm_short2 <- brm(total_energy ~ (timeperiod * source) | matssname, data = short_sims, cores = 4, iter = 100, thin = 1)
+#
+# e_lm_short <- lm(total_energy ~ (timeperiod * source * matssname), data = justsims)
+
 print(Sys.time())
+
+
+
 
 save(e_brm_short, file= "e_brm_short.Rds")
 

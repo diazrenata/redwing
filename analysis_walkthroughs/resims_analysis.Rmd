@@ -29,12 +29,11 @@ short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
 # tbrm<- brm(total_energy ~ (timeperiod * source) / matssname, data = short_sims)
 #load(here::here("brm_50sims.Rds"))
 
-# This brm is from:
-# e_brm_full <- brm(total_energy ~ (timeperiod * source) / matssname, data = shortsims, cores = 4, iter = 10000, thin = 100)
+# Current brm is from biomass, 50 sims, 100 sites. 
 
-load(here::here("e_brm_short.Rds"))
+load(here::here("b_brm_short.Rds"))
 
-tbrm <- e_brm_short
+tbrm <- b_brm_short
 
 ```
 
@@ -170,17 +169,71 @@ ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_act
 td_route_ests_summary <- td_route_ests_summary %>%
   arrange(estimated_sim_change_ratio_mean) %>%
   mutate(sim_change_ratio_rank = row_number()) %>%
-  mutate(omatssname = ordered(1:25, labels = matssname))
+  mutate(omatssname = ordered(1:nrow(td_route_ests_summary), labels = matssname))
 
 
 
 ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, omatssname)) + 
-  geom_point() +
+ # geom_point() +
   geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper)) + 
-  geom_point(aes(x = estimated_actual_change_ratio_mean), color = "blue", alpha = .6) +
-  geom_errorbarh(aes(xmin = estimated_actual_change_ratio_lower, xmax = estimated_actual_change_ratio_upper), color = "blue", alpha = .6) + 
+ # geom_point(aes(x = estimated_actual_change_ratio_mean), color = "blue", alpha = .6) +
+  geom_errorbarh(aes(xmin = estimated_actual_change_ratio_lower, xmax = estimated_actual_change_ratio_upper), color = "blue", alpha = .3) + 
   geom_vline(xintercept = 0) +
   theme_bw() +
-  theme(axis.text.y = element_blank())
+  theme(axis.text.y = element_blank(), panel.grid.major= element_blank())
 
 ```
+
+
+Some interpretation points...
+
+```{r}
+
+td_route_ests_interp <- td_route_ests_summary %>%
+  group_by_all() %>%
+  mutate(
+    abundance_change_ratio_over_zero = (estimated_sim_change_ratio_upper * estimated_sim_change_ratio_lower) < 0,
+    currency_over_abundance = ((estimated_sim_change_ratio_upper < estimated_actual_change_ratio_lower)),
+    abundance_over_currency = estimated_sim_change_ratio_lower > estimated_actual_change_ratio_upper,
+    currency_decouple = currency_over_abundance | abundance_over_currency
+  ) %>%
+  ungroup()
+
+
+
+ggplot(td_route_ests_interp, aes(estimated_sim_change_ratio_mean, omatssname, color = currency_decouple)) + 
+ # geom_point() +
+  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper)) + 
+ # geom_point(aes(x = estimated_actual_change_ratio_mean), color = "blue", alpha = .6) +
+  geom_errorbarh(aes(xmin = estimated_actual_change_ratio_lower, xmax = estimated_actual_change_ratio_upper), alpha = .3) + 
+  geom_vline(xintercept = 0) +
+  theme_bw() +
+  theme(axis.text.y = element_blank(), panel.grid.major= element_blank(), legend.position = "none")
+
+
+ggplot(td_route_ests_interp, aes(estimated_sim_change_ratio_mean, estimated_actual_change_ratio_mean, color= currency_decouple)) +
+  geom_point() +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0)+
+  geom_abline(intercept = 0, slope = 1) +
+  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper, y = estimated_actual_change_ratio_mean), height = .005) +
+  geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005) +
+  scale_color_viridis_d(option='mako', begin = .2, end =.8) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+mean(td_route_ests_interp$abundance_change_ratio_over_zero)
+mean(td_route_ests_interp$estimated_sim_change_ratio_lower > 0)
+mean(td_route_ests_interp$estimated_sim_change_ratio_upper < 0)
+
+mean(td_route_ests_interp$abundance_over_currency)
+mean(td_route_ests_interp$currency_over_abundance)
+mean(td_route_ests_interp$currency_decouple)
+
+
+
+
+```
+
+
