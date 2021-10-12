@@ -46,6 +46,8 @@ drake-cache-rats.sqlite
 .drake/drake/history/total
 logs/workers/*
 drake-cache-neon.sqlite
+.drake
+.drake/*
 
 # mammals raw trap nights
 neon_mammals/provisional_rata_raw/filesToStack10072/stackedFiles/mam_pertrapnight.csv

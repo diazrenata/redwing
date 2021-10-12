@@ -216,7 +216,8 @@ draw_communities <- function(ts_comp, begin_years = 1988:1992, end_years = 2014:
                      total_biomass = sum(mass),
                      total_energy = sum(energy)) %>%
     dplyr::ungroup() %>%
-    dplyr::bind_cols(as.data.frame(ts_comp$metadata$location))
+    dplyr::bind_cols(as.data.frame(ts_comp$metadata$location)) %>%
+    dplyr::mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum))
 
   all_svs
 }

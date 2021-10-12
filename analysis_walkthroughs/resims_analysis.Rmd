@@ -31,7 +31,7 @@ short_sims <- filter(justsims, as.numeric(sim_iteration) <  50)
 
 # Current brm is from biomass, 50 sims, 100 sites. 
 
-load(here::here("b_brm_short.Rds"))
+load(here::here("b_brm_short_allroutes.Rds"))
 
 tbrm <- b_brm_short
 
@@ -157,8 +157,8 @@ ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_mean, estimated_act
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0)+
   geom_abline(intercept = 0, slope = 1) +
-  geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper, y = estimated_actual_change_ratio_mean), height = .005) +
-  geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005) +
+ # geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper, y = estimated_actual_change_ratio_mean), height = .005) +
+  #geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_mean), width = .005) +
   scale_color_viridis_d(option='mako', begin = .2, end =.8) +
   theme(legend.position = "none")
 
