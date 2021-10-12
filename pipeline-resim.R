@@ -3,6 +3,8 @@ library(rwar)
 library(drake)
 library(MATSS)
 library(BBSsize)
+library(brms)
+library(tidybayes)
 
 expose_imports(rwar)
 source(here::here("resim/resim_fxns.R"))

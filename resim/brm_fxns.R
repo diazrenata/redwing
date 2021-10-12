@@ -1,18 +1,33 @@
+#' Fit brms to currencies
+#'
+#' @param some_sims dataframe with columns matssname, timeperiod, source, year, total_energy, total_biomass
+#' @param cores how many cores to use. if on hpg, use ONE. if local, do what you want.
+#' @param iter how many iterations. at scale, I've been using 4000 to be generous.
+#'
+#' @return list of brm fit on total_energy, on total_biomass, and dataset name
+#' @export
+#'
+#' @importFrom brms brm
+#' @importFrom dplyr filter
 fit_brms <- function(some_sims, cores = 1, iter = 4000) {
 
-
+# something in rwar as I currently have it is locking the namespace and interfering with drake, at least locally. this is not my best work but it gets rwar out of the namespace if it's attached.
   is_rwar_attached = any(grepl("rwar", names(sessionInfo()[7]$otherPkgs)))
   if(is_rwar_attached) {
     detach("package:rwar", unload = T)
-}
+  }
+
+  # sims returns estimates of the raw values, which we don't want for the model fit (we jsut want the ones that come from drawing from the densityGMMS)
   justsims <- dplyr::filter(some_sims, source %in% c("actual", "sim")) # remove raw
 
 
+  # Fit a brm on total_energy
   te_brm <- brms::brm(total_energy ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter)
 
-
+  # Fit the brm on total_biomass
   tb_brm <- brms::brm(total_biomass ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter)
 
+  # keep track of what dataset this is
   md <- some_sims$matssname[1]
 
   return(list(
@@ -23,6 +38,15 @@ fit_brms <- function(some_sims, cores = 1, iter = 4000) {
 
 }
 
+#' Extract estimates from brms posteriors
+#'
+#' Extract estimates for a bunch of quantities of interest from the posterior of fitted brms.
+#'
+#' @param some_brms list with brms te_brm, tb_brm, and matssname. Result of running `fit_brms()`
+#'
+#' @return dataframe with estimates. each row is a draw from the posterior. draws from the 2 models are stacked, group by `currency` to get each model.
+#' @export
+#'
 extract_brm_ests <- function(some_brms){
 
   e_ests <- extract_ests(some_brms$te_brm, "energy", matssname = some_brms$matssname)
@@ -38,6 +62,19 @@ extract_brm_ests <- function(some_brms){
 }
 
 
+#' Extract estimates from one brm
+#'
+#' This is the workhorse function for extracting estimates from the posterior and using them to calculate various quantities.
+#'
+#' @param a_brm one of the currency brms
+#' @param brm_currency which currency "energy" or "biomass"
+#' @param matssname dataset name
+#'
+#' @return dataframe with estimates, each row is a draw from the posterior
+#' @export
+#'
+#' @importFrom tidybayes tidy_draws
+#' @importFrom dplyr mutate row_number filter rename select group_by_all mutate ungroup
 extract_ests <- function(a_brm, brm_currency = NULL, matssname = NULL){
 
 
@@ -72,13 +109,41 @@ extract_ests <- function(a_brm, brm_currency = NULL, matssname = NULL){
   return(td_ests)
 }
 
+#' Lower cutoff for a vector
+#'
+#' @param vector vector of values
+#' @param lower_cutoff defaults 0.025
+#'
+#' @return cutoff value
+#' @export
+#'
 lower_quantile <- function(vector, lower_cutoff = 0.025) {
   as.numeric(quantile(vector, probs = lower_cutoff))
 }
+
+
+#' Upper cutoff for a vector
+#'
+#' @param vector vector of values
+#' @param upper_cutoff defaults 0.975
+#'
+#' @return cutoff value
+#' @export
+#'
 upper_quantile <- function(vector, upper_cutoff = .975) {
   as.numeric(quantile(vector, probs = upper_cutoff))
 }
 
+#' Summarize brm ests
+#'
+#' Summarize draws from the posterior to give mean and upper/lower quantile estimates for quantities of interest (parameters, derived estimates)
+#'
+#' @param some_ests dataframe with columns matssname, currency, rowindex, and parameters/values of interest. result of extract_brm_ests
+#'
+#' @return dataframe summarized by matssname and currency to get mean and upper/lower qs.
+#' @export
+#'
+#' @importFrom dplyr select group_by summarize_all ungroup
 summarize_brm_ests <- function(some_ests) {
 
   td_route_ests_summary <- some_ests %>%
