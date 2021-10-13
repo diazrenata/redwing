@@ -17,14 +17,14 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("working_routes.csv"))
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-datasets <- datasets[1:2, ]
+#datasets <- datasets[c(1:2, 13), ]
 
 
 methods <- drake_plan(
   sgmms = target(construct_sampling_gmm(dataset, n_isd_draws = 5),
                  transform = map(
                    dataset = !!rlang::syms(datasets$target))),
-  sims = target(draw_communities_wrapper(ts_comp = dataset, sampling_gmms = sgmms, ndraws =10),
+  sims = target(draw_communities_wrapper(ts_comp = dataset, sampling_gmms = sgmms, ndraws =100),
                 transform = map(
                   sgmms
                 )),
@@ -63,7 +63,7 @@ system.time(make(all,
                  cache = cache,
                  verbose = 1,
                  parallelism = "clustermq",
-                 jobs = 2,
+                 jobs = 20,
                  caching = "main",
                  memory_strategy = "autoclean",
                  lock_envir = F))# Important for DBI caches!

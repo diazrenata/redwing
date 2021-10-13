@@ -81,8 +81,8 @@ extract_ests <- function(a_brm, brm_currency = NULL, matssname = NULL){
   # Get all draws from the posterior and get just the terms we want
   td <- tidybayes::tidy_draws(a_brm) %>%
     #  select_at(vars(starts_with("b"))) %>%
-    dplyr::mutate(rowindex = dplyr::row_number()) %>% # and get a row index to keep draws together, I'm not sure if this matters but I'll do it
-    dplyr::filter(rowindex > max(rowindex) / 2) # remove warmup
+    dplyr::mutate(rowindex = dplyr::row_number()) #%>% # and get a row index to keep draws together, I'm not sure if this matters but I'll do it
+   # dplyr::filter(rowindex > max(rowindex) / 2) # remove warmup
 
   td_ests <- td %>%
     dplyr::rename(timeperiodend_sourcesim = `b_timeperiodend:sourcesim`) %>%
