@@ -50,31 +50,31 @@ db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual-resim.sql
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
-
 ## Run the pipeline
 nodename <- Sys.info()["nodename"]
-if(grepl("ufhpc", nodename)) {
-  print("I know I am on the HiPerGator!")
-  library(clustermq)
-  options(clustermq.scheduler = "slurm", clustermq.template = "slurm_clustermq.tmpl")
-  ## Run the pipeline parallelized for HiPerGator
-  make(all,
-       force = TRUE,
-       cache = cache,
-       verbose = 1,
-       parallelism = "clustermq",
-       jobs = 2,
-       caching = "main", memory_strategy = "autoclean", lock_envir = F) # Important for DBI caches!
-} else {
+# if(grepl("ufhpc", nodename)) {
+#   print("I know I am on the HiPerGator!")
+library(clustermq)
+options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
+)
+## Run the pipeline parallelized for HiPerGator
+system.time(make(all,
+                 force = TRUE,
+                 cache = cache,
+                 verbose = 1,
+                 parallelism = "clustermq",
+                 jobs = 2,
+                 caching = "main",
+                 memory_strategy = "autoclean",
+                 lock_envir = F))# Important for DBI caches!
+#}# else {
+#
+
+# Run the pipeline on multiple local cores
+# system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
-  # Run the pipeline on multiple local cores
-  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
-
-
-}
-
-
+#}
 
 DBI::dbDisconnect(db)
 rm(cache)
