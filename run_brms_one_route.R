@@ -29,40 +29,44 @@ justsims <- filter(all_results, source != "raw")%>%
 print("starting e short")
 print(Sys.time())
 
- e_brm_short <- brm(total_energy ~ (timeperiod * source), data = justsims, cores = 4, chains = 4,iter = 2000, thin = 1)
+# this is for trials on hpg
 
+e_brm_short <- brm(total_energy ~ (timeperiod * source), data = justsims, cores = 1, iter = 2000)
 
-
- e_brm_re <- brm(total_energy ~ (timeperiod * source) + (1 | (year)), data = justsims, cores = 4, chains = 4,iter = 2000, thin = 1)
-
-
- e_brm_ref <- brm(total_energy ~ (timeperiod * source) + (1 | (fyear)), data = justsims, cores = 4, chains = 4,iter = 2000, thin = 1)
+#  e_brm_short <- brm(total_energy ~ (timeperiod * source), data = justsims, cores = 4, chains = 4,iter = 2000, thin = 1)
 #
-#  e_brm_short2 <- brm(total_energy ~ (timeperiod * source) | matssname, data = short_sims, cores = 4, iter = 100, thin = 1)
 #
-# e_lm_short <- lm(total_energy ~ (timeperiod * source * matssname), data = justsims)
-
-print(Sys.time())
-
-
-
-
-save(e_brm_short, file= "e_brm_short_one.Rds")
-
-rm(e_brm_short)
-
-print('e_short')
-
-print("starting b short")
-print(Sys.time())
-b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2000, thin = 1)
-
-save(b_brm_short, file= "b_brm_short_one.Rds")
-print(Sys.time())
-
-rm(b_brm_short)
-
-print('b_short')
+#
+#  e_brm_re <- brm(total_energy ~ (timeperiod * source) + (1 | (year)), data = justsims, cores = 4, chains = 4,iter = 2000, thin = 1)
+#
+#
+#  e_brm_ref <- brm(total_energy ~ (timeperiod * source) + (1 | (fyear)), data = justsims, cores = 4, chains = 4,iter = 2000, thin = 1)
+# #
+# #  e_brm_short2 <- brm(total_energy ~ (timeperiod * source) | matssname, data = short_sims, cores = 4, iter = 100, thin = 1)
+# #
+# # e_lm_short <- lm(total_energy ~ (timeperiod * source * matssname), data = justsims)
+#
+# print(Sys.time())
+#
+#
+#
+#
+# save(e_brm_short, file= "e_brm_short_one.Rds")
+#
+# rm(e_brm_short)
+#
+# print('e_short')
+#
+# print("starting b short")
+# print(Sys.time())
+# b_brm_short <-  brm(total_biomass ~ (timeperiod * source) / matssname, data = short_sims, cores = 4, iter = 2000, thin = 1)
+#
+# save(b_brm_short, file= "b_brm_short_one.Rds")
+# print(Sys.time())
+#
+# rm(b_brm_short)
+#
+# print('b_short')
 
 #
 # print("starting e full")
