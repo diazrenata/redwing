@@ -9,7 +9,7 @@
 #'
 #' @importFrom brms brm
 #' @importFrom dplyr filter
-fit_brms <- function(some_sims, cores = 1, iter = 4000) {
+fit_brms <- function(some_sims, cores = 1, iter = 8000, thin =2) {
 
 # something in rwar as I currently have it is locking the namespace and interfering with drake, at least locally. this is not my best work but it gets rwar out of the namespace if it's attached.
   is_rwar_attached = any(grepl("rwar", names(sessionInfo()[7]$otherPkgs)))
@@ -22,10 +22,10 @@ fit_brms <- function(some_sims, cores = 1, iter = 4000) {
 
 
   # Fit a brm on total_energy
-  te_brm <- brms::brm(total_energy ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter)
+  te_brm <- brms::brm(total_energy ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter, thin = thin)
 
   # Fit the brm on total_biomass
-  tb_brm <- brms::brm(total_biomass ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter)
+  tb_brm <- brms::brm(total_biomass ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter, thin = thin)
 
   # keep track of what dataset this is
   md <- some_sims$matssname[1]
@@ -151,7 +151,8 @@ summarize_brm_ests <- function(some_ests) {
     dplyr::group_by(matssname, currency) %>%
     dplyr::summarize_all(.funs = list(mean = mean,
                                       lower = lower_quantile,
-                                      upper = upper_quantile)) %>%
+                                      upper = upper_quantile,
+                                      median = median)) %>%
     dplyr::ungroup()
 
   td_route_ests_summary

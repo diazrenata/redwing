@@ -52,8 +52,8 @@ cache$del(key = "lock", namespace = "session")
 
 ## Run the pipeline
 nodename <- Sys.info()["nodename"]
-# if(grepl("ufhpc", nodename)) {
-#   print("I know I am on the HiPerGator!")
+if(grepl("ufhpc", nodename)) {
+   print("I know I am on the HiPerGator!")
 library(clustermq)
 options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
 )
@@ -67,14 +67,14 @@ system.time(make(all,
                  caching = "main",
                  memory_strategy = "autoclean",
                  lock_envir = F))# Important for DBI caches!
-#}# else {
-#
+} else {
+
 
 # Run the pipeline on multiple local cores
-# system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
+ system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
-#}
+}
 
 DBI::dbDisconnect(db)
 rm(cache)
