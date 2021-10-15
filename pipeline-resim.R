@@ -33,6 +33,8 @@ methods <- drake_plan(
   all_sims = target(dplyr::bind_rows(as)),
   fits = target(fit_brms(sims),
                 transform = map(sims)),
+  pfits = target(fit_brmsp(sims),
+                transform = map(sims)),
   ests = target(extract_brm_ests(fits),
                 transform = map(fits)),
   ests_summary = target(summarize_brm_ests(ests),

@@ -38,6 +38,40 @@ fit_brms <- function(some_sims, cores = 1, iter = 8000, thin =2) {
 
 }
 
+
+fit_brmsp <- function(some_sims, cores = 1, iter = 8000, thin =2) {
+
+  # something in rwar as I currently have it is locking the namespace and interfering with drake, at least locally. this is not my best work but it gets rwar out of the namespace if it's attached.
+  is_rwar_attached = any(grepl("rwar", names(sessionInfo()[7]$otherPkgs)))
+  if(is_rwar_attached) {
+    detach("package:rwar", unload = T)
+  }
+
+  # sims returns estimates of the raw values, which we don't want for the model fit (we jsut want the ones that come from drawing from the densityGMMS)
+  justsims <- dplyr::filter(some_sims, source %in% c("actual", "sim")) # remove raw
+
+  justsims <- justsims %>%
+    dplyr::mutate(
+      total_energy = round(total_energy),
+      total_biomass = round(total_biomass)
+    )
+
+  # Fit a brm on total_energy
+  te_brm <- brms::brm(total_energy ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter, thin = thin, family = poisson)
+
+  # Fit the brm on total_biomass
+  tb_brm <- brms::brm(total_biomass ~ (timeperiod * source) + (1 | year), data = justsims, cores = cores, iter = iter, thin = thin, family = poisson)
+
+  # keep track of what dataset this is
+  md <- some_sims$matssname[1]
+
+  return(list(
+    te_brm = te_brm,
+    tb_brm = tb_brm,
+    matssname =md
+  ))
+
+}
 #' Extract estimates from brms posteriors
 #'
 #' Extract estimates for a bunch of quantities of interest from the posterior of fitted brms.
