@@ -1,3 +1,7 @@
+Selecting routes
+================
+
+``` r
 #' RMD rerunning and commenting 10/19/21
 
 library(drake)
@@ -7,6 +11,9 @@ db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "dr
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 loadd(year_coverage, cache = cache)
+
+DBI::dbDisconnect(db)
+rm(cache)
 
 # We will try all possible start years from 1970 to 1990, and all possible end years from 2000 to 2020
 startyears <- c(1970:1990)
@@ -73,8 +80,12 @@ ggplot(filter(starts2, ncovered >0 ), aes(timecovered, ncovered, color = nbcr_co
   geom_point() +
   scale_color_viridis_c(option = "turbo", begin = .1, end = .9) +
   geom_point(data = filter(starts2, startyear ==1988, endyear == 2018), shape = 4, size = 6)
+```
 
-# Work with 1988-2018. This appears to maximize time x nbcr x nroutes. This gives 528 sites with complete coverage. You could get a few more routes (up to around 650) if you went down to about 20 years, but that's a much shorter window - 10 years vs 20 years between "start" and "end" chunks.
+![](01_selecting_routes_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+``` r
+# Work with 1988-2018 (marked with the X above). This appears to maximize time x nbcr x nroutes. This gives 528 sites with complete coverage. You could get a few more routes (up to around 650) if you went down to about 20 years, but that's a much shorter window - 10 years vs 20 years between "start" and "end" chunks.
 # My data end in 2018.
 
 
@@ -108,10 +119,14 @@ fullcoverage_true <- filter(fullcoverage, complete_coverage) %>%
   mutate(matssname = paste0("bbs_rtrg_", route, "_", region),
          window = window,
          nreq = nreq)
+```
 
+``` r
 # Save it
 write.csv(fullcoverage_true, here::here("aspirational_structure", "supporting_data", "working_routes.csv"), row.names = F)
+```
 
+``` r
 # Now subsample so each BCR has a maximum of 10 routes represented.
 
 set.seed(1989) # was listening to a lot of TS this year
@@ -145,8 +160,9 @@ for(i in 1:nrow(bcrs)) {
 }
 
 chosen_sites <- dplyr::bind_rows(chosen_sites)
+```
 
+``` r
 # Save it.
 write.csv(chosen_sites,  here::here("aspirational_structure", "supporting_data", "working_routes_max10.csv"), row.names = F)
-
-
+```
