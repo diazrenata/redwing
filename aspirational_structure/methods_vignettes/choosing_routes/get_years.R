@@ -4,10 +4,10 @@
 library(drake)
 library(dplyr)
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-years.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "metadata_cache.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
-loadd(year_coverage, cache = cache)
+loadd(md, cache = cache)
 
 
 startyears <- c(1970:1990)
@@ -27,12 +27,12 @@ for(i in 1:length(startyears)) {
     startcover <- startyears[i]:(startyears[i] + window)
     endcover <- endyears[j]:(endyears[j] - window)
 
-    startcoverage <-  filter(year_coverage, year %in% startcover) %>%
+    startcoverage <-  filter(md, year %in% startcover) %>%
       dplyr::group_by(route, region, location.bcr, location.statenum, location.routename) %>%
       dplyr::summarize(nyears_start = length(unique(year))) %>%
       dplyr::ungroup()
 
-    endcoverage <- filter(year_coverage, year %in% endcover) %>%
+    endcoverage <- filter(md, year %in% endcover) %>%
       dplyr::group_by(route, region, location.bcr, location.statenum, location.routename) %>%
       dplyr::summarize(nyears_end = length(unique(year))) %>%
       dplyr::ungroup()
@@ -82,12 +82,12 @@ nreq = 5
 startcover <- startyear:(startyear + window)
 endcover <- endyear:(endyear - window)
 
-startcoverage <-  filter(year_coverage, year %in% startcover) %>%
+startcoverage <-  filter(md, year %in% startcover) %>%
   dplyr::group_by(route, region, location.bcr, location.statenum, location.routename) %>%
   dplyr::summarize(nyears_start = length(unique(year))) %>%
   dplyr::ungroup()
 
-endcoverage <- filter(year_coverage, year %in% endcover) %>%
+endcoverage <- filter(md, year %in% endcover) %>%
   dplyr::group_by(route, region, location.bcr, location.statenum, location.routename) %>%
   dplyr::summarize(nyears_end = length(unique(year))) %>%
   dplyr::ungroup()
