@@ -1,6 +1,5 @@
 #' RMD 10/19/21
-#'
-#'
+#' This is the original script I used to pick the window.
 
 library(drake)
 library(dplyr)
