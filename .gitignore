@@ -60,6 +60,7 @@ all_bird_comps_nt.csv
 
 analysis_walkthroughs/BOTW*
 analysis_walkthroughs/ranges/species_in_bbs*
+methods_sections/ranges/species_in_bbs*
 
 route_species_lists.csv
 
@@ -67,3 +68,5 @@ route_species_lists.csv
 *b_brm_*
 
 k.R
+*.DS_Store*
+.DS_Store
