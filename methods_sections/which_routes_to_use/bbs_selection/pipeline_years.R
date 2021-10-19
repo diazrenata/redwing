@@ -1,6 +1,5 @@
 #' RMD 10/19/21
-#' I think this is redundant and slightly less preferable to pipeline_route_metadata.R
-#' Both just iterate over all of the BBS routes in MATSS and pull the metadata.
+#' Iterate over all of the BBS routes in MATSS and pull the years + identifying metadata
 #' The end result is a big dataframe with a row for every yearxroute that has that year sampled.
 
 
