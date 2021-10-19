@@ -19,7 +19,7 @@ just_isd <- function(ts_comp, isd_seed = NULL) {
 #' Constructs well-resolved smooths for the begin and end ISDs to use for resampling. Repeatedly draws ISDs by sampling from species' intraspecific body size distributions and combines these repeated samples in to one large sample. Then fits a GMM to this sample to get a very smooth version of the GMM-ified ISD. This allows us to resample ISDs with noninteger ratios of species abundances in a consistent way.
 #'
 #' @param ts_comp matss-shaped dataset
-#' @param n_isd_draws how many versions of the ISD to use to construct the density function. There isn't too much variation between them, defaults to 25 anyway. Adds time.
+#' @param n_isd_draws how many versions of the ISD to use to construct the density function. There isn't too much variation between them, defaults to 5. Adding more increases time nonlinear due to the GMM, do not recommend much more than 10.
 #' @param initial_isd_seed don't recommend providing unless testing
 #' @param begin_years defaults 1988-1992
 #' @param end_years defaults 2014-2018
@@ -27,7 +27,7 @@ just_isd <- function(ts_comp, isd_seed = NULL) {
 #' @return list of two gmm densities as dataframes with columns mass, density, timeperiod
 #' @importFrom dplyr filter bind_rows mutate
 #' @importFrom rwar add_gmm
-construct_sampling_gmm <- function(ts_comp, n_isd_draws = 25, initial_isd_seed = NULL, begin_years = 1988:1992, end_years = 2014:2018) {
+construct_sampling_gmm <- function(ts_comp, n_isd_draws = 5, initial_isd_seed = NULL, begin_years = 1988:1992, end_years = 2014:2018) {
 
   # For debugging
   if(is.null(initial_isd_seed)) {
