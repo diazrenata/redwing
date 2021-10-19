@@ -29,6 +29,12 @@ methods <- drake_plan(
 
 all = bind_rows(datasets, methods)
 
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "metadata_cache.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+
 ## Run the pipeline
 nodename <- Sys.info()["nodename"]
 if(grepl("ufhpc", nodename)) {
