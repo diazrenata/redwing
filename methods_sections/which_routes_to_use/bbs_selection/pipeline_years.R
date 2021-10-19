@@ -1,9 +1,15 @@
+#' RMD 10/19/21
+#' I think this is redundant and slightly less preferable to pipeline_route_metadata.R
+#' Both just iterate over all of the BBS routes in MATSS and pull the metadata.
+#' The end result is a big dataframe with a row for every yearxroute that has that year sampled.
+
+
 library(dplyr)
-library(rwar)
+# library(rwar) #rawr isn't actually used
 library(drake)
 library(MATSS)
 
-expose_imports(rwar)
+#expose_imports(rwar)
 
 get_years <- function(dataset) {
 

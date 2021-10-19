@@ -1,9 +1,14 @@
+#' RMD 10/19/21
+#' I think this is redundant and slightly less preferable to pipeline_route_metadata.R
+#' Both just iterate over all of the BBS routes in MATSS and pull the metadata.
+#' The end result is a big dataframe with a row for every yearxroute that has that year sampled.
+
 library(dplyr)
-library(rwar)
+#library(rwar) # rwar is not actually used in this pipeline
 library(drake)
 library(MATSS)
 
-expose_imports(rwar)
+#expose_imports(rwar)
 
 get_metadat <- function(dataset) {
 
@@ -15,10 +20,6 @@ get_metadat <- function(dataset) {
 
 datasets <- MATSS::build_bbs_datasets_plan()
 
-working_datasets <- read.csv(here::here("working_routes.csv"))
-
-datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-
 methods <- drake_plan(
   m = target(get_metadat(dataset),
              transform = map(
@@ -29,7 +30,7 @@ methods <- drake_plan(
 all = bind_rows(datasets, methods)
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("bbs_selection", "drake-cache-years.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "drake-cache-route-metadata.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 

@@ -1,3 +1,7 @@
+#' RMD 10/19/21
+#'
+#'
+
 library(drake)
 library(dplyr)
 ## Set up the cache and config
@@ -6,7 +10,6 @@ cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 loadd(year_coverage, cache = cache)
 
-#year_coverage <- filter(year_coverage, location.routename %in% unique(year_coverage$location.routename)[1:10])
 
 startyears <- c(1970:1990)
 
@@ -14,8 +17,8 @@ endyears <- c(2000:2020)
 
 consec_starts <- list()
 
-window = 6
-
+# Window = 4 and nreq = 5 is asking for *all years* of a *five year window* to be represented.
+window = 4 # Set window to 1-nyears you want
 nreq = 5
 
 for(i in 1:length(startyears)) {
