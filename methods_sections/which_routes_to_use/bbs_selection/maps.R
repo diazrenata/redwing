@@ -1,3 +1,6 @@
+#' RMD 10/19/21
+#' This is old, it's from when I was doing spatial comparisons.
+
 library(drake)
 library(dplyr)
 library(ggplot2)
