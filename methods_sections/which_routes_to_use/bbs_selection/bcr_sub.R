@@ -1,3 +1,6 @@
+#' RMD 10/19/21
+#' This is  the original script I used to subsample to a max of 10 routes per BCR.
+
 library(dplyr)
 
 
