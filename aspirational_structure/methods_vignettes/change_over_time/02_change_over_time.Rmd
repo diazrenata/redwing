@@ -126,7 +126,7 @@ ggplot(sampling_gmms$begin, aes(mass, density)) + geom_line() + geom_line(data =
   end_individuals <- add_drawn_individuals(end_isd, sampling_gmms$end, draw_seed = draw_seed)
 
   actual_individuals <- dplyr::bind_rows(begin_individuals, end_individuals) %>%
-    dplyr::mutate(source = "actual")
+    dplyr::mutate(source = "currency")
 
 
   # Now draw individuals for each time period with scrambled ISDs. Specifically, draw for the beginning from the beginning ISD. But then also draw the end from the beginning ISD. This gives an "end" ISD pretending that the ISD didn't change from the beginning.
@@ -136,7 +136,7 @@ ggplot(sampling_gmms$begin, aes(mass, density)) + geom_line() + geom_line(data =
 
 
   sim_individuals <- dplyr::bind_rows(begin_individuals_sim, end_individuals_sim) %>%
-    dplyr::mutate(source = "sim")
+    dplyr::mutate(source = "abundance")
 
 ```
 
@@ -209,7 +209,7 @@ We can pull multiple sims using `draw_communities_wrapper`.
 
 ```{r}
 
-multi_svs <- draw_communities_wrapper(granby, ndraws = 50, sampling_gmms = sampling_gmms) %>%
+multi_svs <- draw_communities_wrapper(granby, ndraws = 100, sampling_gmms = sampling_gmms) %>%
   mutate(group_to_plot = paste0(sim_iteration, source))
 ```
 
@@ -217,6 +217,12 @@ multi_svs <- draw_communities_wrapper(granby, ndraws = 50, sampling_gmms = sampl
 gridExtra::grid.arrange(grobs = list(ggplot(multi_svs, aes(year, total_abundance, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("abundance") + theme(legend.position = "bottom"),
   ggplot(multi_svs, aes(year, total_energy, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("energy") + theme(legend.position = "bottom"),
                                      ggplot(multi_svs, aes(year, total_biomass, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("biomass") + theme(legend.position = "bottom")), ncol = 3)
+
+
+
+gridExtra::grid.arrange(grobs = list(ggplot(filter(multi_svs, source != "raw"), aes(year, total_abundance, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("abundance") + theme(legend.position = "bottom"),
+  ggplot(filter(multi_svs, source != "raw"), aes(year, total_energy, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("energy") + theme(legend.position = "bottom"),
+                                     ggplot(filter(multi_svs, source != "raw"), aes(year, total_biomass, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("biomass") + theme(legend.position = "bottom")), ncol = 3)
 ```
 
 From here we can see that there is some heterogeneity in the slopes derived simply from repeating sims. 
@@ -279,7 +285,7 @@ This section is only for drake pipelines and will hopefully be able to go once I
 
 ```{r}
   # sims returns estimates of the raw values, which we don't want for the model fit (we jsut want the ones that come from drawing from the densityGMMS)
-  justsims <- dplyr::filter(some_sims, source %in% c("actual", "sim")) # remove raw
+  justsims <- dplyr::filter(some_sims, source %in% c("abundance", "currency")) # remove raw
 
 
   # Fit a brm on total_energy
@@ -305,151 +311,76 @@ some_brms <- (list(
 # }
 ```
 
-### Extract parameter estimates
+### Interpret brm
 
-To extract the estimates for the parameters, and then calculate quantities of interest, use `extract_ests` (one one brm) or `extract_brm_ests` (on a list of 2 brms, one `$te_brm` and one `$tb_brm`).
+OK, so this is new. I think parsimony is to extract the posterior draws and then just look at the slope terms. And hey, the intercepts.
 
-The following is from `extract_ests`. `extract_ests` is the workhorse function called by `extract_brm_ests`.
+#### Total energy
 
-Arguments:
+```{r, fig.dim = c(3,3)}
+library(tidybayes)
 
-```{r}
-a_brm = some_brms$tb_brm
-brm_currency = "biomass"
-matssname = some_brms$matssname
+
+te_draws <- tidybayes::tidy_draws(te_brm) %>%
+  tidybayes::median_qi(b_sourcecurrency, b_timeperiodend, `b_timeperiodend:sourcecurrency`, currency_slope =  `b_timeperiodend:sourcecurrency` + b_timeperiodend, .width = c(.99, .95, .8))
+
+ggplot(te_draws, aes(1, x = b_sourcecurrency, xmin = b_sourcecurrency.lower, xmax = b_sourcecurrency.upper)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
+
+ggplot(te_draws, aes(1, x = b_timeperiodend, xmin = b_timeperiodend.lower, xmax = b_timeperiodend.upper)) + geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
+
+ggplot(te_draws, aes(1, x = `b_timeperiodend:sourcecurrency`, xmin = `b_timeperiodend:sourcecurrency.lower`, xmax = `b_timeperiodend:sourcecurrency.upper`)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
+
+ggplot(te_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
+
 
 ```
 
 
-```{r}
-#extract_ests <- function(a_brm, brm_currency = NULL, matssname = NULL){
-
-
-  # Get all draws from the posterior and get just the terms we want
-  td <- tidybayes::tidy_draws(a_brm) %>%
-    #  select_at(vars(starts_with("b"))) %>%
-    dplyr::mutate(rowindex = dplyr::row_number()) #%>% # and get a row index to keep draws together, I'm not sure if this matters but I'll do it
-  # dplyr::filter(rowindex > max(rowindex) / 2) # remove warmup
-
-  td_ests <- td %>%
-    dplyr::rename(timeperiodend_sourcesim = `b_timeperiodend:sourcesim`) %>%
-    dplyr::select(rowindex, b_Intercept, b_timeperiodend, b_sourcesim, timeperiodend_sourcesim) %>%
-    dplyr::group_by_all() %>%
-    dplyr::mutate(
-      estimated_actual_begin = sum(b_Intercept), # estimated beginning value
-      estimated_actual_end = sum(b_Intercept, b_timeperiodend), # estimated end value
-      estimated_sim_begin = sum(b_Intercept, b_sourcesim), # estimated beginning value from sims. we expect this to be equal to the estimated beginning value, any change is just sampling error.
-      estimated_sim_end = sum(b_Intercept, b_timeperiodend, timeperiodend_sourcesim, b_sourcesim),
-      estimated_actual_change_ratio = (estimated_actual_end - estimated_actual_begin) / estimated_actual_begin, # this is a measure of the magnitude of the change from beginning to end. the sign is going to be increase (positive) or decrease. the magnitude is the % increase. so .1 = added 10% of starting (biomass or energy) to get to the end. -.2 = lost 20% of starting (biomass or energy) between begin and end.
-      estimated_sim_change_ratio = (estimated_sim_end - estimated_sim_begin) / estimated_sim_begin, # same measure but having drawn the end values using the beginning isd. this is the amount of change expected due only to changes in the numbers of individuals observed in each time period. by comparing estimated_actual_change_ratio to estimated_sim_change_ratio, I believe we get an estimate of both the significance and magnitude of decoupling of (biomass or energy) and numerical abundance due to changes in the size spectrum.
-      estimated_actual_change = estimated_actual_end - estimated_actual_begin, # the "slope" assuming x = 0 or 1 for begin or end. aka the absolute change from end to begin.
-      estimated_sim_change = estimated_sim_end - estimated_sim_begin, # absolute change from end to begin due to abundance change
-      estimated_change_ratio_deviation = estimated_actual_change_ratio - estimated_sim_change_ratio, # deviation of change ratios from 1:1
-      estimated_change_deviation = estimated_actual_change - estimated_sim_change # deviation of actual change from 1:1
-
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(currency = brm_currency,
-                  matssname = matssname)
-
-
- # return(td_ests)
-#}
-```
-
-#### Visualize posterior results
-
-We can examine quantities derived from the posterior.
-
-For all plots, black is the actual (ISD change) value and pink is the sim (only abundance-driven change) value.
-
-
-These are just the beginning/end values:
+#### Total biomass
 
 ```{r, fig.dim = c(3,3)}
 
-ggplot(td_ests, aes(estimated_actual_begin)) + geom_density() + geom_density(aes(estimated_sim_begin), color = "pink") +
-  ggtitle("Begin value", subtitle = "These should be equal.")
+
+tb_draws <- tidybayes::tidy_draws(tb_brm) %>%
+  tidybayes::median_qi(b_sourcecurrency, b_timeperiodend, `b_timeperiodend:sourcecurrency`, currency_slope =  `b_timeperiodend:sourcecurrency` + b_timeperiodend, .width = c(.99, .95, .8))
+
+ggplot(tb_draws, aes(1, x = b_sourcecurrency, xmin = b_sourcecurrency.lower, xmax = b_sourcecurrency.upper)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
+
+ggplot(tb_draws, aes(1, x = b_timeperiodend, xmin = b_timeperiodend.lower, xmax = b_timeperiodend.upper)) + geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
+
+ggplot(tb_draws, aes(1, x = `b_timeperiodend:sourcecurrency`, xmin = `b_timeperiodend:sourcecurrency.lower`, xmax = `b_timeperiodend:sourcecurrency.upper`)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
+
+ggplot(tb_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 
 
-ggplot(td_ests, aes(estimated_actual_end)) + geom_density() + geom_density(aes(estimated_sim_end), color = "pink") +
-  ggtitle("End value", subtitle = "Offset = decoupled")
 ```
 
-Here is the slope:
+#### On the same scales
+
+To bring different currencies and routes into the same (ballpark) scales, divide by the intercept. This won't change whether these quantities overlap 0, but they will bring them into the same ballpark for visualization. Note this isn't really for inference, but vis.
 
 ```{r}
 
-ggplot(td_ests, aes(estimated_actual_change)) + geom_density() + geom_density(aes(estimated_sim_change), color = "pink") +
-  ggtitle("Change value", subtitle = "Offset = decoupled")
 
 
+tb_draws_scaled <- tidybayes::tidy_draws(tb_brm) %>%
+  tidybayes::median_qi(currency_intercept_scaled = b_sourcecurrency / b_Intercept, abundance_slope_scaled = b_timeperiodend / b_Intercept, currency_offset_scaled = `b_timeperiodend:sourcecurrency` / b_Intercept, currency_slope_scaled =  (`b_timeperiodend:sourcecurrency` + b_timeperiodend) / b_Intercept, .width = c(.99, .95, .8))  %>%
+  mutate(currency = "biomass")
 
-ggplot(td_ests, aes(estimated_change_deviation)) + geom_density() +
-  ggtitle("Difference in change value", subtitle = "Over zero - not decoupled")
+te_draws_scaled <- tidybayes::tidy_draws(te_brm) %>%
+  tidybayes::median_qi(currency_intercept_scaled = b_sourcecurrency / b_Intercept, abundance_slope_scaled = b_timeperiodend / b_Intercept, currency_offset_scaled = `b_timeperiodend:sourcecurrency` / b_Intercept, currency_slope_scaled =  (`b_timeperiodend:sourcecurrency` + b_timeperiodend) / b_Intercept, .width = c(.99, .95, .8))  %>%
+  mutate(currency = "energy")
 
-
-```
-
-These are the "change ratio" estimates. The change ratio is:
-
-`(end_value - begin_value) / begin_value`. 
-
-You can think of it as the slope scaled relative to the beginning value. It has a relatively intuitive interpretation. .1 means the end value gained 10% of the begin value. -.1 means the begin value lost 10% of itself over time. It is comparable across things that started at different begin values, and I think it's a pretty good measure of the magnitude of the slope.
-
-This plot has a lot of information in it:
-
-- each density curve separately shows the change over time for the actual (black) and abundance-only (pink). So if either curve overlaps 0, that currency "didn't change". If either curve is below/above 0, that's a decrease/increase.
-- if the two curves overlap, the currencies are "not decoupled", if the two curves are distinct, the currencies "are decoupled"
-
-```{r, fig.dim = c(3,3)}
-
-ggplot(td_ests, aes(estimated_actual_change_ratio)) + geom_density() + geom_density(aes(estimated_sim_change_ratio), color = "pink") +
-  ggtitle("End value", subtitle = "Offset = decoupled; sign = direction")
-
-```
+draws_scaled <- bind_rows(tb_draws_scaled, te_draws_scaled)
 
 
-Here is the difference between actual and sim ratios:
+ggplot(draws_scaled, aes(currency, x = currency_intercept_scaled, xmin = currency_intercept_scaled.lower, xmax = currency_intercept_scaled.upper, color = currency)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
 
-```{r}
+ggplot(draws_scaled, aes(currency, x = abundance_slope_scaled, xmin = abundance_slope_scaled.lower, xmax = abundance_slope_scaled.upper)) + geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
 
-ggplot(td_ests, aes(estimated_change_ratio_deviation)) + geom_density()+
-  ggtitle("Change value", subtitle = "Over zero - not decoupled")
+ggplot(draws_scaled, aes(currency, x = currency_offset_scaled, xmin = currency_offset_scaled.lower, xmax = currency_offset_scaled.upper)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
 
-```
-### Summarize posterior draws
+ggplot(draws_scaled, aes(currency, x = currency_slope_scaled, xmin = currency_slope_scaled.lower, xmax = currency_slope_scaled.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 
-Extracting summary statistics from the posterior estimates.
-
-The following is from `summarize_brm_ests`:
-
-Argument:
-
-```{r}
-
-some_ests <- extract_brm_ests(some_brms)
-```
-
-```{r}
-
-  td_route_ests_summary <- some_ests %>%
-    dplyr::select(-rowindex) %>%
-    dplyr::group_by(matssname, currency) %>%
-    dplyr::summarize_all(.funs = list(mean = mean,
-                                      lower = lower_quantile,
-                                      upper = upper_quantile,
-                                      median = median)) %>%
-    dplyr::ungroup()
-
-```
-
-This gives us a dataframe with the mean, lower, upper, and median estimates for all the parameters + all the quantities of interest we looked at above.
-
-What I really care about is the `actual_change_ratio` and `sim_change_ratio`.
-
-```{r}
-
-ggplot(td_route_ests_summary, aes(estimated_sim_change_ratio_median, estimated_actual_change_ratio_median, color = currency)) + geom_point() + geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper), width = .05) + geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper), height = .05) + geom_abline(slope =1, intercept = 0)
 
 ```
