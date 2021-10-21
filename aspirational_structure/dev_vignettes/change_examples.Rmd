@@ -283,6 +283,59 @@ summarize_draws(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_318_3)
 ```
 
 
+# 116_18 (granby)
+
+## "actual" dyanmics
+
+```{r}
+
+loadd(sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+
+
+actual_plots(sims_sgmms_bbs_rtrg_116_18)
+
+
+```
+
+## Models
+
+### Diagnostics
+
+```{r}
+
+loadd(fits_sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+summary(fits_sims_sgmms_bbs_rtrg_116_18$te_brm)
+summary(fits_sims_sgmms_bbs_rtrg_116_18$tb_brm)
+
+```
+
+
+### Summary plots
+
+```{r}
+
+loadd(qis_draws_fits_sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+qi_plots(qis_draws_fits_sims_sgmms_bbs_rtrg_116_18)
+
+qi_plots_scaled(qis_draws_fits_sims_sgmms_bbs_rtrg_116_18)
+
+
+```
+
+### Probabilities from draws
+
+```{r}
+
+loadd(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+
+summarize_draws(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_116_18)
+
+```
+
 ```{r}
 
 DBI::dbDisconnect(db)

@@ -19,6 +19,12 @@ Exploring on some examples
           - [Diagnostics](#diagnostics-2)
           - [Summary plots](#summary-plots-2)
           - [Probabilities from draws](#probabilities-from-draws-2)
+  - [116\_18 (granby)](#116_18-granby)
+      - [“actual” dyanmics](#actual-dyanmics-3)
+      - [Models](#models-3)
+          - [Diagnostics](#diagnostics-3)
+          - [Summary plots](#summary-plots-3)
+          - [Probabilities from draws](#probabilities-from-draws-3)
 
 # 19\_7
 
@@ -277,5 +283,91 @@ Exploring on some examples
     ##   <chr>          <dbl>           <dbl>            <dbl>                    <dbl>
     ## 1 biomass            0         0.00025            0.451                        0
     ## 2 energy             0         0.00025            0.433                        0
+
+# 116\_18 (granby)
+
+## “actual” dyanmics
+
+![](change_examples_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+## Models
+
+### Diagnostics
+
+    ##  Family: gaussian 
+    ##   Links: mu = identity; sigma = identity 
+    ## Formula: total_energy ~ (timeperiod * source) + (1 | year) 
+    ##    Data: justsims (Number of observations: 2000) 
+    ##   Draws: 4 chains, each with iter = 4000; warmup = 2000; thin = 2;
+    ##          total post-warmup draws = 4000
+    ## 
+    ## Group-Level Effects: 
+    ## ~year (Number of levels: 10) 
+    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sd(Intercept)  8544.13   2280.78  5267.13 14048.64 1.00     3790     4983
+    ## 
+    ## Population-Level Effects: 
+    ##                              Estimate Est.Error l-95% CI  u-95% CI Rhat
+    ## Intercept                    98494.71   3929.81 90820.30 106325.83 1.00
+    ## timeperiodend                 5022.75   5666.92 -5999.16  16404.80 1.00
+    ## sourcecurrency                  66.27    288.74  -507.87    629.51 1.00
+    ## timeperiodend:sourcecurrency  6159.46    404.82  5367.73   6956.61 1.00
+    ##                              Bulk_ESS Tail_ESS
+    ## Intercept                        3628     5601
+    ## timeperiodend                    4031     5201
+    ## sourcecurrency                   7154     6546
+    ## timeperiodend:sourcecurrency     7454     7173
+    ## 
+    ## Family Specific Parameters: 
+    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sigma  4605.94     73.68  4465.64  4749.39 1.00     7607     6769
+    ## 
+    ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
+    ## scale reduction factor on split chains (at convergence, Rhat = 1).
+
+    ##  Family: gaussian 
+    ##   Links: mu = identity; sigma = identity 
+    ## Formula: total_biomass ~ (timeperiod * source) + (1 | year) 
+    ##    Data: justsims (Number of observations: 2000) 
+    ##   Draws: 4 chains, each with iter = 4000; warmup = 2000; thin = 2;
+    ##          total post-warmup draws = 4000
+    ## 
+    ## Group-Level Effects: 
+    ## ~year (Number of levels: 10) 
+    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sd(Intercept)  3193.56    902.86  1953.95  5414.84 1.00     3771     4878
+    ## 
+    ## Population-Level Effects: 
+    ##                              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
+    ## Intercept                    34424.49   1454.97 31517.99 37327.23 1.00     4967
+    ## timeperiodend                 1724.09   2105.41 -2420.19  5862.72 1.00     5104
+    ## sourcecurrency                  21.86    189.52  -348.29   380.81 1.00     7429
+    ## timeperiodend:sourcecurrency  7207.93    267.74  6693.27  7733.81 1.00     7429
+    ##                              Tail_ESS
+    ## Intercept                        5280
+    ## timeperiodend                    5388
+    ## sourcecurrency                   7046
+    ## timeperiodend:sourcecurrency     7082
+    ## 
+    ## Family Specific Parameters: 
+    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sigma  2988.51     47.49  2898.98  3081.99 1.00     7821     6546
+    ## 
+    ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
+    ## scale reduction factor on split chains (at convergence, Rhat = 1).
+
+### Summary plots
+
+![](change_examples_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->![](change_examples_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
+
+### Probabilities from draws
+
+    ## # A tibble: 2 × 5
+    ##   currency b_Intercept b_timeperiodend b_sourcecurrency `b_timeperiodend:source…
+    ##   <chr>          <dbl>           <dbl>            <dbl>                    <dbl>
+    ## 1 biomass            0           0.193            0.447                        0
+    ## 2 energy             0           0.176            0.410                        0
 
     ## [1] "Completed OK"
