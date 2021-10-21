@@ -39,7 +39,7 @@ methods <- drake_plan(
               transform = combine(draws)),
   all_draws = target(dplyr::bind_rows(ad)),
   allq = target(dplyr::combine(qis),
-              transform = map(qis)),
+              transform = combine(qis)),
   all_qis = target(dplyr::bind_rows(allq))
 
 )

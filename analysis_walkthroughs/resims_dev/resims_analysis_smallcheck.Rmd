@@ -10,7 +10,7 @@ library(drake)
 library(multipanelfigure)
 theme_set(theme_bw())
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual-resim.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("old_caches", "drake-cache-actual-resim.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
@@ -29,7 +29,7 @@ Estimated change due to abundance:
 
 ```{r}
 
-ggplot(all_estimates, aes(estimated_sim_change_ratio_median, estimated_actual_change_ratio_median)) +
+ggplot(all_estimates[100:140,], aes(estimated_sim_change_ratio_median, estimated_actual_change_ratio_median, color = matssname)) +
   geom_point() +
   geom_vline(xintercept = 0) +
   geom_hline(yintercept = 0)+
@@ -37,10 +37,11 @@ ggplot(all_estimates, aes(estimated_sim_change_ratio_median, estimated_actual_ch
 ## geom_errorbarh(aes(xmin = estimated_sim_change_ratio_lower, xmax = estimated_sim_change_ratio_upper, y = estimated_actual_change_ratio_median), height = .005) +
   #geom_errorbar(aes(ymin = estimated_actual_change_ratio_lower, ymax = estimated_actual_change_ratio_upper, x = estimated_sim_change_ratio_median), width = .005) +
   #scale_color_viridis_d(option='mako', begin = .2, end =.8) +
-  theme(legend.position = "none") +
+  #theme(legend.position = "none") +
   facet_wrap(vars(currency)) +
 xlim(-1, 2) +
-ylim(-2, 3)
+ylim(-2, 3) +
+  geom_point(data = filter(all_estimates, matssname =="bbs_rtrg_19_7"), size = 3)
 
 ```
 ## biomass
