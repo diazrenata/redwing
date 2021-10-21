@@ -3,6 +3,7 @@ title: "Change over time in different currencies"
 output: 
   github_document:
     toc: TRUE
+    df_print: kable
 ---
 
 ```{r setup, include=FALSE}
@@ -322,7 +323,7 @@ library(tidybayes)
 
 
 te_draws <- tidybayes::tidy_draws(te_brm) %>%
-  tidybayes::median_qi(b_sourcecurrency, b_timeperiodend, `b_timeperiodend:sourcecurrency`, currency_slope =  `b_timeperiodend:sourcecurrency` + b_timeperiodend, .width = c(.99, .95, .8))
+  tidybayes::median_qi(b_sourcecurrency, b_timeperiodend, `b_timeperiodend:sourcecurrency`, currency_slope =  `b_timeperiodend:sourcecurrency` + b_timeperiodend, relative_offset =  `b_timeperiodend:sourcecurrency` / b_timeperiodend, .width = c(.99, .95, .8))
 
 ggplot(te_draws, aes(1, x = b_sourcecurrency, xmin = b_sourcecurrency.lower, xmax = b_sourcecurrency.upper)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
 
@@ -333,6 +334,8 @@ ggplot(te_draws, aes(1, x = `b_timeperiodend:sourcecurrency`, xmin = `b_timeperi
 ggplot(te_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 
 
+ggplot(te_draws, aes(1, x = relative_offset, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Currency offset relative to abund slope") + geom_vline(xintercept = 0)
+
 ```
 
 
@@ -342,7 +345,7 @@ ggplot(te_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = 
 
 
 tb_draws <- tidybayes::tidy_draws(tb_brm) %>%
-  tidybayes::median_qi(b_sourcecurrency, b_timeperiodend, `b_timeperiodend:sourcecurrency`, currency_slope =  `b_timeperiodend:sourcecurrency` + b_timeperiodend, .width = c(.99, .95, .8))
+  tidybayes::median_qi(b_sourcecurrency, b_timeperiodend, `b_timeperiodend:sourcecurrency`, currency_slope =  `b_timeperiodend:sourcecurrency` + b_timeperiodend, relative_offset =  `b_timeperiodend:sourcecurrency` / b_timeperiodend, .width = c(.99, .95, .8))
 
 ggplot(tb_draws, aes(1, x = b_sourcecurrency, xmin = b_sourcecurrency.lower, xmax = b_sourcecurrency.upper)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
 
@@ -351,6 +354,7 @@ ggplot(tb_draws, aes(1, x = b_timeperiodend, xmin = b_timeperiodend.lower, xmax 
 ggplot(tb_draws, aes(1, x = `b_timeperiodend:sourcecurrency`, xmin = `b_timeperiodend:sourcecurrency.lower`, xmax = `b_timeperiodend:sourcecurrency.upper`)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
 
 ggplot(tb_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
+
 
 
 ```
@@ -364,7 +368,7 @@ To bring different currencies and routes into the same (ballpark) scales, divide
 
 
 tb_draws_scaled <- tidybayes::tidy_draws(tb_brm) %>%
-  tidybayes::median_qi(currency_intercept_scaled = b_sourcecurrency / b_Intercept, abundance_slope_scaled = b_timeperiodend / b_Intercept, currency_offset_scaled = `b_timeperiodend:sourcecurrency` / b_Intercept, currency_slope_scaled =  (`b_timeperiodend:sourcecurrency` + b_timeperiodend) / b_Intercept, .width = c(.99, .95, .8))  %>%
+  tidybayes::median_qi(currency_intercept_scaled = b_sourcecurrency / b_Intercept, abundance_slope_scaled = b_timeperiodend / b_Intercept, currency_offset_scaled = `b_timeperiodend:sourcecurrency` / b_Intercept, currency_slope_scaled =  (`b_timeperiodend:sourcecurrency` + b_timeperiodend) / b_Intercept,  .width = c(.99, .95, .8))  %>%
   mutate(currency = "biomass")
 
 te_draws_scaled <- tidybayes::tidy_draws(te_brm) %>%
@@ -382,5 +386,39 @@ ggplot(draws_scaled, aes(currency, x = currency_offset_scaled, xmin = currency_o
 
 ggplot(draws_scaled, aes(currency, x = currency_slope_scaled, xmin = currency_slope_scaled.lower, xmax = currency_slope_scaled.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 
+```
+
+Biomass over zeros:
+
+```{r, results = T}
+
+mean_o_zero <- function(vector) {
+  return(mean(vector > 0))
+}
+
+tb_draws <- tidybayes::tidy_draws(tb_brm) %>%
+  select(b_Intercept, b_timeperiodend, `b_timeperiodend:sourcecurrency`, `b_sourcecurrency`) %>%
+  summarize_all(mean_o_zero)
+
+print(tb_draws)
+
+print(summary(tb_brm))
+
+```
+
+
+
+Energy over zeros:
+
+```{r, results = T}
+
+
+te_draws <- tidybayes::tidy_draws(te_brm) %>%
+  select(b_Intercept, b_timeperiodend, `b_timeperiodend:sourcecurrency`, `b_sourcecurrency`) %>%
+  summarize_all(mean_o_zero)
+
+print(te_draws)
+
+print(summary(te_brm))
 
 ```

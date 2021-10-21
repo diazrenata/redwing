@@ -51,7 +51,7 @@ ggplot(dat_to_plot, aes(year, total_energy)) + geom_point() + ggtitle("energy")+
 ggplot(dat_to_plot, aes(year, total_biomass)) + geom_point() + ggtitle("biomass")+ geom_smooth(method = "lm", se = F)), ncol = 3)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 Granby looks like not an appreciable change in abundance, but
 potentially an increase in energy and more probably biomass.
@@ -103,7 +103,7 @@ masses (and then a large buffer). Drawing from `$mass` with probability
 ggplot(sampling_gmms$begin, aes(mass, density)) + geom_line() + geom_line(data = sampling_gmms$end, color = "green") + ggtitle("Sampling GMMs", subtitle = "Black = begin, green = end") + xlab("Mass (log)")
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ### Get template ISD dataframes
 
@@ -191,7 +191,7 @@ ggplot(all_svs, aes(year, total_energy, color = source)) + geom_point() + geom_s
 ggplot(all_svs, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se= F) + ggtitle("biomass") + theme(legend.position = "bottom")), ncol = 3)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 Some interpretation on these plots.
 
@@ -225,7 +225,7 @@ We can pull multiple sims using `draw_communities_wrapper`.
 ### Pull multiple sims
 
 ``` r
-multi_svs <- draw_communities_wrapper(granby, ndraws = 100, sampling_gmms = sampling_gmms) %>%
+multi_svs <- draw_communities_wrapper(granby, ndraws = 10, sampling_gmms = sampling_gmms) %>%
   mutate(group_to_plot = paste0(sim_iteration, source))
 ```
 
@@ -235,7 +235,7 @@ gridExtra::grid.arrange(grobs = list(ggplot(multi_svs, aes(year, total_abundance
                                      ggplot(multi_svs, aes(year, total_biomass, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("biomass") + theme(legend.position = "bottom")), ncol = 3)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 gridExtra::grid.arrange(grobs = list(ggplot(filter(multi_svs, source != "raw"), aes(year, total_abundance, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("abundance") + theme(legend.position = "bottom"),
@@ -243,7 +243,7 @@ gridExtra::grid.arrange(grobs = list(ggplot(filter(multi_svs, source != "raw"), 
                                      ggplot(filter(multi_svs, source != "raw"), aes(year, total_biomass, color = source, group = as.factor(group_to_plot))) + geom_point() + geom_smooth(method = "lm", se= F, size = .5) + ggtitle("biomass") + theme(legend.position = "bottom")), ncol = 3)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
 
 From here we can see that there is some heterogeneity in the slopes
 derived simply from repeating sims.
@@ -365,31 +365,31 @@ te_draws <- tidybayes::tidy_draws(te_brm) %>%
 ggplot(te_draws, aes(1, x = b_sourcecurrency, xmin = b_sourcecurrency.lower, xmax = b_sourcecurrency.upper)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 ggplot(te_draws, aes(1, x = b_timeperiodend, xmin = b_timeperiodend.lower, xmax = b_timeperiodend.upper)) + geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
 ``` r
 ggplot(te_draws, aes(1, x = `b_timeperiodend:sourcecurrency`, xmin = `b_timeperiodend:sourcecurrency.lower`, xmax = `b_timeperiodend:sourcecurrency.upper`)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
 
 ``` r
 ggplot(te_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
 
 ``` r
 ggplot(te_draws, aes(1, x = relative_offset, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Currency offset relative to abund slope") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-15-5.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-15-5.png)<!-- -->
 
 #### Total biomass
 
@@ -400,25 +400,25 @@ tb_draws <- tidybayes::tidy_draws(tb_brm) %>%
 ggplot(tb_draws, aes(1, x = b_sourcecurrency, xmin = b_sourcecurrency.lower, xmax = b_sourcecurrency.upper)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 ggplot(tb_draws, aes(1, x = b_timeperiodend, xmin = b_timeperiodend.lower, xmax = b_timeperiodend.upper)) + geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
 
 ``` r
 ggplot(tb_draws, aes(1, x = `b_timeperiodend:sourcecurrency`, xmin = `b_timeperiodend:sourcecurrency.lower`, xmax = `b_timeperiodend:sourcecurrency.upper`)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-16-3.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-16-3.png)<!-- -->
 
 ``` r
 ggplot(tb_draws, aes(1, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-16-4.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-16-4.png)<!-- -->
 
 #### On the same scales
 
@@ -442,25 +442,25 @@ draws_scaled <- bind_rows(tb_draws_scaled, te_draws_scaled)
 ggplot(draws_scaled, aes(currency, x = currency_intercept_scaled, xmin = currency_intercept_scaled.lower, xmax = currency_intercept_scaled.upper, color = currency)) + geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 ggplot(draws_scaled, aes(currency, x = abundance_slope_scaled, xmin = abundance_slope_scaled.lower, xmax = abundance_slope_scaled.upper)) + geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ``` r
 ggplot(draws_scaled, aes(currency, x = currency_offset_scaled, xmin = currency_offset_scaled.lower, xmax = currency_offset_scaled.upper)) + geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
 
 ``` r
 ggplot(draws_scaled, aes(currency, x = currency_slope_scaled, xmin = currency_slope_scaled.lower, xmax = currency_slope_scaled.upper)) + geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
 ```
 
-![](02_change_over_time_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
+![](02_change_over_time_10sims_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
 
 Biomass over zeros:
 
@@ -479,7 +479,7 @@ print(tb_draws)
     ## # A tibble: 1 × 4
     ##   b_Intercept b_timeperiodend `b_timeperiodend:sourcecurrency` b_sourcecurrency
     ##         <dbl>           <dbl>                            <dbl>            <dbl>
-    ## 1           1            0.78                                1            0.501
+    ## 1           1           0.779                                1            0.258
 
 ``` r
 print(summary(tb_brm))
@@ -488,30 +488,30 @@ print(summary(tb_brm))
     ##  Family: gaussian 
     ##   Links: mu = identity; sigma = identity 
     ## Formula: total_biomass ~ (timeperiod * source) + (1 | year) 
-    ##    Data: justsims (Number of observations: 2000) 
+    ##    Data: justsims (Number of observations: 200) 
     ##   Draws: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
     ##          total post-warmup draws = 8000
     ## 
     ## Group-Level Effects: 
     ## ~year (Number of levels: 10) 
     ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)  3178.44    878.07  1941.48  5378.19 1.00     2167     3204
+    ## sd(Intercept)  3070.37    890.00  1805.46  5270.66 1.00     2167     3763
     ## 
     ## Population-Level Effects: 
     ##                              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
-    ## Intercept                    34507.36   1520.15 31481.48 37504.25 1.00     2232
-    ## timeperiodend                 1525.87   2174.90 -2795.68  5943.10 1.00     2299
-    ## sourcecurrency                   1.68    191.11  -372.08   369.25 1.00     6203
-    ## timeperiodend:sourcecurrency  7234.35    267.38  6709.65  7753.89 1.00     5862
+    ## Intercept                    34905.91   1425.17 32114.56 37778.77 1.00     3055
+    ## timeperiodend                 1477.03   2074.67 -2754.41  5628.10 1.00     3104
+    ## sourcecurrency                -377.46    574.51 -1516.42   743.81 1.00     6025
+    ## timeperiodend:sourcecurrency  8220.47    811.11  6676.86  9805.55 1.00     6339
     ##                              Tail_ESS
-    ## Intercept                        3114
-    ## timeperiodend                    3031
-    ## sourcecurrency                   5450
-    ## timeperiodend:sourcecurrency     5368
+    ## Intercept                        3864
+    ## timeperiodend                    3816
+    ## sourcecurrency                   5554
+    ## timeperiodend:sourcecurrency     5852
     ## 
     ## Family Specific Parameters: 
     ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sigma  2992.77     47.26  2900.53  3086.68 1.00     7989     5033
+    ## sigma  2881.18    149.01  2609.28  3198.36 1.00     6234     4913
     ## 
     ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
     ## and Tail_ESS are effective sample size measures, and Rhat is the potential
@@ -530,7 +530,7 @@ print(te_draws)
     ## # A tibble: 1 × 4
     ##   b_Intercept b_timeperiodend `b_timeperiodend:sourcecurrency` b_sourcecurrency
     ##         <dbl>           <dbl>                            <dbl>            <dbl>
-    ## 1           1           0.805                                1            0.526
+    ## 1           1           0.801                                1            0.212
 
 ``` r
 print(summary(te_brm))
@@ -539,30 +539,30 @@ print(summary(te_brm))
     ##  Family: gaussian 
     ##   Links: mu = identity; sigma = identity 
     ## Formula: total_energy ~ (timeperiod * source) + (1 | year) 
-    ##    Data: justsims (Number of observations: 2000) 
+    ##    Data: justsims (Number of observations: 200) 
     ##   Draws: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
     ##          total post-warmup draws = 8000
     ## 
     ## Group-Level Effects: 
     ## ~year (Number of levels: 10) 
     ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)  8510.34   2318.45  5247.83 14215.90 1.00     2185     3452
+    ## sd(Intercept)  8321.32   2282.99  5153.30 14019.49 1.00     2570     3722
     ## 
     ## Population-Level Effects: 
     ##                              Estimate Est.Error l-95% CI  u-95% CI Rhat
-    ## Intercept                    98911.48   3798.87 91423.45 106608.79 1.00
-    ## timeperiodend                 4331.88   5345.59 -6417.93  15352.03 1.00
-    ## sourcecurrency                  20.55    290.36  -525.50    594.10 1.00
-    ## timeperiodend:sourcecurrency  6355.66    414.35  5531.34   7169.67 1.00
+    ## Intercept                    99664.35   3732.15 92193.18 106958.71 1.00
+    ## timeperiodend                 4301.41   5471.80 -6622.25  15222.51 1.00
+    ## sourcecurrency                -711.54    887.34 -2473.01   1011.65 1.00
+    ## timeperiodend:sourcecurrency  7641.77   1253.71  5227.99  10094.93 1.00
     ##                              Bulk_ESS Tail_ESS
-    ## Intercept                        2606     3123
-    ## timeperiodend                    1930     3140
-    ## sourcecurrency                   5596     4942
-    ## timeperiodend:sourcecurrency     5341     5020
+    ## Intercept                        2716     3563
+    ## timeperiodend                    2784     3265
+    ## sourcecurrency                   4980     4880
+    ## timeperiodend:sourcecurrency     5309     4834
     ## 
     ## Family Specific Parameters: 
     ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sigma  4620.34     73.86  4474.57  4768.22 1.00     6684     4009
+    ## sigma  4367.92    224.03  3956.96  4837.03 1.00     6329     5091
     ## 
     ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
     ## and Tail_ESS are effective sample size measures, and Rhat is the potential
