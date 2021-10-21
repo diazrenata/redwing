@@ -6,7 +6,7 @@
 #SBATCH --qos=ewhite-b
 #SBATCH --ntasks=1                 # Number of MPI ranks
 #SBATCH --cpus-per-task=4            # Number of cores per MPI rank
-#SBATCH --mem-per-cpu=4GB
+#SBATCH --mem-per-cpu=8GB
 #SBATCH --time=12:00:00       #Time limit hrs:min:sec
 #SBATCH --output ../../aspirational_structure/drake_caches/logs/dev_change%j.out
 #SBATCH --error ../../aspirational_structure/drake_caches/logs/dev_change%j.err
