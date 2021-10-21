@@ -8,6 +8,7 @@ library(tidybayes)
 
 expose_imports(rwar)
 
+run_hpg = T
 
 datasets <- MATSS::build_bbs_datasets_plan()
 
@@ -54,8 +55,10 @@ cache$del(key = "lock", namespace = "session")
 
 ## Run the pipeline
 nodename <- Sys.info()["nodename"]
-if(grepl("ufhpc", nodename)) {
-   print("I know I am on the HiPerGator!")
+# if(grepl("ufhpc", nodename)) {
+#    print("I know I am on the HiPerGator!")
+
+if(run_hpg) {
 library(clustermq)
 options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
 )
