@@ -8,27 +8,12 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F)
 library(dplyr)
-library(drake)
 library(ggplot2)
 library(multipanelfigure)
+library(tidybayes)
 theme_set(theme_bw())
-```
 
-```{r}
-
-## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "dev-change-cache.sqlite"))
-cache <- storr::storr_dbi("datatable", "keystable", db)
-cache$del(key = "lock", namespace = "session")
-
-cached(cache = cache)
-```
-
-```{r}
-
-loadd(all_sims, cache = cache)
-
-shortsims <- filter(all_sims, as.numeric(sim_iteration) <2, source != "raw")
+load(here::here("aspirational_structure", "dev_vignettes", "hbrm_post1.Rds"))
 
 
 ```
@@ -36,16 +21,125 @@ shortsims <- filter(all_sims, as.numeric(sim_iteration) <2, source != "raw")
 
 ```{r}
 
-library(brms)
 
-hbrm <- brm(total_energy ~ 0 + ((timeperiod * source )| matssname), data = shortsims, cores = 4)
+intercept_cols <- which(grepl(",Intercept]", colnames(hbrm_post1)))
 
-hbrm_draws <- tidybayes::tidy_draws(hbrm)
+intercept_draws <- hbrm_post1[,intercept_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "intercept")
 
-ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,timeperiodend]`)) + geom_density()
-ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,timeperiodend:sourcecurrency]`)) + geom_density()
-ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,sourcecurrency]`)) + geom_density()
+ggplot(filter(intercept_draws, site %in% unique(intercept_draws$site)[1:5]), aes(intercept)) + geom_density() + facet_wrap(vars(site), ncol = 1)
 
+
+
+sim_int_cols <- which(grepl(",sourcesim]", colnames(hbrm_post1)))
+
+sim_int_draws <- hbrm_post1[,sim_int_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "sim_int")
+
+ggplot(filter(sim_int_draws, site %in% unique(sim_int_draws$site)[1:5]), aes(sim_int)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+slope_cols <- which(grepl("timeperiodend]", colnames(hbrm_post1)))
+
+slope_draws <- hbrm_post1[,slope_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "slope")
+
+ggplot(filter(slope_draws, site %in% unique(slope_draws$site)[1:5]), aes(slope)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+
+offset_cols <- which(grepl("timeperiodend:sourcesim]", colnames(hbrm_post1)))
+
+offset_draws <- hbrm_post1[,offset_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "offset")
+
+ggplot(filter(offset_draws, site %in% unique(offset_draws$site)[1:5]), aes(offset)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+```
+
+
+```{r}
+intercept_qis <- hbrm_post1[,intercept_cols] %>%
+  median_qi() %>%
+  tidyr::pivot_longer(-c(.width, .point, .interval), names_to = "var", values_to = "val") %>%
+  mutate(varname = ifelse(
+    grepl(".lower", var), "lower",
+    ifelse(
+      grepl(".upper", var), "upper",
+      "median"
+    )
+  )) %>%
+  group_by_all() %>%
+  mutate(sitename = unlist(strsplit(substr(var, 13, 30), ","))[1]) %>%
+  ungroup() %>%
+  select(-var) %>%
+  tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
+
+ggplot(intercept_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + ggtitle("Intercept")
+
+
+
+slope_qis <- hbrm_post1[,slope_cols] %>%
+  median_qi() %>%
+  tidyr::pivot_longer(-c(.width, .point, .interval), names_to = "var", values_to = "val") %>%
+  mutate(varname = ifelse(
+    grepl(".lower", var), "lower",
+    ifelse(
+      grepl(".upper", var), "upper",
+      "median"
+    )
+  )) %>%
+  group_by_all() %>%
+  mutate(sitename = unlist(strsplit(substr(var, 13, 30), ","))[1]) %>%
+  ungroup() %>%
+  select(-var) %>%
+  tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
+
+ggplot(slope_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Slope")
+
+
+
+sim_int_qis <- hbrm_post1[,sim_int_cols] %>%
+  median_qi() %>%
+  tidyr::pivot_longer(-c(.width, .point, .interval), names_to = "var", values_to = "val") %>%
+  mutate(varname = ifelse(
+    grepl(".lower", var), "lower",
+    ifelse(
+      grepl(".upper", var), "upper",
+      "median"
+    )
+  )) %>%
+  group_by_all() %>%
+  mutate(sitename = unlist(strsplit(substr(var, 13, 30), ","))[1]) %>%
+  ungroup() %>%
+  select(-var) %>%
+  tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
+
+ggplot(sim_int_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Sim intercept")
+
+
+offset_qis <- hbrm_post1[,offset_cols] %>%
+  median_qi() %>%
+  tidyr::pivot_longer(-c(.width, .point, .interval), names_to = "var", values_to = "val") %>%
+  mutate(varname = ifelse(
+    grepl(".lower", var), "lower",
+    ifelse(
+      grepl(".upper", var), "upper",
+      "median"
+    )
+  )) %>%
+  group_by_all() %>%
+  mutate(sitename = unlist(strsplit(substr(var, 13, 30), ","))[1]) %>%
+  ungroup() %>%
+  select(-var) %>%
+  tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
+
+ggplot(offset_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Offset")
 
 ```
 
