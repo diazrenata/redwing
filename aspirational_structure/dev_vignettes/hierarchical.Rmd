@@ -28,7 +28,7 @@ cached(cache = cache)
 
 loadd(all_sims, cache = cache)
 
-shortsims <- filter(all_sims, as.numeric(sim_iteration) <6, source != "raw")
+shortsims <- filter(all_sims, as.numeric(sim_iteration) <2, source != "raw")
 
 
 ```
@@ -40,7 +40,12 @@ library(brms)
 
 hbrm <- brm(total_energy ~ 0 + (timeperiod * source | matssname), data = shortsims, cores = 4)
 
-hbrm_post <- posterior_samples(hbrm)
+hbrm_draws <- tidybayes::tidy_draws(hbrm)
+
+ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_5_64,sourcecurrency]`)) + geom_density()
+ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_116_18,timeperiodend:sourcecurrency]`)) + geom_density()
+ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_116_18,timeperiodend]`)) + geom_density()
+
 
 
 ```

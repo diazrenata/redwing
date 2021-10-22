@@ -19,14 +19,15 @@ print("Completed OK")
 
 set.seed(1989)
 
-shorter_sites <- sample(unique(all_sims$matssname), size = 3, replace = F)
+shorter_sites <- sample(unique(all_sims$matssname), size = 10, replace = F)
 
-shorter_sims <- filter(all_sims, as.numeric(sim_iteration) < 6, matssname %in% shorter_sites)
+shorter_sims <- filter(all_sims, as.numeric(sim_iteration) < 11, matssname %in% shorter_sites)
 
 set.seed(NULL)
 
 print(Sys.time())
-hlmer <- lmer(total_energy ~ 0 + ((timeperiod * source) | matssname), data = shorter_sims)
+hlm <- lm(total_energy ~ 0 + ((timeperiod * source) / matssname), data = shorter_sims)
+hlmer <- lmer(total_energy ~ 1 + ((timeperiod * source) | matssname), data = shorter_sims)
 
 
 print(Sys.time())
