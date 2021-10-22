@@ -1,0 +1,53 @@
+---
+title: "Exploring on some examples"
+output: 
+  github_document:
+     toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F)
+library(dplyr)
+library(drake)
+library(ggplot2)
+library(multipanelfigure)
+theme_set(theme_bw())
+```
+
+```{r}
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "dev-change-cache.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+cached(cache = cache)
+```
+
+```{r}
+
+loadd(all_sims, cache = cache)
+
+shortsims <- filter(all_sims, as.numeric(sim_iteration) <11, source != "raw")
+
+
+```
+
+
+```{r}
+
+library(brms)
+
+hbrm <- brm(total_energy ~ 0 + (timeperiod * source | matssname), data = shortsims, cores = 4)
+
+hbrm_post <- posterior_samples(hbrm)
+
+
+```
+
+```{r}
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
+```
