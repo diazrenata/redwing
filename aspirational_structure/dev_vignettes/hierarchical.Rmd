@@ -28,7 +28,7 @@ cached(cache = cache)
 
 loadd(all_sims, cache = cache)
 
-shortsims <- filter(all_sims, as.numeric(sim_iteration) <11, source != "raw")
+shortsims <- filter(all_sims, as.numeric(sim_iteration) <6, source != "raw")
 
 
 ```
