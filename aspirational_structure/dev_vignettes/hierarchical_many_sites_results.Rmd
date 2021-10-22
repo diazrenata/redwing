@@ -6,7 +6,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F, fig.dim = c(4, 8))
 library(dplyr)
 library(ggplot2)
 library(multipanelfigure)
@@ -80,7 +80,7 @@ intercept_qis <- hbrm_post1[,intercept_cols] %>%
   select(-var) %>%
   tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
 
-ggplot(intercept_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + ggtitle("Intercept")
+ggplot(intercept_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + ggtitle("Intercept")
 
 
 
@@ -100,7 +100,7 @@ slope_qis <- hbrm_post1[,slope_cols] %>%
   select(-var) %>%
   tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
 
-ggplot(slope_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Slope")
+ggplot(slope_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Slope")
 
 
 
@@ -120,7 +120,7 @@ sim_int_qis <- hbrm_post1[,sim_int_cols] %>%
   select(-var) %>%
   tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
 
-ggplot(sim_int_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Sim intercept")
+ggplot(sim_int_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Sim intercept")
 
 
 offset_qis <- hbrm_post1[,offset_cols] %>%
@@ -139,13 +139,58 @@ offset_qis <- hbrm_post1[,offset_cols] %>%
   select(-var) %>%
   tidyr::pivot_wider(id_cols= c(sitename, .point, .width, .interval), names_from = varname, values_from = val)
 
-ggplot(offset_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper)) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Offset")
+ggplot(offset_qis, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Offset")
 
 ```
 
+For visualization, interested in rescaling to ~comparable to the intercept for each route.
+
+NOT FOR INFERENCE. NOT INCORPORATING VARIATION AROUND ESTIMATE FOR INTERCEPT. just ballparking it...
+
+
 ```{r}
 
-DBI::dbDisconnect(db)
-rm(cache)
-print("Completed OK")
+
+rescale_val <- select(intercept_qis, sitename, median) %>% rename(rescaler = median)
+
+slope_qis_relative <- slope_qis %>% left_join(rescale_val) %>%
+  mutate(
+    median = median / rescaler,
+    lower = lower / rescaler,
+    upper = upper / rescaler
+  )
+ggplot(slope_qis_relative, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Slope")
+
+
+sim_int_qis_relative <- sim_int_qis %>% left_join(rescale_val) %>%
+  mutate(
+    median = median / rescaler,
+    lower = lower / rescaler,
+    upper = upper / rescaler
+  )
+ggplot(sim_int_qis_relative, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Sim intercept")
+
+offset_rescale_val <- select(slope_qis, sitename, median) %>% rename(rescaler = median)
+
+
+offset_qis_relative <- offset_qis %>% left_join(rescale_val) %>%
+  mutate(
+    median = median / rescaler,
+    lower = lower / rescaler,
+    upper = upper / rescaler
+  )
+ggplot(offset_qis_relative, aes(median, sitename)) + geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + geom_vline(xintercept = 0, color = "red")+ ggtitle("Offset relative to intercept")
+offset_qis_relatives <- offset_qis %>% left_join(offset_rescale_val) %>%
+  mutate(
+    median = median / rescaler,
+    lower = lower / rescaler,
+    upper = upper / rescaler
+  )
+ggplot(offset_qis_relatives, aes(median, sitename)) + 
+  geom_pointinterval(aes(xmin = lower, xmax = upper), size = .1) + 
+  geom_point() +
+  geom_vline(xintercept = 0, color = "red")+ 
+  ggtitle("Offset relative to slope", subtitle=("xlims remove bars for some sites")) + 
+  xlim(-10, 10)
+
 ```
