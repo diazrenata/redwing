@@ -22,7 +22,7 @@ library(brms)
 # shorter_sims <- filter(all_sims, as.numeric(sim_iteration) < 2, matssname %in% shorter_sites, source != "raw")
 # write.csv(shorter_sims,here::here("aspirational_structure", "dev_vignettes", "shorter_sims.csv"), row.names = F)
 
-#shorter_sims <- read.csv(here::here("aspirational_structure", "dev_vignettes", "shorter_sims.csv"))
+shorter_sims <- read.csv(here::here("aspirational_structure", "dev_vignettes", "shorter_sims.csv"))
 set.seed(NULL)
 
 print(Sys.time())
