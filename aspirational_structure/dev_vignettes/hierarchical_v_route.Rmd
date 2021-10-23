@@ -1,0 +1,130 @@
+---
+title: "Exploring on some examples"
+output: 
+  github_document:
+     toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F, fig.dim = c(4, 8))
+library(dplyr)
+library(ggplot2)
+library(multipanelfigure)
+library(tidybayes)
+theme_set(theme_bw())
+
+load(here::here("aspirational_structure", "dev_vignettes", "hbrm_post1.Rds"))
+
+
+```
+
+
+```{r}
+
+
+intercept_cols <- which(grepl(",Intercept]", colnames(hbrm_post1)))
+
+intercept_draws <- hbrm_post1[,intercept_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "intercept")
+
+ggplot(filter(intercept_draws, site %in% unique(intercept_draws$site)[1:5]), aes(intercept)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+
+sim_int_cols <- which(grepl(",sourcesim]", colnames(hbrm_post1)))
+
+sim_int_draws <- hbrm_post1[,sim_int_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "sim_int")
+
+ggplot(filter(sim_int_draws, site %in% unique(sim_int_draws$site)[1:5]), aes(sim_int)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+slope_cols <- which(grepl("timeperiodend]", colnames(hbrm_post1)))
+
+slope_draws <- hbrm_post1[,slope_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "slope")
+
+ggplot(filter(slope_draws, site %in% unique(slope_draws$site)[1:5]), aes(slope)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+
+offset_cols <- which(grepl("timeperiodend:sourcesim]", colnames(hbrm_post1)))
+
+offset_draws <- hbrm_post1[,offset_cols] %>%
+  mutate(rown = dplyr::row_number()) %>%
+  tidyr::pivot_longer(-rown, names_to = "site", values_to = "offset")
+
+ggplot(filter(offset_draws, site %in% unique(offset_draws$site)[1:5]), aes(offset)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+```
+
+```{r}
+library(drake)
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("old_caches", "drake-cache-actual-resim.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+loadd(all_sims, cache = cache)
+
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
+
+```
+
+
+```{r}
+
+demo_sims <- filter(all_sims, matssname == "bbs_rtrg_413_11", source != "raw", as.numeric(sim_iteration) < 6)
+
+ggplot(demo_sims, aes(year, total_energy, color = source)) + geom_point()
+
+
+
+#ggplot(filter(intercept_draws, grepl("bbs_rtrg_413_11", site)), aes(intercept)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+#ggplot(filter(intercept_draws, grepl("bbs_rtrg_413_11", site)), aes(sim_int)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+ggplot(filter(slope_draws, grepl("bbs_rtrg_413_11", site)), aes(slope)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+ggplot(filter(offset_draws, grepl("bbs_rtrg_413_11", site)), aes(offset)) + geom_density() + facet_wrap(vars(site), ncol = 1)
+
+
+library(brms)
+
+demo_brm <- brm(total_energy ~ (timeperiod * source), data = demo_sims, cores = 4)
+
+demo_brm_draws <- tidybayes::tidy_draws(demo_brm)
+
+hbrm_slope_draws <- filter(slope_draws, grepl("bbs_rtrg_413_11", site)) %>%
+  rename(b_timeperiodend = slope)
+
+ggplot(demo_brm_draws, aes(b_timeperiodend)) + geom_density() + geom_density(data = hbrm_slope_draws, color = "blue")
+
+
+
+hbrm_offset_draws <- filter(offset_draws, grepl("bbs_rtrg_413_11", site)) %>%
+  rename(`b_timeperiodend:sourcesim` = offset)
+
+ggplot(demo_brm_draws, aes(`b_timeperiodend:sourcesim`)) + geom_density() + geom_density(data = hbrm_offset_draws, color = "blue")
+
+
+demo_pred <- demo_sims %>%
+  mutate(predicted = predict(demo_brm)[,1])
+
+load(here::here("aspirational_structure", "dev_vignettes", "hbrm1_pred.Rds"))
+
+hbrm_pred <- hbrm_pred %>%
+  filter(matssname == "bbs_rtrg_413_11") %>%
+  left_join(select(demo_sims, year, timeperiod) %>% distinct())
+
+ggplot(demo_pred, aes(year, total_energy, color = source)) + geom_point() + geom_point(aes(y = predicted))
+
+ggplot(hbrm_pred, aes(year, total_energy, color = source)) + geom_point() + geom_point(aes(y = predicted))
+```
