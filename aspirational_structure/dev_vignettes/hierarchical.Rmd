@@ -49,6 +49,19 @@ ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,sourcecurrency]`)) + geom_den
 
 ```
 
+
+```{r}
+
+
+hbrm2 <- brm(total_energy ~ 0  + timeperiod + ((timeperiod * source )| matssname), data = shortsims, cores = 4)
+
+hbrm_draws <- tidybayes::tidy_draws(hbrm2)
+
+ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,timeperiodend]`)) + geom_density()
+ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,timeperiodend:sourcecurrency]`)) + geom_density()
+ggplot(hbrm_draws, aes(`r_matssname[bbs_rtrg_318_3,sourcecurrency]`)) + geom_density()
+```
+
 ```{r}
 
 DBI::dbDisconnect(db)
