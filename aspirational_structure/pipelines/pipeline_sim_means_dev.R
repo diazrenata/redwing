@@ -15,7 +15,7 @@ datasets <- MATSS::build_bbs_datasets_plan()
 
 working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes.csv"))
 
-datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3")), "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")), ]
+datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")), ]
 
 
 sim_plan <- drake_plan(
