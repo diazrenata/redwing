@@ -13,4 +13,4 @@
 
 #This is a generic R submission script
 module load R
-Rscript ../../aspirational_structure/drake_pipelines/pipeline_year_coverage.R
+Rscript ../../aspirational_structure/pipelines/pipeline_year_coverage.R
