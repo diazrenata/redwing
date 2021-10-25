@@ -39,9 +39,9 @@ methods <- drake_plan(
                 transform = map(
                   sims = !!rlang::syms(sim_plan$target)
                 ) ),
-  as = target(dplyr::combine(ssims),
-              transform = combine(ssims)),
-  all_sims = target(dplyr::bind_rows(as)),
+ as = target(dplyr::combine(ssims),
+            transform = combine(ssims)),
+ all_sims = target(dplyr::bind_rows(as)),
   fits = target(rwar::fit_brms3(sims, iter = 2000, thin = 1),
                 transform = map(
                   sims = !!rlang::syms(sim_plan$target)
