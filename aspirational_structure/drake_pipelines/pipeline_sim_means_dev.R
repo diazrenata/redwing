@@ -1,12 +1,10 @@
 library(dplyr)
-library(rwar)
+#library(rwar)
 library(drake)
 library(MATSS)
 library(BBSsize)
 library(brms)
 library(tidybayes)
-
-expose_imports(rwar)
 
 source(here::here("aspirational_structure", "dev_vignettes", "sim_means_fxns_dev.R"))
 
@@ -44,11 +42,11 @@ methods <- drake_plan(
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
   all_sims = target(dplyr::bind_rows(as)),
-  fits = target(fit_brms3(sims, iter = 2000, thin = 1),
+  fits = target(rwar::fit_brms3(sims, iter = 2000, thin = 1),
                 transform = map(
                   sims = !!rlang::syms(sim_plan$target)
                 )),
-  fits_compare = target(compare_both_brms(fits),
+  fits_compare = target(rwar::compare_both_brms(fits),
                         transform = map(fits)),
   af = target(dplyr::combine(fits_compare),
               transform = combine(fits_compare)),
@@ -78,7 +76,7 @@ system.time(make(all,
                  cache = cache,
                  verbose = 1,
                  parallelism = "clustermq",
-                 jobs = 4,
+                 jobs = 6,
                  caching = "main",
                  memory_strategy = "autoclean",
                  lock_envir = F))# Important for DBI caches!
