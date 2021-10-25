@@ -50,7 +50,7 @@ methods <- drake_plan(
                         transform = map(fits)),
   af = target(dplyr::combine(fits_compare),
               transform = combine(fits_compare)),
-  all_comparisons = target(dplyr::bind_rows(af))
+  all_comparisons = target(dplyr::bind_rows(af, .id = "drakename"))
 )
 
 all = bind_rows(datasets, sim_plan, methods)
