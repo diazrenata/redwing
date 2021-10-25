@@ -10,7 +10,7 @@ expose_imports(rwar)
 
 source(here::here("aspirational_structure", "dev_vignettes", "sim_means_fxns_dev.R"))
 
-run_hpg = F
+run_hpg = T
 
 datasets <- MATSS::build_bbs_datasets_plan()
 
