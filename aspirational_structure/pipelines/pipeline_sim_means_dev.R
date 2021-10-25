@@ -47,7 +47,8 @@ methods <- drake_plan(
                   sims = !!rlang::syms(sim_plan$target)
                 )),
   fits_compare = target(rwar::compare_both_brms(fits),
-                        transform = map(fits)),
+                        transform = map(fits),
+                        trigger = trigger(condition = T)),
   af = target(dplyr::combine(fits_compare),
               transform = combine(fits_compare)),
   all_comparisons = target(dplyr::bind_rows(af, .id = "drakename"))
