@@ -13,7 +13,9 @@ cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 cached(cache=cache)
 
-loadd(fits_compare_fits_actual_sims_bbs_rtrg_116_18, cache = cache)
-loadd(fits_actual_sims_bbs_rtrg_116_18, cache = cache)
+loadd(fits_compare_fits_actual_sims_bbs_rtrg_318_3, cache = cache)
+loadd(fits_actual_sims_bbs_rtrg_318_3, cache = cache)
 
-loo_selected <- loo_select(fits_actual_sims_bbs_rtrg_116_18, fits_compare_fits_actual_sims_bbs_rtrg_116_18)
+loo_selected <- loo_select(fits_actual_sims_bbs_rtrg_318_3, fits_compare_fits_actual_sims_bbs_rtrg_318_3)
+
+loo_selected$winner_info

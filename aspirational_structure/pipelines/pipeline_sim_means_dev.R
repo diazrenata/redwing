@@ -42,10 +42,8 @@ methods <- drake_plan(
  as = target(dplyr::combine(ssims),
             transform = combine(ssims)),
  all_sims = target(dplyr::bind_rows(as)),
-  fits = target(rwar::fit_brms3(sims, iter = 2000, thin = 1),
-                transform = map(
-                  sims = !!rlang::syms(sim_plan$target)
-                )),
+  fits = target(rwar::fit_brms3(ssims, iter = 2000, thin = 1),
+                transform = map(ssims)),
   fits_compare = target(rwar::compare_both_brms(fits),
                         transform = map(fits),
                         trigger = trigger(condition = T)),
