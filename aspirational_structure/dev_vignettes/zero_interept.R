@@ -20,6 +20,9 @@ justsims <- filter(actual_sims_bbs_rtrg_318_3, source != "raw") %>%
   ungroup()
 
 a_brm <- brm(total_biomass ~ timeperiod * source, data = justsims, prior = prior(constant(0), class = "b", coef = "sourcecurrency") )
+source(here::here("aspirational_structure", "dev_vignettes", "sim_means_fxns_dev.R"))
+
+
 
 a_brm1 <- brm(total_biomass ~ timeperiod * source, data = justsims )
 
@@ -30,3 +33,8 @@ justsims_p <- justsims %>%
   mutate(predicted = predict(a_brm)[,1],
          predicted_withint = predict(a_brm1)[,1])
 ggplot(justsims_p, aes(year, total_biomass, color = source)) + geom_point()+ geom_point(aes(y = predicted)) + geom_point(aes(y = predicted_withint), shape = 3)
+
+
+ssims <- summarize_sims(actual_sims_bbs_rtrg_318_3)
+
+smods <- rwar::fit_brms3(ssims, 4, 2000, 1)

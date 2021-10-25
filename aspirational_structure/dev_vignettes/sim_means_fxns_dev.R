@@ -8,8 +8,8 @@ make_nochange_sims <- function(dat) {
 
   dat_nochange$abundance[end_rows, ] <- dat_nochange$abundance[begin_rows, ]
 
-  dat_nochange_gmms <- rwar::construct_sampling_gmm(dat_nochange, n_isd_draws = 1)
-  nochange_sims <- rwar::draw_communities_wrapper(dat_nochange, sampling_gmms = dat_nochange_gmms, ndraws = 10)
+  dat_nochange_gmms <- rwar::construct_sampling_gmm(dat_nochange, n_isd_draws = 10)
+  nochange_sims <- rwar::draw_communities_wrapper(dat_nochange, sampling_gmms = dat_nochange_gmms, ndraws = 100)
 nochange_sims$simtype = "nochange"
 
   return(nochange_sims)
@@ -17,12 +17,12 @@ nochange_sims$simtype = "nochange"
 }
 
 make_nosizechange_sims <- function(dat) {
-  dat_gmms <- rwar::construct_sampling_gmm(dat, n_isd_draws = 1)
+  dat_gmms <- rwar::construct_sampling_gmm(dat, n_isd_draws = 10)
 
   nosizechange_gmms <- dat_gmms
   nosizechange_gmms$end <- nosizechange_gmms$begin %>% mutate(timeperiod = "end")
 
-  nosizechange_sims <- rwar::draw_communities_wrapper(dat, sampling_gmms = nosizechange_gmms, ndraws = 10)
+  nosizechange_sims <- rwar::draw_communities_wrapper(dat, sampling_gmms = nosizechange_gmms, ndraws = 100)
 
   nosizechange_sims$simtype = "nosizechange"
   return(nosizechange_sims)
@@ -30,8 +30,8 @@ make_nosizechange_sims <- function(dat) {
 
 
 make_actual_sims <- function(dat){
-  dat_gmms <- rwar::construct_sampling_gmm(dat, n_isd_draws = 1)
-  sims <- rwar::draw_communities_wrapper(dat, sampling_gmms = dat_gmms, ndraws = 10)
+  dat_gmms <- rwar::construct_sampling_gmm(dat, n_isd_draws = 10)
+  sims <- rwar::draw_communities_wrapper(dat, sampling_gmms = dat_gmms, ndraws = 100)
   sims$simtype = "actual"
   return(sims)
 }
