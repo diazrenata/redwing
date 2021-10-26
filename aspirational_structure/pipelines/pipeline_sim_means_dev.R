@@ -18,7 +18,7 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-datasets <- datasets[ unique(c(1:50, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
+datasets <- datasets[ unique(c(1:10, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
 
 
 sim_plan <- drake_plan(
