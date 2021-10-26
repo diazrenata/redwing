@@ -3,6 +3,7 @@ title: "Modeling approach & validation"
 output: 
         github_document:
             toc: TRUE
+            df_print: kable
 author: Renata Diaz
 date: "`r Sys.Date()`"
 ---
@@ -29,9 +30,9 @@ From there, we would like to know:
 We use the sims method to get estimates of total energy or total biomass for each year under the scenarios 1) actual size structure change 2) no change, achieved by using the size structure for the first 5 years for the last 5 years as well. 
 
 ```{r, message=F, warning=F,results=F}
-dat = granby
+#dat = granby
 
-actual_sims <- rwar::make_actual_sims(dat) # this is a wrapper fxns that draws 100 sims
+#actual_sims <- rwar::make_actual_sims(dat) # this is a wrapper fxns that draws 100 sims
 
 print(rwar::make_actual_sims)
 
@@ -41,13 +42,13 @@ This gives us a dataframe with columns:
 
 ```{r}
 
-colnames(actual_sims)
+#colnames(actual_sims)
 
 ```
 
 ```{r}
 
-ggplot(actual_sims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F)
+#ggplot(actual_sims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F)
 
 ```
 
@@ -63,9 +64,12 @@ We also want to remove "raw" because that is just for a gut check.
 
 ```{r}
 
-ssims_actual_sims <- rwar::summarize_sims(actual_sims)
+#ssims_actual_sims <- rwar::summarize_sims(actual_sims)
 
 print(rwar::summarize_sims)
+
+
+#head(ssims_actual_sims)
 
 ```
 
@@ -87,7 +91,7 @@ We will use the LOO criterion from `brms::loo`. Because sometimes the best model
 
 ```{r}
 
-fits <- rwar::fit_brms(ssims_actual_sims, cores = 4, iter = 2000, thin = 1) # For running at scale, I use 8000 iterations and thin = 4. This ensures that absolutely every model definitely converges, even unsupervised.
+#fits <- rwar::fit_brms(ssims_actual_sims, cores = 4, iter = 2000, thin = 1) # For running at scale, I use 8000 iterations and thin = 4. This ensures that absolutely every model definitely converges, even unsupervised.
 
 print(rwar::fit_brms)
 
@@ -97,7 +101,7 @@ print(rwar::fit_brms)
 
 ```{r}
 
-fits_compare <- rwar::compare_both_brms(fits)
+#fits_compare <- rwar::compare_both_brms(fits)
 
 print(rwar::compare_both_brms)
 
@@ -109,10 +113,46 @@ print(rwar::compare_brms)
 
 ```{r}
 
-fits_winners <- rwar::loo_select(fits_compare)
+#fits_winners <- rwar::loo_select(fits_compare)
 
 print(rwar::loo_select)
 
-print(fits_winners)
+#print(fits_winners)
 ```
 
+# Demo scenarios
+
+I ran this pipeline on 4 datasets demonstrating different types of dynamics, and compared the "actual" dynamics to additional sims illustrating different "real" effects.
+
+```{r}
+library(drake)
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "sim_means-cache.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+#cached(cache = cache)
+loadd(all_sims, cache=cache)
+
+
+```
+
+```{r, fig.dim = c(9,9)}
+ggplot(all_sims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F, size = .3) + facet_wrap(vars(matssname, simtype), scales = "free", ncol = 3) + theme(legend.position = "bottom")
+
+```
+
+The "sims" correspond to: no change in abunance or size strucutre (no change), no change in size structure (nosizechange). While we expect to get decoupling of currency and size structure in some actual dynamics, we do not expected it in these sims. We have weaker expectations about the slopes of the actual dynamics. Note that the lines are lm smooths without se and not suitable for inference. 
+
+Here are the model winners for the different sims:
+
+
+224 and 116 both have deviations; 19_7 selects no change; 318_3 selects a slope but not a deviation. None of the sims select overly-complex models. Note that usually but not often we're invoking the one se rule (if `rank` isn't 1 it means we selected a lower-ranked model because it was simpler and within 1 se.)
+
+```{r}
+loadd(all_winners, cache = cache)
+
+all_winners %>%
+  dplyr::filter(currency == "biomass")
+```
