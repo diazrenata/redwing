@@ -36,7 +36,7 @@ sim_plan <- drake_plan(
 
 
 methods <- drake_plan(
-  ssims = target(summarize_sims(sims),
+  ssims = target(rwar::summarize_sims(sims),
                  transform = map(
                    sims = !!rlang::syms(sim_plan$target)
                  ) ),

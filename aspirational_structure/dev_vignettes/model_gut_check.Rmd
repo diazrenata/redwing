@@ -1,0 +1,118 @@
+---
+title: "Modeling approach & validation"
+output: 
+        github_document:
+            toc: TRUE
+author: Renata Diaz
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(BBSsize)
+library(ggplot2)
+theme_set(theme_bw())
+```
+
+# How we get here
+
+See 02_01_change_over_time_sims.Rmd for an explanation of how we generate sims describing energy use/biomass dynamics assuming a) actual change in the size structure over time or b) no change in the size structure (such that any change that occurs is driven solely by changes in abundance).
+
+From there, we would like to know:
+
+- how much change has occurred due to change in abundance
+- how much change in the currency deviates from the change driven by change in abundance (reflecting change in the size structure)
+
+
+# Data 
+
+We use the sims method to get estimates of total energy or total biomass for each year under the scenarios 1) actual size structure change 2) no change, achieved by using the size structure for the first 5 years for the last 5 years as well. 
+
+```{r, message=F, warning=F,results=F}
+dat = granby
+
+actual_sims <- rwar::make_actual_sims(dat) # this is a wrapper fxns that draws 100 sims
+
+print(rwar::make_actual_sims)
+
+```
+
+This gives us a dataframe with columns:
+
+```{r}
+
+colnames(actual_sims)
+
+```
+
+```{r}
+
+ggplot(actual_sims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F)
+
+```
+
+We want to know:
+
+- the slope for abundance
+- the slope for currency
+- i.e. whether the slope for currency is different from the slope for abundance
+
+To fit models, we need to summarize across all the sims, because including all the individual sims is going to artificially inflate the model's confidence. 
+
+We also want to remove "raw" because that is just for a gut check.
+
+```{r}
+
+ssims_actual_sims <- rwar::summarize_sims(actual_sims)
+
+print(rwar::summarize_sims)
+
+```
+
+# Models
+
+We will use bayesian linear models to estimate the slopes for abundance and currency and the difference between them.
+
+We will compare models of the following forms:
+
+`response ~ timeperiod * source`: Estimates a slope for timeperiod ("begin" or "end") and the interaction between source ("abundance" or "currency")
+
+`response ~ timeperiod`: Only a timeperiod slope, no difference between sources
+
+`response ~ 1`: Only an intercept, no change begin or end.
+
+We will use the LOO criterion from `brms::loo`. Because sometimes the best model according to LOO wins by a very small margin, we will select the simplest model within 1 standard error of the best model for interpretation. 
+
+## Fit models
+
+```{r}
+
+fits <- rwar::fit_brms(ssims_actual_sims, cores = 4, iter = 2000, thin = 1) # For running at scale, I use 8000 iterations and thin = 4. This ensures that absolutely every model definitely converges, even unsupervised.
+
+print(rwar::fit_brms)
+
+```
+
+## Compare models
+
+```{r}
+
+fits_compare <- rwar::compare_both_brms(fits)
+
+print(rwar::compare_both_brms)
+
+print(rwar::compare_brms)
+
+```
+
+## Select best model
+
+```{r}
+
+fits_winners <- rwar::loo_select(fits_compare)
+
+print(rwar::loo_select)
+
+print(fits_winners)
+```
+
