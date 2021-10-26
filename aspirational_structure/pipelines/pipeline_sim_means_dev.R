@@ -6,8 +6,6 @@ library(BBSsize)
 library(brms)
 library(tidybayes)
 
-source(here::here("aspirational_structure", "dev_vignettes", "sim_means_fxns_dev.R"))
-
 run_hpg = T
 
 datasets <- MATSS::build_bbs_datasets_plan()
@@ -18,19 +16,19 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-datasets <- datasets[ unique(c(1:10, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
+datasets <- datasets[ unique(c(which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
 
 
 sim_plan <- drake_plan(
-  actual_sims = target(make_actual_sims(dataset),
+  actual_sims = target(rwar::make_actual_sims(dataset),
                        transform = map(
                          dataset = !!rlang::syms(datasets$target)
                        )),
-  nc_sims = target(make_nochange_sims(dataset),
+  nc_sims = target(rwar::make_nochange_sims(dataset),
                    transform = map(
                      dataset = !!rlang::syms(datasets$target)
                    )),
-  nsc_sims = target(make_nosizechange_sims(dataset),
+  nsc_sims = target(rwar::make_nosizechange_sims(dataset),
                     transform = map(
                       dataset = !!rlang::syms(datasets$target)
                     ))
@@ -45,24 +43,24 @@ methods <- drake_plan(
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
   all_sims = target(dplyr::bind_rows(as)),
-  fits = target(rwar::fit_brms3(ssims, iter = 8000, thin = 4),
+  fits = target(rwar::fit_brms(ssims, iter = 8000, thin = 4),
                 transform = map(ssims)),
   fits_compare = target(rwar::compare_both_brms(fits),
                         transform = map(fits)),
   af = target(dplyr::combine(fits_compare),
               transform = combine(fits_compare)),
   all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
-  winners = target(loo_select(fits_compare),
+  winners = target(rwar::loo_select(fits_compare),
                    transform = map(fits_compare)),
   aw = target(dplyr::combine(winners),
               transform = combine(winners)),
   all_winners  = target(dplyr::bind_rows(aw)),
-  draws = target(winner_draws(winners, fits),
+  draws = target(rwar::winner_draws(winners, fits),
                  transform = map(winners, fits)),
   ad = target(dplyr::combine(draws),
               transform = combine(draws)),
   all_draws = target(dplyr::bind_rows(ad)),
-  qis = target(winner_qis(draws),
+  qis = target(rwar::winner_qis(draws),
                transform = map(draws)),
   aq = target(dplyr::combine(qis),
               transform = combine(qis)),
