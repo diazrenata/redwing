@@ -15,41 +15,58 @@ datasets <- MATSS::build_bbs_datasets_plan()
 
 working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes.csv"))
 
-datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")), ]
+
+datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
+
+datasets <- datasets[ unique(c(1:50, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
 
 
 sim_plan <- drake_plan(
   actual_sims = target(make_actual_sims(dataset),
-                        transform = map(
-                          dataset = !!rlang::syms(datasets$target)
-                        )),
+                       transform = map(
+                         dataset = !!rlang::syms(datasets$target)
+                       )),
   nc_sims = target(make_nochange_sims(dataset),
-                        transform = map(
-                          dataset = !!rlang::syms(datasets$target)
-                        )),
+                   transform = map(
+                     dataset = !!rlang::syms(datasets$target)
+                   )),
   nsc_sims = target(make_nosizechange_sims(dataset),
-                        transform = map(
-                          dataset = !!rlang::syms(datasets$target)
-                        ))
+                    transform = map(
+                      dataset = !!rlang::syms(datasets$target)
+                    ))
 )
 
 
 methods <- drake_plan(
   ssims = target(summarize_sims(sims),
-                transform = map(
-                  sims = !!rlang::syms(sim_plan$target)
-                ) ),
- as = target(dplyr::combine(ssims),
-            transform = combine(ssims)),
- all_sims = target(dplyr::bind_rows(as)),
-  fits = target(rwar::fit_brms3(ssims, iter = 2000, thin = 1),
+                 transform = map(
+                   sims = !!rlang::syms(sim_plan$target)
+                 ) ),
+  as = target(dplyr::combine(ssims),
+              transform = combine(ssims)),
+  all_sims = target(dplyr::bind_rows(as)),
+  fits = target(rwar::fit_brms3(ssims, iter = 8000, thin = 4),
                 transform = map(ssims)),
   fits_compare = target(rwar::compare_both_brms(fits),
-                        transform = map(fits),
-                        trigger = trigger(condition = T)),
+                        transform = map(fits)),
   af = target(dplyr::combine(fits_compare),
               transform = combine(fits_compare)),
-  all_comparisons = target(dplyr::bind_rows(af, .id = "drakename"))
+  all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
+  winners = target(loo_select(fits_compare),
+                   transform = map(fits_compare)),
+  aw = target(dplyr::combine(winners),
+              transform = combine(winners)),
+  all_winners  = target(dplyr::bind_rows(aw)),
+  draws = target(winner_draws(winners, fits),
+                 transform = map(winners, fits)),
+  ad = target(dplyr::combine(draws),
+              transform = combine(draws)),
+  all_draws = target(dplyr::bind_rows(ad)),
+  qis = target(winner_qis(draws),
+               transform = map(draws)),
+  aq = target(dplyr::combine(qis),
+              transform = combine(qis)),
+  all_qis = target(dplyr::bind_rows(aq))
 )
 
 all = bind_rows(datasets, sim_plan, methods)
@@ -66,24 +83,24 @@ nodename <- Sys.info()["nodename"]
 #    print("I know I am on the HiPerGator!")
 
 if(run_hpg) {
-library(clustermq)
-options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
-)
-## Run the pipeline parallelized for HiPerGator
-system.time(make(all,
-                 force = TRUE,
-                 cache = cache,
-                 verbose = 1,
-                 parallelism = "clustermq",
-                 jobs = 6,
-                 caching = "main",
-                 memory_strategy = "autoclean",
-                 lock_envir = F))# Important for DBI caches!
+  library(clustermq)
+  options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
+  )
+  ## Run the pipeline parallelized for HiPerGator
+  system.time(make(all,
+                   force = TRUE,
+                   cache = cache,
+                   verbose = 1,
+                   parallelism = "clustermq",
+                   jobs = 12,
+                   caching = "main",
+                   memory_strategy = "autoclean",
+                   lock_envir = F))# Important for DBI caches!
 } else {
 
 
-# Run the pipeline on multiple local cores
- system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
+  # Run the pipeline on multiple local cores
+  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
 }

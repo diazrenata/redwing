@@ -78,7 +78,7 @@ summarize_sims <- function(sims) {
 }
 
 
-loo_select <- function(some_models, some_compares) {
+loo_select <- function(some_compares) {
 
   # Select the simplest model within 1 se of the best model
 
@@ -94,39 +94,80 @@ loo_select <- function(some_models, some_compares) {
     ungroup() %>%
     filter(model_rank == 1)
 
-  biomass_winner <- winners %>%
-    filter(currency == "biomass") %>%
-    select(model) %>%
-    as.character()
+  # biomass_winner <- winners %>%
+  #   filter(currency == "biomass") %>%
+  #   select(model) %>%
+  #   as.character()
+  #
+  # energy_winner <- winners %>%
+  #   filter(currency == "energy") %>%
+  #   select(model) %>%
+  #   as.character()
+  #
+  # winner_mods <- list(
+  #   te_winner = some_models$te_brms[[energy_winner]],
+  #   tb_winner = some_models$tb_brms[[biomass_winner]],
+  #   matssname = some_models$matssname,
+  #   simtype = some_models$simtype,
+  #   winner_info = list(te_winner = energy_winner,
+  #                      tb_winner = biomass_winner)
+  # )
 
-  energy_winner <- winners %>%
-    filter(currency == "energy") %>%
-    select(model) %>%
-    as.character()
-
-  winner_mods <- list(
-    te_winner = some_models$te_brms[[energy_winner]],
-    tb_winner = some_models$tb_brms[[biomass_winner]],
-    matssname = some_models$matssname,
-    simtype = some_models$simtype,
-    winner_info = list(te_winner = energy_winner,
-                       tb_winner = biomass_winner)
-  )
-
-  return(winner_mods)
+ # return(winner_mods)
+  return(winners)
 }
 
-winner_draws <- function(loo_results) {
+#' Extract draws from winning models
+#'
+#' @param some_winners df with rows for energy and biomass, column "model" name of best model
+#' @param some_models list of models from fit_brms
+#'
+#' @return df of draws from both models
+#' @export
+#' @importFrom dplyr filter select mutate
+#' @importFrom tidybayes tidy_draws
+winner_draws <- function(some_winners, some_models) {
 
-  te_draws <- tidybayes::tidy_draws(loo_results$te_winner) %>%
-    dplyr::mutate(currency = "energy", modtype = loo_results$winner_info$te_winner)
+  winner_energy_mod <- some_winners %>%
+    dplyr::filter(currency == "energy") %>%
+    dplyr::select(model) %>%
+    as.character()
 
-  tb_draws <- tidybayes::tidy_draws(loo_results$tb_winner) %>%
-    dplyr::mutate(currency = "biomass", modtype = loo_results$winner_info$tb_winner)
+  winner_biomass_mod <- some_winners %>%
+    dplyr::filter(currency == "biomass") %>%
+    dplyr::select(model) %>%
+    as.character()
+
+  te_draws <- tidybayes::tidy_draws(some_models$te_brms[[winner_energy_mod]]) %>%
+    dplyr::mutate(currency = "energy", modtype = winner_energy_mod)
+
+  tb_draws <- tidybayes::tidy_draws(some_models$tb_brms[[winner_biomass_mod]]) %>%
+    dplyr::mutate(currency = "biomass", modtype = winner_biomass_mod)
 
   all_draws <- dplyr::bind_rows(te_draws, tb_draws) %>%
-    dplyr::mutate(matssname = loo_results$matssname,
-                  simtype = loo_results$simtype)
+    dplyr::mutate(matssname = some_winners$matssname[1],
+                  simtype = some_winners$simtype[1])
 
   return(all_draws)
+}
+
+
+#' Extract qis from draws
+#'
+#' @param some_draws df of draws
+#'
+#' @return df of qis
+#' @export
+#'
+#' @importFrom tidybayes median_qi
+#' @importFrom dplyr group_by ungroup
+winner_qis <- function(some_draws) {
+
+  some_qis <- some_draws %>%
+    dplyr::group_by(currency, modtype, matssname, simtype) %>%
+    tidybayes::median_qi(.width = c(.95, .99)) %>%
+    dplyr::ungroup()
+
+
+  return(some_qis)
 }
