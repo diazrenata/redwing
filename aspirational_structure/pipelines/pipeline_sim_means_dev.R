@@ -56,6 +56,11 @@ methods <- drake_plan(
   aw = target(dplyr::combine(winners),
               transform = combine(winners)),
   all_winners  = target(dplyr::bind_rows(aw)),
+  diag = target(rwar::extract_diagnostics(fits),
+                transform = map(fits)),
+  adg = target(dplyr::combine(diag),
+               transform = combine(diag)),
+  all_diagnostics = target(dplyr::bind_rows(adg)),
   draws = target(rwar::winner_draws(winners, fits),
                  transform = map(winners, fits)),
   ad = target(dplyr::combine(draws),
@@ -104,8 +109,8 @@ if(run_hpg) {
 
 }
 
-loadd(all_sims, all_winners, all_draws, all_qis, cache = cache)
-save(all_sims, all_winners, all_draws, all_qis, file = "portable_results.Rds")
+loadd(all_sims, all_winners, all_draws, all_qis, all_diagnostics, cache = cache)
+save(all_sims, all_winners, all_draws, all_qis, all_diagnostics, file = "portable_results.Rds")
 
 DBI::dbDisconnect(db)
 rm(cache)
