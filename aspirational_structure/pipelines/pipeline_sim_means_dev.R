@@ -99,7 +99,8 @@ if(run_hpg) {
                    jobs = 12,
                    caching = "main",
                    memory_strategy = "autoclean",
-                   lock_envir = F))# Important for DBI caches!
+                   lock_envir = F,
+                   garbage_collection = T))# Important for DBI caches!
 } else {
 
 
