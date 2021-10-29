@@ -13,33 +13,20 @@ all_winners %>%
 
 | simtype      | currency | model             | count |
 | :----------- | :------- | :---------------- | ----: |
-| actual       | biomass  | tb\_brm\_full     |    11 |
-| actual       | biomass  | tb\_brm\_nosource |     6 |
-| actual       | biomass  | tb\_brm\_notime   |     7 |
-| actual       | energy   | te\_brm\_full     |     7 |
-| actual       | energy   | te\_brm\_nosource |     9 |
-| actual       | energy   | te\_brm\_notime   |     8 |
-| nochange     | biomass  | tb\_brm\_notime   |    24 |
-| nochange     | energy   | te\_brm\_notime   |    24 |
-| nosizechange | biomass  | tb\_brm\_nosource |    15 |
-| nosizechange | biomass  | tb\_brm\_notime   |     9 |
-| nosizechange | energy   | te\_brm\_nosource |    15 |
-| nosizechange | energy   | te\_brm\_notime   |     9 |
+| actual       | biomass  | tb\_brm\_full     |    31 |
+| actual       | biomass  | tb\_brm\_nosource |    31 |
+| actual       | biomass  | tb\_brm\_notime   |    38 |
+| actual       | energy   | te\_brm\_full     |    17 |
+| actual       | energy   | te\_brm\_nosource |    45 |
+| actual       | energy   | te\_brm\_notime   |    38 |
+| nochange     | biomass  | tb\_brm\_notime   |   100 |
+| nochange     | energy   | te\_brm\_notime   |   100 |
+| nosizechange | biomass  | tb\_brm\_nosource |    58 |
+| nosizechange | biomass  | tb\_brm\_notime   |    42 |
+| nosizechange | energy   | te\_brm\_nosource |    60 |
+| nosizechange | energy   | te\_brm\_notime   |    40 |
 
 </div>
-
-From 24 sites…
-
-  - 7 (for biomass) and 8 (for energy) models don’t pick up on any
-    difference begin-end
-  - 11 (for biomass) and 7 (for energy) models pick up on *different*
-    dynamics for the currency than if the size structure were more or
-    less replicated.
-  - Biomass picks up on an interaction more often than energy.
-  - These tallies don’t tell us how often the abundance slope is nonzero
-    in the full models
-
-<!-- end list -->
 
 ``` r
 actual_qis <- all_qis %>% 
@@ -49,9 +36,9 @@ actual_qis_95 <- filter(actual_qis, .width == .95)
 ggplot(actual_qis, aes(b_timeperiodend, matssname)) + geom_pointinterval(aes(xmin = b_timeperiodend.lower, xmax = b_timeperiodend.upper, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
 ```
 
-    ## Warning: Removed 14 rows containing missing values (geom_segment).
-
-    ## Warning: Removed 16 rows containing missing values (geom_segment).
+    ## Warning: Removed 76 rows containing missing values (geom_segment).
+    
+    ## Warning: Removed 76 rows containing missing values (geom_segment).
 
 ![](model_tallies_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
@@ -67,8 +54,8 @@ actual_qis_95 %>%
 
 | currency | percent\_with\_slope |
 | :------- | -------------------: |
-| biomass  |            0.7083333 |
-| energy   |            0.6666667 |
+| biomass  |                 0.62 |
+| energy   |                 0.62 |
 
 </div>
 
@@ -78,15 +65,16 @@ Of models with a slope…
 actual_qis_95 %>%
   group_by(currency) %>%
   summarize(percent_decreasing = mean(b_timeperiodend.upper < 0, na.rm = T),
-            percent_increasing = mean(b_timeperiodend.lower > 0, na.rm = T))
+            percent_increasing = mean(b_timeperiodend.lower > 0, na.rm = T),
+            n_with_slope = sum(!is.na(b_timeperiodend)))
 ```
 
 <div class="kable-table">
 
-| currency | percent\_decreasing | percent\_increasing |
-| :------- | ------------------: | ------------------: |
-| biomass  |           0.5882353 |           0.2941176 |
-| energy   |           0.6250000 |           0.3125000 |
+| currency | percent\_decreasing | percent\_increasing | n\_with\_slope |
+| :------- | ------------------: | ------------------: | -------------: |
+| biomass  |           0.6290323 |           0.2258065 |             62 |
+| energy   |           0.7096774 |           0.2258065 |             62 |
 
 </div>
 
@@ -106,8 +94,8 @@ actual_qis_95 %>%
 
 | currency | percent\_interaction |
 | :------- | -------------------: |
-| biomass  |            0.4583333 |
-| energy   |            0.2916667 |
+| biomass  |                 0.31 |
+| energy   |                 0.17 |
 
 </div>
 
@@ -117,15 +105,16 @@ Of models with an interaction…
 actual_qis_95 %>%
   group_by(currency) %>%
   summarize(percent_currency_above_abund = mean((`b_timeperiodend:sourcecurrency.lower` >0), na.rm = T),
-            percent_currency_below_abund = mean((`b_timeperiodend:sourcecurrency.upper` <0), na.rm = T))
+            percent_currency_below_abund = mean((`b_timeperiodend:sourcecurrency.upper` <0), na.rm = T),
+            n_with_interaction = sum(!is.na(`b_timeperiodend:sourcecurrency`)))
 ```
 
 <div class="kable-table">
 
-| currency | percent\_currency\_above\_abund | percent\_currency\_below\_abund |
-| :------- | ------------------------------: | ------------------------------: |
-| biomass  |                       0.7272727 |                       0.2727273 |
-| energy   |                       0.5714286 |                       0.4285714 |
+| currency | percent\_currency\_above\_abund | percent\_currency\_below\_abund | n\_with\_interaction |
+| :------- | ------------------------------: | ------------------------------: | -------------------: |
+| biomass  |                       0.8064516 |                       0.1935484 |                   31 |
+| energy   |                       0.7058824 |                       0.2941176 |                   17 |
 
 </div>
 

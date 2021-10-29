@@ -16,7 +16,7 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
+#datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
 
 
 sim_plan <- drake_plan(
@@ -63,9 +63,9 @@ methods <- drake_plan(
   all_diagnostics = target(dplyr::bind_rows(adg)),
   draws = target(rwar::winner_draws(winners, fits),
                  transform = map(winners, fits)),
-  ad = target(dplyr::combine(draws),
-              transform = combine(draws)),
-  all_draws = target(dplyr::bind_rows(ad)),
+  #ad = target(dplyr::combine(draws),
+   #           transform = combine(draws)),
+ # all_draws = target(dplyr::bind_rows(ad)),
   qis = target(rwar::winner_qis(draws),
                transform = map(draws)),
   aq = target(dplyr::combine(qis),
@@ -110,8 +110,8 @@ if(run_hpg) {
 
 }
 
-loadd(all_sims, all_winners, all_draws, all_qis, all_diagnostics, cache = cache)
-save(all_sims, all_winners, all_draws, all_qis, all_diagnostics, file = "portable_results.Rds")
+loadd(all_sims, all_winners,  all_qis, all_diagnostics, cache = cache)
+save(all_sims, all_winners,  all_qis, all_diagnostics, file = "portable_results.Rds")
 
 DBI::dbDisconnect(db)
 rm(cache)

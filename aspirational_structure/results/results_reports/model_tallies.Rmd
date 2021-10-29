@@ -30,13 +30,6 @@ all_winners %>%
 
 ```
 
-From 24 sites...
-
-* 7 (for biomass) and 8 (for energy) models don't pick up on any difference begin-end
-* 11 (for biomass) and 7 (for energy) models pick up on *different* dynamics for the currency than if the size structure were more or less replicated. 
-* Biomass picks up on an interaction more often than energy.
-* These tallies don't tell us how often the abundance slope is nonzero in the full models
-
 
 
 ```{r}
@@ -66,7 +59,8 @@ Of models with a slope...
 actual_qis_95 %>%
   group_by(currency) %>%
   summarize(percent_decreasing = mean(b_timeperiodend.upper < 0, na.rm = T),
-            percent_increasing = mean(b_timeperiodend.lower > 0, na.rm = T))
+            percent_increasing = mean(b_timeperiodend.lower > 0, na.rm = T),
+            n_with_slope = sum(!is.na(b_timeperiodend)))
 
 ```
 
@@ -92,7 +86,8 @@ Of models with an interaction...
 actual_qis_95 %>%
   group_by(currency) %>%
   summarize(percent_currency_above_abund = mean((`b_timeperiodend:sourcecurrency.lower` >0), na.rm = T),
-            percent_currency_below_abund = mean((`b_timeperiodend:sourcecurrency.upper` <0), na.rm = T))
+            percent_currency_below_abund = mean((`b_timeperiodend:sourcecurrency.upper` <0), na.rm = T),
+            n_with_interaction = sum(!is.na(`b_timeperiodend:sourcecurrency`)))
 
 ```
 
