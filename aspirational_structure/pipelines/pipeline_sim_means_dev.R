@@ -16,29 +16,29 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-#datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")))), ]
+#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")), ]
 
-
-sim_plan <- drake_plan(
-  actual_sims = target(rwar::make_actual_sims(dataset),
-                       transform = map(
-                         dataset = !!rlang::syms(datasets$target)
-                       )),
-  nc_sims = target(rwar::make_nochange_sims(dataset),
-                   transform = map(
-                     dataset = !!rlang::syms(datasets$target)
-                   )),
-  nsc_sims = target(rwar::make_nosizechange_sims(dataset),
-                    transform = map(
-                      dataset = !!rlang::syms(datasets$target)
-                    ))
-)
+#
+# sim_plan <- drake_plan(
+#   actual_sims = target(rwar::ssims_wrapper(dataset, simtype = "actual"),
+#                        transform = map(
+#                          dataset = !!rlang::syms(datasets$target)
+#                        )),
+#   nc_sims = target(rwar::ssims_wrapper(dataset, simtype = "nc"),
+#                    transform = map(
+#                      dataset = !!rlang::syms(datasets$target)
+#                    )),
+#   nsc_sims = target(rwar::ssims_wrapper(dataset, simtype = "nsc"),
+#                     transform = map(
+#                     ))
+# )
 
 
 methods <- drake_plan(
-  ssims = target(rwar::summarize_sims(sims),
-                 transform = map(
-                   sims = !!rlang::syms(sim_plan$target)
+  ssims = target(rwar::ssims_wrapper(dataset, simtype),
+                 transform = cross(
+                   dataset = !!rlang::syms(datasets$target),
+                   simtype = c("actual", "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
@@ -47,9 +47,9 @@ methods <- drake_plan(
                 transform = map(ssims)),
   fits_compare = target(rwar::compare_both_brms(fits),
                         transform = map(fits)),
-  af = target(dplyr::combine(fits_compare),
-              transform = combine(fits_compare)),
-  all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
+  #af = target(dplyr::combine(fits_compare),
+  #            transform = combine(fits_compare)),
+  #all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
   winners = target(rwar::loo_select(fits_compare),
                    transform = map(fits_compare),
                    trigger = trigger(condition = T)),
@@ -73,7 +73,7 @@ methods <- drake_plan(
   all_qis = target(dplyr::bind_rows(aq))
 )
 
-all = bind_rows(datasets, sim_plan, methods)
+all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
