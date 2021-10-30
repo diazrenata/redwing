@@ -7,7 +7,7 @@ library(BBSsize)
 load(here::here("aspirational_structure", "dev_vignettes", "3_80_for_diag.Rds"))
 
 
-fit_stanlm <- function(some_sims, iter = 8000, thin =4) {
+fit_stanlm <- function(some_sims) {
 
   # Fit a brm on total_energy
   te_brm_full <- rstanarm::stan_glm(total_energy ~ (timeperiod * source) , data = some_sims, iter =8000, thin = 4)
@@ -42,7 +42,7 @@ fit_stanlm <- function(some_sims, iter = 8000, thin =4) {
 
 }
 
-compare_stanarms <- function(brms_fits, iter = 8000, thin = 4) {
+compare_stanarms <- function(brms_fits) {
 
   brms_loos<- lapply(brms_fits, rstanarm::loo, k_threshold= .7)
 

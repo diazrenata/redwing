@@ -14,9 +14,9 @@ datasets <- MATSS::build_bbs_datasets_plan()
 working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes.csv"))
 
 
-datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
+#datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18")), ]
+datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 
 #
 # sim_plan <- drake_plan(
@@ -38,14 +38,14 @@ methods <- drake_plan(
   ssims = target(rwar::ssims_wrapper(dataset, simtype),
                  transform = cross(
                    dataset = !!rlang::syms(datasets$target),
-                   simtype = c("actual")#, "nc", "nsc")
+                   simtype = c("actual", "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
   all_sims = target(dplyr::bind_rows(as)),
-  fits = target(rwar::fit_brms(ssims, iter = 8000, thin = 4),
+  fits = target(rwar::fit_stanlm(ssims),
                 transform = map(ssims)),
-  fits_compare = target(rwar::compare_both_brms(fits),
+  fits_compare = target(rwar::compare_both_stanarms(fits),
                         transform = map(fits)),
   af = target(dplyr::combine(fits_compare),
              transform = combine(fits_compare)),
