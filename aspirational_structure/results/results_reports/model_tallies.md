@@ -13,18 +13,18 @@ all_winners %>%
 
 | simtype      | currency | model             | count |
 | :----------- | :------- | :---------------- | ----: |
-| actual       | biomass  | tb\_brm\_full     |    31 |
-| actual       | biomass  | tb\_brm\_nosource |    31 |
-| actual       | biomass  | tb\_brm\_notime   |    38 |
-| actual       | energy   | te\_brm\_full     |    17 |
-| actual       | energy   | te\_brm\_nosource |    45 |
-| actual       | energy   | te\_brm\_notime   |    38 |
-| nochange     | biomass  | tb\_brm\_notime   |   100 |
-| nochange     | energy   | te\_brm\_notime   |   100 |
-| nosizechange | biomass  | tb\_brm\_nosource |    58 |
-| nosizechange | biomass  | tb\_brm\_notime   |    42 |
-| nosizechange | energy   | te\_brm\_nosource |    60 |
-| nosizechange | energy   | te\_brm\_notime   |    40 |
+| actual       | biomass  | tb\_brm\_full     |     3 |
+| actual       | biomass  | tb\_brm\_nosource |     1 |
+| actual       | biomass  | tb\_brm\_notime   |     1 |
+| actual       | energy   | te\_brm\_full     |     2 |
+| actual       | energy   | te\_brm\_nosource |     1 |
+| actual       | energy   | te\_brm\_notime   |     2 |
+| nochange     | biomass  | tb\_brm\_notime   |     5 |
+| nochange     | energy   | te\_brm\_notime   |     5 |
+| nosizechange | biomass  | tb\_brm\_nosource |     4 |
+| nosizechange | biomass  | tb\_brm\_notime   |     1 |
+| nosizechange | energy   | te\_brm\_nosource |     4 |
+| nosizechange | energy   | te\_brm\_notime   |     1 |
 
 </div>
 
@@ -33,12 +33,12 @@ actual_qis <- all_qis %>%
   filter(simtype == "actual") 
 actual_qis_95 <- filter(actual_qis, .width == .95)
 
-ggplot(actual_qis, aes(b_timeperiodend, matssname)) + geom_pointinterval(aes(xmin = b_timeperiodend.lower, xmax = b_timeperiodend.upper, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
+ggplot(actual_qis, aes(timeperiodend, matssname)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
 ```
 
-    ## Warning: Removed 76 rows containing missing values (geom_segment).
-    
-    ## Warning: Removed 76 rows containing missing values (geom_segment).
+    ## Warning: Removed 2 rows containing missing values (geom_segment).
+
+    ## Warning: Removed 4 rows containing missing values (geom_segment).
 
 ![](model_tallies_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
@@ -47,15 +47,15 @@ Of models of actual,
 ``` r
 actual_qis_95 %>%
   group_by(currency) %>%
-  summarize(percent_with_slope = mean(!is.na(b_timeperiodend)))
+  summarize(percent_with_slope = mean(!is.na(timeperiodend)))
 ```
 
 <div class="kable-table">
 
 | currency | percent\_with\_slope |
 | :------- | -------------------: |
-| biomass  |                 0.62 |
-| energy   |                 0.62 |
+| biomass  |                  0.8 |
+| energy   |                  0.6 |
 
 </div>
 
@@ -64,17 +64,17 @@ Of models with a slope…
 ``` r
 actual_qis_95 %>%
   group_by(currency) %>%
-  summarize(percent_decreasing = mean(b_timeperiodend.upper < 0, na.rm = T),
-            percent_increasing = mean(b_timeperiodend.lower > 0, na.rm = T),
-            n_with_slope = sum(!is.na(b_timeperiodend)))
+  summarize(percent_decreasing = mean(timeperiodend.upper < 0, na.rm = T),
+            percent_increasing = mean(timeperiodend.lower > 0, na.rm = T),
+            n_with_slope = sum(!is.na(timeperiodend)))
 ```
 
 <div class="kable-table">
 
 | currency | percent\_decreasing | percent\_increasing | n\_with\_slope |
 | :------- | ------------------: | ------------------: | -------------: |
-| biomass  |           0.6290323 |           0.2258065 |             62 |
-| energy   |           0.7096774 |           0.2258065 |             62 |
+| biomass  |           0.0000000 |           0.5000000 |              4 |
+| energy   |           0.3333333 |           0.6666667 |              3 |
 
 </div>
 
@@ -87,15 +87,15 @@ Of all models, here’s the proportion with an interaction:
 ``` r
 actual_qis_95 %>%
   group_by(currency) %>%
-  summarize(percent_interaction = mean(!is.na(`b_timeperiodend:sourcecurrency`), na.rm = T))
+  summarize(percent_interaction = mean(!is.na(`timeperiodend:sourcecurrency`), na.rm = T))
 ```
 
 <div class="kable-table">
 
 | currency | percent\_interaction |
 | :------- | -------------------: |
-| biomass  |                 0.31 |
-| energy   |                 0.17 |
+| biomass  |                  0.6 |
+| energy   |                  0.4 |
 
 </div>
 
@@ -104,19 +104,29 @@ Of models with an interaction…
 ``` r
 actual_qis_95 %>%
   group_by(currency) %>%
-  summarize(percent_currency_above_abund = mean((`b_timeperiodend:sourcecurrency.lower` >0), na.rm = T),
-            percent_currency_below_abund = mean((`b_timeperiodend:sourcecurrency.upper` <0), na.rm = T),
-            n_with_interaction = sum(!is.na(`b_timeperiodend:sourcecurrency`)))
+  summarize(percent_currency_above_abund = mean((`timeperiodend:sourcecurrency.lower` >0), na.rm = T),
+            percent_currency_below_abund = mean((`timeperiodend:sourcecurrency.upper` <0), na.rm = T),
+            n_with_interaction = sum(!is.na(`timeperiodend:sourcecurrency`)))
 ```
 
 <div class="kable-table">
 
 | currency | percent\_currency\_above\_abund | percent\_currency\_below\_abund | n\_with\_interaction |
 | :------- | ------------------------------: | ------------------------------: | -------------------: |
-| biomass  |                       0.8064516 |                       0.1935484 |                   31 |
-| energy   |                       0.7058824 |                       0.2941176 |                   17 |
+| biomass  |                               1 |                               0 |                    3 |
+| energy   |                               1 |                               0 |                    2 |
 
 </div>
+
+``` r
+ggplot(actual_qis, aes(`timeperiodend:sourcecurrency`, matssname)) + geom_pointinterval(aes(xmin = `timeperiodend:sourcecurrency.lower`, xmax = `timeperiodend:sourcecurrency.upper`, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
+```
+
+    ## Warning: Removed 4 rows containing missing values (geom_segment).
+
+    ## Warning: Removed 6 rows containing missing values (geom_segment).
+
+![](model_tallies_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 raw_changes <- all_sims %>%
@@ -137,8 +147,8 @@ raw_changes <- all_sims %>%
 ``` r
 sig_changes <- raw_changes %>%
   left_join(actual_qis_95) %>%
-  mutate(abund_slope_nonzero = (b_timeperiodend.upper < 0 | b_timeperiodend.lower > 0) & !is.na(b_timeperiodend),
-         currency_offset_nonzero =(`b_timeperiodend:sourcecurrency.upper` < 0 | `b_timeperiodend:sourcecurrency.lower` > 0) & !is.na(`b_timeperiodend:sourcecurrency`))
+  mutate(abund_slope_nonzero = (timeperiodend.upper < 0 | timeperiodend.lower > 0) & !is.na(timeperiodend),
+         currency_offset_nonzero =(`timeperiodend:sourcecurrency.upper` < 0 | `timeperiodend:sourcecurrency.lower` > 0) & !is.na(`timeperiodend:sourcecurrency`))
 ```
 
     ## Joining, by = "matssname"
@@ -150,7 +160,7 @@ ggplot(sig_changes, aes(energy_ratio_abundance, energy_ratio_currency)) + geom_p
 ![](model_tallies_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
-ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency)) + geom_point(alpha = .1) + geom_point(data =filter(sig_changes, !is.na(b_timeperiodend)), aes(color = currency_offset_nonzero), alpha = 1) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "bottom") + ggtitle("Biomass")
+ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency)) + geom_point(alpha = .1) + geom_point(data =filter(sig_changes, !is.na(timeperiodend)), aes(color = currency_offset_nonzero), alpha = 1) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "bottom") + ggtitle("Biomass")
 ```
 
 ![](model_tallies_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
