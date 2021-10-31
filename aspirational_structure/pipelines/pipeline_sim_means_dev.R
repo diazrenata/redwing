@@ -38,7 +38,7 @@ methods <- drake_plan(
   ssims = target(rwar::ssims_wrapper(dataset, simtype),
                  transform = cross(
                    dataset = !!rlang::syms(datasets$target),
-                   simtype = c("actual")#, "nc", "nsc")
+                   simtype = c("actual", "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
@@ -51,8 +51,7 @@ methods <- drake_plan(
              transform = combine(fits_compare)),
   all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
   winners = target(rwar::loo_select(fits_compare),
-                   transform = map(fits_compare),
-                   trigger = trigger(condition = T)),
+                   transform = map(fits_compare)),
   aw = target(dplyr::combine(winners),
               transform = combine(winners)),
   all_winners  = target(dplyr::bind_rows(aw)),
