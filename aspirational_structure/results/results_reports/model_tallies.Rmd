@@ -32,7 +32,7 @@ all_winners %>%
 
 
 
-```{r}
+```{r, fig.dim = c(6,9)}
 
 actual_qis <- all_qis %>% 
   filter(simtype == "actual") 
@@ -80,7 +80,7 @@ actual_qis_95 %>%
 
 Of models with an interaction...
 
-```{r}
+```{r, fig.dim = c(6,9)}
 
 
 actual_qis_95 %>%
