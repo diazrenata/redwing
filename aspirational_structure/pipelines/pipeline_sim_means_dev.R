@@ -38,7 +38,7 @@ methods <- drake_plan(
   ssims = target(rwar::ssims_wrapper(dataset, simtype),
                  transform = cross(
                    dataset = !!rlang::syms(datasets$target),
-                   simtype = c("actual", "nc", "nsc")
+                   simtype = c("actual")#, "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
