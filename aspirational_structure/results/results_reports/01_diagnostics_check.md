@@ -24,7 +24,7 @@ ggplot(filter(long_diagnostics, is_neff), aes(val)) + geom_density() + facet_wra
 
     ## Warning: Removed 15840 rows containing non-finite values (stat_density).
 
-![](diagnostics_check_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](01_diagnostics_check_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 Here is how many \< .5:
 
@@ -46,7 +46,7 @@ ggplot(filter(long_diagnostics, is_rhat), aes(val)) + geom_density() + facet_wra
 
     ## Warning: Removed 15840 rows containing non-finite values (stat_density).
 
-![](diagnostics_check_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](01_diagnostics_check_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 Here is how many rhats (of any parameter) are greater than…(The ref I
 found flags things \> 1.05 at minimum.)

@@ -12,6 +12,7 @@ date: "`r Sys.Date()`"
 knitr::opts_chunk$set(echo = TRUE)
 library(BBSsize)
 library(ggplot2)
+library(dplyr)
 theme_set(theme_bw())
 ```
 
@@ -85,15 +86,13 @@ We will compare models of the following forms:
 
 `response ~ 1`: Only an intercept, no change begin or end.
 
-We will use the LOO criterion from `brms::loo`. Because sometimes the best model according to LOO wins by a very small margin, we will select the simplest model within 1 standard error of the best model for interpretation. 
+We will use the LOO criterion from `rstanarm::loo`. Because sometimes the best model according to LOO wins by a very small margin, we will select the simplest model within 1 standard error of the best model for interpretation. 
 
 ## Fit models
 
 ```{r}
 
-#fits <- rwar::fit_brms(ssims_actual_sims, cores = 4, iter = 2000, thin = 1) # For running at scale, I use 8000 iterations and thin = 4. This ensures that absolutely every model definitely converges, even unsupervised.
-
-print(rwar::fit_brms)
+print(rwar::fit_stanlm)
 
 ```
 
@@ -103,9 +102,9 @@ print(rwar::fit_brms)
 
 #fits_compare <- rwar::compare_both_brms(fits)
 
-print(rwar::compare_both_brms)
+print(rwar::compare_both_stanarms)
 
-print(rwar::compare_brms)
+print(rwar::compare_stanarms)
 
 ```
 
@@ -128,13 +127,15 @@ I ran this pipeline on 4 datasets demonstrating different types of dynamics, and
 library(drake)
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "sim_means-cache.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "sim_means-cache-unlocked.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
 #cached(cache = cache)
 loadd(all_sims, cache=cache)
 
+all_sims <- all_sims %>%
+  filter(matssname %in% c("bbs_rtrg_116_18", "bbs_rtrg_19_7", "bbs_rtrg_224_3", "bbs_rtrg_318_3"))
 
 ```
 
@@ -154,5 +155,8 @@ Here are the model winners for the different sims:
 loadd(all_winners, cache = cache)
 
 all_winners %>%
+  filter(matssname %in% c("bbs_rtrg_116_18", "bbs_rtrg_19_7", "bbs_rtrg_224_3", "bbs_rtrg_318_3")) %>%
   dplyr::filter(currency == "biomass")
 ```
+
+For model diagnostics and results see `results/results_reports/`
