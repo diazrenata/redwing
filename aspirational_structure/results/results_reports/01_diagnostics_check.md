@@ -22,7 +22,7 @@ Really problematic is \<.1
 ggplot(filter(long_diagnostics, is_neff), aes(val)) + geom_density() + facet_wrap(vars(par), scales = "free")
 ```
 
-    ## Warning: Removed 15840 rows containing non-finite values (stat_density).
+    ## Warning: Removed 150 rows containing non-finite values (stat_density).
 
 ![](01_diagnostics_check_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
@@ -44,7 +44,7 @@ Convergence is close to 1, higher is bad.
 ggplot(filter(long_diagnostics, is_rhat), aes(val)) + geom_density() + facet_wrap(vars(par), scales = "free")
 ```
 
-    ## Warning: Removed 15840 rows containing non-finite values (stat_density).
+    ## Warning: Removed 150 rows containing non-finite values (stat_density).
 
 ![](01_diagnostics_check_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
@@ -89,7 +89,7 @@ nrow(long_diagnostics %>%
   filter(val > 1.001))
 ```
 
-    ## [1] 2017
+    ## [1] 17
 
 ## divergent transitions
 
