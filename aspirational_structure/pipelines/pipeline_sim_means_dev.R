@@ -17,6 +17,10 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
 #datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
+#
+ datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
+
+ #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
 #
 # sim_plan <- drake_plan(
@@ -42,41 +46,41 @@ methods <- drake_plan(
                  ) ),
   as = target(dplyr::combine(ssims),
               transform = combine(ssims)),
-  all_sims = target(dplyr::bind_rows(as)),
-  fits = target(rwar::fit_stanlm(ssims),
-                transform = map(ssims)),
-  fits_compare = target(rwar::compare_both_stanarms(fits),
-                        transform = map(fits)),
-  af = target(dplyr::combine(fits_compare),
-             transform = combine(fits_compare)),
-  all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
-  winners = target(rwar::loo_select(fits_compare),
-                   transform = map(fits_compare)),
-  aw = target(dplyr::combine(winners),
-              transform = combine(winners)),
-  all_winners  = target(dplyr::bind_rows(aw)),
-  diag = target(rwar::extract_diagnostics(fits),
-                transform = map(fits)),
-  adg = target(dplyr::combine(diag),
-               transform = combine(diag)),
-  all_diagnostics = target(dplyr::bind_rows(adg)),
-  draws = target(rwar::winner_draws(winners, fits),
-                 transform = map(winners, fits)),
-  #ad = target(dplyr::combine(draws),
-   #           transform = combine(draws)),
- # all_draws = target(dplyr::bind_rows(ad)),
-  qis = target(rwar::winner_qis(draws),
-               transform = map(draws)),
-  aq = target(dplyr::combine(qis),
-              transform = combine(qis)),
-  all_qis = target(dplyr::bind_rows(aq))
+  all_sims = target(dplyr::bind_rows(as))#,
+ #  fits = target(rwar::fit_stanlm(ssims),
+ #                transform = map(ssims)),
+ #  fits_compare = target(rwar::compare_both_stanarms(fits),
+ #                        transform = map(fits)),
+ #  af = target(dplyr::combine(fits_compare),
+ #             transform = combine(fits_compare)),
+ #  all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
+ #  winners = target(rwar::loo_select(fits_compare),
+ #                   transform = map(fits_compare)),
+ #  aw = target(dplyr::combine(winners),
+ #              transform = combine(winners)),
+ #  all_winners  = target(dplyr::bind_rows(aw)),
+ #  diag = target(rwar::extract_diagnostics(fits),
+ #                transform = map(fits)),
+ #  adg = target(dplyr::combine(diag),
+ #               transform = combine(diag)),
+ #  all_diagnostics = target(dplyr::bind_rows(adg)),
+ #  draws = target(rwar::winner_draws(winners, fits),
+ #                 transform = map(winners, fits)),
+ #  #ad = target(dplyr::combine(draws),
+ #   #           transform = combine(draws)),
+ # # all_draws = target(dplyr::bind_rows(ad)),
+ #  qis = target(rwar::winner_qis(draws),
+ #               transform = map(draws)),
+ #  aq = target(dplyr::combine(qis),
+ #              transform = combine(qis)),
+ #  all_qis = target(dplyr::bind_rows(aq))
 )
 
 all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "sim_means-cache-unlocked.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "test_refact.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
@@ -95,7 +99,7 @@ if(run_hpg) {
                    cache = cache,
                    verbose = 1,
                    parallelism = "clustermq",
-                   jobs = 12,
+                   jobs = 4,
                    caching = "main",
                    memory_strategy = "autoclean",
                    lock_envir = F,
@@ -110,7 +114,7 @@ if(run_hpg) {
 }
 
 loadd(all_sims, all_winners,  all_qis, all_diagnostics, cache = cache)
-save(all_sims, all_winners,  all_qis, all_diagnostics, file = "portable_results.Rds")
+save(all_sims, all_winners,  all_qis, all_diagnostics, file = "portable_results_compare.Rds")
 
 DBI::dbDisconnect(db)
 rm(cache)
