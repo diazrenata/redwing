@@ -39,7 +39,7 @@ datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
 
 methods <- drake_plan(
-  ssims = target(rwar::ssims_wrapper(dataset, simtype),
+  ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 5, ndraws = 25),
                  transform = cross(
                    dataset = !!rlang::syms(datasets$target),
                    simtype = c("actual", "nc", "nsc")
