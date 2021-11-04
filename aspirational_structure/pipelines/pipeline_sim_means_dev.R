@@ -39,7 +39,7 @@ datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224
 
 
 methods <- drake_plan(
-  ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 1, ndraws = 5),
+  ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 5, ndraws = 5),
                  transform = cross(
                    dataset = !!rlang::syms(datasets$target),
                    simtype = c("actual", "nc", "nsc")

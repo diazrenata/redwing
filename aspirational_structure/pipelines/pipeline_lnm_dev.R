@@ -39,7 +39,7 @@ datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_3
 
 
 methods <- drake_plan(
-  lnm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 100, n_isd_draws = 1, ndraws = 5, initial_null_model_seed = 1989),
+  lnm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 10, n_isd_draws = 5, ndraws = 5, initial_null_model_seed = 1989),
                  transform = map(
                    dataset = !!rlang::syms(datasets$target)
                  )),
@@ -82,7 +82,7 @@ if(run_hpg) {
                    cache = cache,
                    verbose = 1,
                    parallelism = "clustermq",
-                   jobs = 5,
+                   jobs = 2,
                    caching = "main",
                    memory_strategy = "autoclean",
                    lock_envir = F,
