@@ -3,8 +3,6 @@ library(dplyr)
 library(drake)
 library(MATSS)
 library(BBSsize)
-library(brms)
-library(tidybayes)
 
 run_hpg = T
 
@@ -18,9 +16,9 @@ datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
 #datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
-#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
+datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 
-datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_318_3")), ]
+#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_318_3")), ]
 
 #
 # sim_plan <- drake_plan(
@@ -36,7 +34,7 @@ datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_
 #                     transform = map(
 #                     ))
 # )
-sim_draws = 100
+sim_draws = 250
 nm_seeds <- 1989:(1989 + sim_draws - 1)
 
 methods <- drake_plan(
@@ -57,12 +55,18 @@ methods <- drake_plan(
                )),
   anm_s = target(rwar::summarize_null_models(anm),
                  transform = map(anm)),
-  as = target(dplyr::combine(lnm_s),
-              transform = combine(lnm_s)),
-  all_summaries = target(dplyr::bind_rows(as)),
-  aa = target(dplyr::combine(anm_s),
-              transform = combine(anm_s)),
-  all_actual_summaries = target(dplyr::bind_rows(aa))
+  # as = target(dplyr::combine(lnm_s),
+  #             transform = combine(lnm_s)),
+  # all_summaries = target(dplyr::bind_rows(as)),
+  # aa = target(dplyr::combine(anm_s),
+  #             transform = combine(anm_s)),
+  # all_actual_summaries = target(dplyr::bind_rows(aa))
+  cnm = target(rwar::compare_actual_null_models(anm_s, lnm_s),
+               transform = combine(anm_s, lnm_s, .by = dataset
+               )),
+  acnm = target(dplyr::combine(cnm),
+                transform = combine(cnm)),
+  all_scores = target(dplyr::bind_rows(acnm))
 )
 
 all = bind_rows(datasets, methods)
@@ -88,7 +92,7 @@ if(run_hpg) {
                    cache = cache,
                    verbose = 1,
                    parallelism = "clustermq",
-                   jobs = 4,
+                   jobs = 12,
                    caching = "main",
                    memory_strategy = "autoclean",
                    lock_envir = F,
@@ -97,13 +101,13 @@ if(run_hpg) {
 
 
   # Run the pipeline on multiple local cores
-  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F, jobs = 2))
+  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
 }
 
-loadd(all_summaries, cache = cache)
-save(all_summaries, file = "local_summaries.Rds")
+loadd(all_scores, cache = cache)
+save(all_scores, file = "local_summaries.Rds")
 
 DBI::dbDisconnect(db)
 rm(cache)
