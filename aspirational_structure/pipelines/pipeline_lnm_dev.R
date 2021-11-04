@@ -18,9 +18,9 @@ datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
 #datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
-datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
+#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 
-#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_318_3")), ]
+datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_318_3")), ]
 
 #
 # sim_plan <- drake_plan(
@@ -36,16 +36,22 @@ datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_3
 #                     transform = map(
 #                     ))
 # )
-
+sim_draws = 5
+nm_seeds <- 1989:(1989 + sim_draws - 1)
 
 methods <- drake_plan(
-  lnm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 10, n_isd_draws = 5, ndraws = 5, initial_null_model_seed = 1989),
-                 transform = map(
-                   dataset = !!rlang::syms(datasets$target)
+  lnm = target(rwar::local_null_model(dataset, n_isd_draws = 5, ndraws = 5, null_mod_seed = nm_seed),
+                 transform = cross(
+                   dataset = !!rlang::syms(datasets$target),
+                   nm_seed = !!nm_seeds
                  )),
-  lnm_s = target(rwar::summarize_null_models(lnm),
-                 transform = map(lnm)),
-  anm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 1, n_isd_draws = 1, ndraws = 5, initial_null_model_seed = 1989, return_actual = T),
+  site_lnms = target(dplyr::combine(lnm),
+                     transform = combine(lnm, .by = dataset)),
+  site_local_nulls = target(dplyr::bind_rows(site_lnms),
+                            transform = map(site_lnms)),
+  lnm_s = target(rwar::summarize_null_models(site_local_nulls),
+                 transform = map(site_local_nulls)),
+  anm = target(rwar::local_null_model(dataset, null_mod_seed = 1989, n_isd_draws = 5, ndraws = 5, return_actual = T),
                transform = map(
                  dataset = !!rlang::syms(datasets$target)
                )),
@@ -82,7 +88,7 @@ if(run_hpg) {
                    cache = cache,
                    verbose = 1,
                    parallelism = "clustermq",
-                   jobs = 2,
+                   jobs = 4,
                    caching = "main",
                    memory_strategy = "autoclean",
                    lock_envir = F,
@@ -91,7 +97,7 @@ if(run_hpg) {
 
 
   # Run the pipeline on multiple local cores
-  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
+  system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F, jobs = 2))
 
 
 }
