@@ -16,9 +16,9 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-#datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
+datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
-datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
+#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 
 # datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
@@ -85,7 +85,7 @@ all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "test_refact5.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "test_refact100.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
