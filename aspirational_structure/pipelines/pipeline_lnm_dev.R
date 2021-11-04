@@ -36,7 +36,7 @@ datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_
 #                     transform = map(
 #                     ))
 # )
-sim_draws = 5
+sim_draws = 100
 nm_seeds <- 1989:(1989 + sim_draws - 1)
 
 methods <- drake_plan(
