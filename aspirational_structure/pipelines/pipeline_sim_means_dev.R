@@ -16,7 +16,7 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-#datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
+datasets <- datasets[ unique(c(1:100, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
 #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 
@@ -45,7 +45,7 @@ methods <- drake_plan(
                    simtype = c("actual", "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),
-              transform = combine(ssims)),
+             transform = combine(ssims)),
   all_sims = target(dplyr::bind_rows(as)),
   fits = target(rwar::fit_stanlm(ssims),
                 transform = map(ssims)),
@@ -80,7 +80,7 @@ all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "test_refact.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "test_refact100.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
@@ -112,9 +112,9 @@ if(run_hpg) {
 
 
 }
-
-loadd(all_sims, all_winners,  all_qis, all_diagnostics, cache = cache)
-save(all_sims, all_winners,  all_qis, all_diagnostics, file = "portable_results_compare.Rds")
+#
+# loadd(all_sims, all_winners,  all_qis, all_diagnostics, cache = cache)
+# save(all_sims, all_winners,  all_qis, all_diagnostics, file = "portable_results_compare.Rds")
 
 DBI::dbDisconnect(db)
 rm(cache)
