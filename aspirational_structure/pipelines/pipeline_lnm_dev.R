@@ -39,13 +39,13 @@ datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_3
 
 
 methods <- drake_plan(
-  lnm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 500, n_isd_draws = 5, ndraws = 25, initial_null_model_seed = 1989),
+  lnm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 100, n_isd_draws = 1, ndraws = 5, initial_null_model_seed = 1989),
                  transform = map(
                    dataset = !!rlang::syms(datasets$target)
                  )),
   lnm_s = target(rwar::summarize_null_models(lnm),
                  transform = map(lnm)),
-  anm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 1, n_isd_draws = 5, ndraws = 25, initial_null_model_seed = 1989, return_actual = T),
+  anm = target(rwar::local_null_model_wrapper(dataset, n_null_model_sims = 1, n_isd_draws = 1, ndraws = 5, initial_null_model_seed = 1989, return_actual = T),
                transform = map(
                  dataset = !!rlang::syms(datasets$target)
                )),
