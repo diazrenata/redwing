@@ -104,7 +104,7 @@ if(run_hpg) {
                    cache = cache,
                    verbose = 1,
                    parallelism = "clustermq",
-                   jobs = 6,
+                   jobs = 12,
                    caching = "main",
                    memory_strategy = "autoclean",
                    lock_envir = F,
