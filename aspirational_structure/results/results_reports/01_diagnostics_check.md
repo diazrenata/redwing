@@ -89,7 +89,7 @@ nrow(long_diagnostics %>%
   filter(val > 1.001))
 ```
 
-    ## [1] 1916
+    ## [1] 1960
 
 ## divergent transitions
 
