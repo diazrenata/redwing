@@ -9,18 +9,7 @@ library(dplyr)
 library(drake)
 library(ggplot2)
 
-
-## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "dev_lnm.sqlite"))
-cache <- storr::storr_dbi("datatable", "keystable", db)
-cache$del(key = "lock", namespace = "session")
-
-
-
-loadd(cache=cache)
-
-DBI::dbDisconnect(db)
-rm(cache)
+load(here::here("aspirational_structure", "pipelines", "local_summaries.Rds"))
 ```
 
 ```{r}
