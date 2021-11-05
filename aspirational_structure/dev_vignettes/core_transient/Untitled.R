@@ -31,3 +31,24 @@ all_sims <- bind_rows(all_sims_all, all_sims_ct)
 a_route = filter(all_sims, matssname == "bbs_rtrg_26_68")
 
 ggplot(a_route, aes(year, total_biomass, color = source)) + geom_point() + facet_wrap(vars(ct))
+
+
+# 3/4 of the time the winning model is the same..
+
+different_winners <- filter(all_winners, model_complexity_all != model_complexity_core)
+
+different_winners %>%
+  group_by(currency) %>%
+  summarize(n  = dplyr::n())
+
+length(unique(different_winners$matssname))
+
+nrow(different_winners %>%
+  filter(model_complexity_all == 3, model_complexity_core < 3)) # about half the time it's that there IS decoupling in the full TS but not in the core TS
+
+nrow(different_winners %>%
+       filter(model_complexity_all == 2, model_complexity_core == 1))
+
+nrow(different_winners %>%
+       filter(model_complexity_core == 3))
+nrow(different_winners %>% filter(model_complexity_core == 2, model_complexity_all == 1))
