@@ -16,8 +16,7 @@ library(ggplot2)
 theme_set(theme_bw())
 
 #load(here::here("aspirational_structure", "pipelines", "portable_results.Rds"))
-load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
-working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes_max10.csv"))
+load(here::here("aspirational_structure", "pipelines", "portable_results_local_null1.Rds"))
 ```
 
 
@@ -26,7 +25,7 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 all_winners %>%
   group_by(simtype, currency, model) %>%
-  summarize(count = dplyr::n()) 
+  summarize(count = dplyr::n())
 
 
 ```
