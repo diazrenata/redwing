@@ -16,7 +16,7 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-datasets <- datasets[ unique(c(1:275, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
+datasets <- datasets[ unique(c(1:400, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
 #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 #datasets <- datasets[ which(datasets$target %in% c( "bbs_rtrg_116_18", "bbs_rtrg_224_3")), ]
