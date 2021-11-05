@@ -23,7 +23,7 @@ datasets <- datasets[ unique(c(1:130, which(datasets$target %in% c("bbs_rtrg_224
 # datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
 nontransient_datasets <- drake_plan(
-  nontransientdat = target(rwar::nontransient_transient(dataset, core_only =F),
+  nontransientdat = target(rwar::core_transient(dataset, core_only =F),
                    transform = map(
                      dataset = !!rlang::syms(datasets$target)
                    )
