@@ -3,6 +3,8 @@ library(dplyr)
 library(drake)
 library(MATSS)
 library(BBSsize)
+library(brms)
+library(tidybayes)
 
 run_hpg = T
 
@@ -14,11 +16,11 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-datasets <- datasets[ 101:200, ]
+#datasets <- datasets[ unique(c(1:250, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
 #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 
-#datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18", "bbs_rtrg_318_3")), ]
+# datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
 #
 # sim_plan <- drake_plan(
@@ -34,46 +36,32 @@ datasets <- datasets[ 101:200, ]
 #                     transform = map(
 #                     ))
 # )
-sim_draws = 250
-nm_seeds <- 1989:(1989 + sim_draws - 1)
+#
+# draw_wrapper <- function(winners, fits) {
+#   draws = rwar::winner_draws(winners, fits)
+#   draw_qis = rwar::winner_qis(draws)
+#   draw_qis
+# }
 
 methods <- drake_plan(
-  lnm = target(rwar::local_null_model(dataset, n_isd_draws = 5, ndraws = 5, null_mod_seed = nm_seed),
-                 transform = cross(
-                   dataset = !!rlang::syms(datasets$target),
-                   nm_seed = !!nm_seeds
+  coredat = target(rwar::core_transient(dataset, core_only = T),
+                   transform = map(
+                     dataset = !!rlang::syms(dataset$target)
+                   )),
+  comps = target(rwar::be_comparison(coredat),
+                 transform = map(
+                   coredat
                  )),
-  site_lnms = target(dplyr::combine(lnm),
-                     transform = combine(lnm, .by = dataset)),
-  site_local_nulls = target(dplyr::bind_rows(site_lnms),
-                            transform = map(site_lnms)),
-  lnm_s = target(rwar::summarize_null_models(site_local_nulls),
-                 transform = map(site_local_nulls)),
-  anm = target(rwar::local_null_model(dataset, null_mod_seed = 1989, n_isd_draws = 5, ndraws = 5, return_actual = T),
-               transform = map(
-                 dataset = !!rlang::syms(datasets$target)
-               )),
-  anm_s = target(rwar::summarize_null_models(anm),
-                 transform = map(anm)),
-  # as = target(dplyr::combine(lnm_s),
-  #             transform = combine(lnm_s)),
-  # all_summaries = target(dplyr::bind_rows(as)),
-  # aa = target(dplyr::combine(anm_s),
-  #             transform = combine(anm_s)),
-  # all_actual_summaries = target(dplyr::bind_rows(aa))
-  cnm = target(rwar::compare_actual_null_models(anm_s, lnm_s),
-               transform = combine(anm_s, lnm_s, .by = dataset
-               )),
-  acnm = target(dplyr::combine(cnm),
-                transform = combine(cnm)),
-  all_scores = target(dplyr::bind_rows(acnm))
+  ac = target(dplyr::combine(comps),
+             transform = combine(comps)),
+  all_comps = target(dplyr::bind_rows(ac))
 )
 
 all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "dev_lnm_slice2.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "comps_core.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
@@ -92,7 +80,7 @@ if(run_hpg) {
                    cache = cache,
                    verbose = 1,
                    parallelism = "clustermq",
-                   jobs = 12,
+                   jobs = 4,
                    caching = "main",
                    memory_strategy = "autoclean",
                    lock_envir = F,
@@ -105,9 +93,9 @@ if(run_hpg) {
 
 
 }
-
-loadd(all_scores, cache = cache)
-save(all_scores, file = "local_summaries_slice2.Rds")
+#
+ loadd(all_comps, cache = cache)
+ save(all_comps, file = "portable_comps_core.Rds")
 
 DBI::dbDisconnect(db)
 rm(cache)
