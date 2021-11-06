@@ -46,7 +46,7 @@ datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 methods <- drake_plan(
   coredat = target(rwar::core_transient(dataset, core_only = T),
                    transform = map(
-                     dataset = !!rlang::syms(dataset$target)
+                     dataset = !!rlang::syms(datasets$target)
                    )),
   comps = target(rwar::be_comparison(coredat),
                  transform = map(
