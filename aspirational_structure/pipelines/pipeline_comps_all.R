@@ -47,7 +47,8 @@ methods <- drake_plan(
   comps = target(rwar::be_comparison(dataset),
                  transform = map(
                    dataset = !!rlang::syms(datasets$target)
-                 )),
+                 ),
+                 trigger = trigger(condition = T)),
   ac = target(dplyr::combine(comps),
              transform = combine(comps)),
   all_comps = target(dplyr::bind_rows(ac))

@@ -51,7 +51,8 @@ methods <- drake_plan(
   comps = target(rwar::be_comparison(coredat),
                  transform = map(
                    coredat
-                 )),
+                 ),
+                 trigger = trigger(condition = T)),
   ac = target(dplyr::combine(comps),
              transform = combine(comps)),
   all_comps = target(dplyr::bind_rows(ac))
