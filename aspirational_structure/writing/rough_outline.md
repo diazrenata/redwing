@@ -1,8 +1,8 @@
 ---
 output:
-  pdf_document: default
   word_document:
     reference_docx: default_gdoc.docx
+  pdf_document: default
 csl: ecology.csl
 bibliography: refs.bib
 ---
@@ -96,7 +96,7 @@ bibliography: refs.bib
           1. Again because there is some sampling error, we repeat the re-drawing of individuals 5 times and compute the mean total biomass/total energy use across draws. Again I don't think this really affects stuff in aggregate and I could be talked out of it. 
     1. We use Bayesian linear models to test whether change in the "actual ISDs" vs "no change-ISDs" scenarios differs.
         1. The "no-change ISDs" scenario reflects change in total energy/biomass due simply to changes in total abundance. The "actual ISDs" scenario reflects the combined effects of change in abundance and change in the ISD.
-        1. We evaluate change at the route level. I tried fitting everything within one  hierarchical model, but the hierarachical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also ridiculously hard to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in computing one slope. We care most about the *decoupling* of slopes at the route level. The use of a Bayesian framework helps us offset some of the issues around p-values if we were to do this many models in a frequentist setting. 
+        1. We evaluate change at the route level. I tried fitting everything within one  hierarchical model, but the hierarachical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also ridiculously hard to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in change in one currency per site. We care most about the *decoupling* of slopes at the route level. The use of a Bayesian framework helps us offset some of the issues around p-values if we were to do this many models in a frequentist setting. 
         1. For each currency for each route, we fit 3 models:
             1. `total_biomass ~ timeperiod * scenario`, `total_biomass ~ timeperiod`, `total_biomass ~ 1`
             1. We used LOO-crossvalidation to select the best-fitting model as the simplest model with an ELPD within 1 SE of the best-fitting model.
@@ -104,6 +104,11 @@ bibliography: refs.bib
             1. We fit as Gaussians with default priors, run for 8000 iterations. We fit as Gaussians to avoid having to deal with back-transforming the parameter estimates (and because when I coerced to other family distributions I got tons of convergence issues). Running for 8000 iterations is extremely generous for these models.
         1. If the best-fitting model does not include the scenario term, it means that the change in the ISD does not ~significantly decouple the dynamics of total energy/biomass from that which is driven by changes in abundance. If there is no **timeperiod** term, it means that there's not a ~significant change begin-end.
         1. We extract parameter estimates from the best-fitting model to examine the magnitude and direction of change beginning-to-end and decoupling due to change in the ISD. 
+    1. I ran this whole pipeline on some "quality control" sims where 1) neither abundance nor the ISD changes begin-end and 2) the ISD doesn't change begin-end for either scenario. It behaves as expected for those. 
+
+1. Core-transient
+    1. We run this pipeline on the whole dataset, and using just core species (those present in >= 2/3 of timesteps).
+    1. We also explore a null model in which we restrict to the same richness as the core species richness but draw a random set of species.
 
 
 
