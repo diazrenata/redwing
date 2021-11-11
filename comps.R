@@ -39,6 +39,8 @@ summary(all_comps$transient_size_ratio)
 summary(all_comps$all_size_ratio)
 summary(all_comps$core_size_ratio)
 
+ggplot(all_comps, aes(all_size_ratio, transient_size_ratio)) + geom_point() + scale_x_log10() + scale_y_log10() + geom_abline(slope = 1, intercept = 0)
+
 
 a_weird_route <- MATSS::get_bbs_route_region_data(route = 119, region = 68)
 
@@ -49,9 +51,13 @@ an_isd <- rwar::just_isd(weird_transients, 1989)
 begin_isd <- filter(an_isd, year %in% 1988:1992)
 end_isd <- filter(an_isd, year %in% 2014:2018)
 
+median(begin_isd$mass)
+median(end_isd$mass)
+
+begin_ecdf <- ecdf(begin_isd$mass)
+
+
 ggplot(begin_isd, aes(log(mass))) + geom_density() + xlim(0, 15)  + geom_density(data = end_isd, color = "blue")
 
 ggplot(end_isd, aes(log(mass))) + geom_density() + xlim(0, 15)
 
-
-ggplot(all_comps, aes(all_size_ratio, transient_size_ratio)) + geom_point() + scale_x_log10() + scale_y_log10() + geom_abline(slope = 1, intercept = 0)
