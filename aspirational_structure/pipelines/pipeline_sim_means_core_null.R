@@ -16,16 +16,19 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-#datasets <- datasets[ unique(c(1:350, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
+datasets <- datasets[ unique(c(1:125, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
 #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 #datasets <- datasets[ which(datasets$target %in% c( "bbs_rtrg_116_18", "bbs_rtrg_224_3")), ]
 # datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
+null_seeds <- c(1989:1991)
+
 core_datasets <- drake_plan(
-  coredat = target(rwar::core_transient_null(dataset, core_only =T, null_seed= 1989),
-                   transform = map(
-                     dataset = !!rlang::syms(datasets$target)
+  coredat = target(rwar::core_transient_null(dataset, core_only =T, null_seed= null_seed),
+                   transform = cross(
+                     dataset = !!rlang::syms(datasets$target),
+                     null_seed = !!null_seeds
                    )
 ))
 
@@ -49,22 +52,22 @@ methods <- drake_plan(
                    transform = map(fits_compare)),
   aw = target(dplyr::combine(winners),
               transform = combine(winners)),
-  all_winners  = target(dplyr::bind_rows(aw)),
-  diag = target(rwar::extract_diagnostics(fits),
-                transform = map(fits)),
-  adg = target(dplyr::combine(diag),
-               transform = combine(diag)),
-  all_diagnostics = target(dplyr::bind_rows(adg)),
+  all_winners  = target(dplyr::bind_rows(aw))#,
+  # diag = target(rwar::extract_diagnostics(fits),
+  #               transform = map(fits)),
+ # adg = target(dplyr::combine(diag),
+ #              transform = combine(diag)),
+ # all_diagnostics = target(dplyr::bind_rows(adg)),
  # draws = target(rwar::winner_draws(winners, fits),
  #                transform = map(winners, fits)),
   #ad = target(dplyr::combine(draws),
    #           transform = combine(draws)),
  # all_draws = target(dplyr::bind_rows(ad)),
-  qis = target(rwar::draw_wrapper(winners, fits),
-               transform = combine(winners, fits, .by = fits)),
-  aq = target(dplyr::combine(qis),
-              transform = combine(qis)),
-  all_qis = target(dplyr::bind_rows(aq))
+ # qis = target(rwar::draw_wrapper(winners, fits),
+  #             transform = combine(winners, fits, .by = fits)),
+#  aq = target(dplyr::combine(qis),
+ #             transform = combine(qis)),
+ # all_qis = target(dplyr::bind_rows(aq))
 )
 
 all = bind_rows(datasets,core_datasets,  methods)
