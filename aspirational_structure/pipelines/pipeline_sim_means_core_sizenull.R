@@ -16,7 +16,12 @@ working_datasets <- read.csv(here::here("aspirational_structure", "supporting_da
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
-datasets <- datasets[ unique(c(1:350, which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
+max_caps <- c(125, 350, 528)
+
+for(i in 1:length(max_caps)) {
+
+
+datasets <- datasets[ unique(c(1:max_caps[i], which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 #
 #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
 #datasets <- datasets[ which(datasets$target %in% c( "bbs_rtrg_116_18", "bbs_rtrg_224_3")), ]
@@ -152,6 +157,7 @@ if(run_hpg) {
 #
  loadd(all_sims, all_winners, cache = cache)#,  all_qis, all_diagnostics, cache = cache)
  save(all_sims, all_winners, file = "portable_results_coresizenull.Rds") # all_qis, all_diagnostics, file = "portable_results_coresizenull.Rds")
+}
 
 DBI::dbDisconnect(db)
 rm(cache)
