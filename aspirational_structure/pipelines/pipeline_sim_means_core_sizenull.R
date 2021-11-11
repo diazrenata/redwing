@@ -22,7 +22,7 @@ datasets <- datasets[ unique(c(1:125, which(datasets$target %in% c("bbs_rtrg_224
 #datasets <- datasets[ which(datasets$target %in% c( "bbs_rtrg_116_18", "bbs_rtrg_224_3")), ]
 # datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
-null_seeds <- c(1989:1991)
+null_seeds <- c(1989)
 core_transient_sizenull <- function(dat, core_only = F, null_seed = 1989){
 
 
