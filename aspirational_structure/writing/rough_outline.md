@@ -1,8 +1,8 @@
 ---
 output:
+  pdf_document: default
   word_document:
     reference_docx: default_gdoc.docx
-  pdf_document: default
 csl: ecology.csl
 bibliography: refs.bib
 ---
@@ -60,13 +60,50 @@ bibliography: refs.bib
         1. This yielded 528 routes. 
             1. Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 (I believe).
 1. Estimated size data
-    1. BBS contains abundances for all species along a route in each year, but does not include measurements of individual body size. We generated body size estimates for individual birds assuming that intraspecific size distributions are normally distributed around a species’ mean body size (following @thibault2011; also recent Myers/Botero/Fristoe paper I believe).
+    1. BBS contains abundances for all species along a route in each year, but does not include measurements of individual body size. We generated body size estimates for individual birds assuming that intraspecific size distributions are normally distributed around a species’ mean body size (following @thibault2011; also recent Myers/Catano/Fristoe paper I believe).
         1. Using records of species’ mean and standard deviation body sizes from @dunning2007, we drew individuals’ body sizes from the appropriate normal distributions.
             1. For species for which there was not a standard deviation recorded in @dunning2007 (n =?), we estimated the standard deviation based on an allometric scaling relationship between mean and standard deviation in body mass (also described in @thibault2011). For species with multiple records in @dunning2007, we used the mean mean and standard deviation body sizes across all records (averaging across sexes, subspecies, and records from different locations). We performed this averaging after estimating any missing standard deviation measurements.
-        1. This method does not incorporate intraspecific variation in body size across geographies or over time [@dunning2007; @gardner2011].. However, it makes it possible to conduct macroecological studies of avian size distributions at a spatial and temporal scale that would otherwise be impossible [@thibault2011].
+        1. This method does not incorporate intraspecific variation in body size across geographies or over time [@dunning2007; @gardner2011]. However, it makes it possible to conduct macroecological studies of avian size distributions at a spatial and temporal scale that would otherwise be impossible [@thibault2011].
         1. For each individual bird observed, we estimated metabolic rate as (parameters) [@fristoe2015]. 
-        
-1. Change in total abundance, biomass, and energy use over time
+        1. For each route in a given year, we compute total energy use, total biomass, and total abundance by summing over all individuals observed on that route in that year. 
+
+1. Comparing ISDs over time
+    1. Characterizing the ISD
+        1. For a given route and time period, we draw the appropriate numbers of individuals of each species from their corresponding normal distributions.
+    1. We use two approaches to test whether the ISD for 1988-1992 is significantly different from the one for 2014-2018
+        1. Kolmogorov-Smirnov test on the vector of masses for the begin vs end time periods
+        1. Bootstrap resampling of individuals [pretty sure this derives from @ernest2005]:
+            1. From the pool of all individuals "observed" in both timeperiods, draw the appropriate number for each time period without replacement.
+            1. KS test comparing "begin" and "end" for the reshuffled communities
+            1. Repeat 500x and retain the test statistic (D) for all tests
+            1. Compute the percentile and standardized effect size [@gotelli_SES] for the test statistic for the *actual* time periods to the distribution of test statistics for the reshuffles
+    1. For an intuitive measure of the magnitude of change over time, we compute an overlap measure derived from [@read2018]:
+        1. We characterize the ISD as a smooth function by fitting a Gaussian mixture model (to logarithm of mass, up to 15 Gaussians, select best using BIC, all following @thibault2011). We evaluate the density function of the GMM at points for a size range from 0-exp(15), which covers the range of sizes in this dataset with ample padding on each side. We then rescale the density function so the total area under the ISD is 1.
+        1. We calculate the overlap between two ISDs as the sum of the minimum density at each evaluation point. This ranges from 0 (no overlap) to 1 (complete overlap).
+
+
+1. Decoupling of dynamics in total abundance, biomass, and energy use over time
+    1. To test whether change in the ISD results in decoupling of currencies, we can't just compare the slopes for total energy, total biomass, total abundance to each other. This is because the three different currencies are on radically different scales of measurement. We also can't rescale using the usual methods (e.g. scale to mean 0/sd 1, sqrt transform @dornelas2014; @gotelli2017) because these destroy information about the range of variability within a single currency.
+    1. Instead, we test whether the observed change in biomass or energy use differs from the change that we would expect given observed changes in community-wide abundance, but with *no change* in the ISD from beginning to end. Enter Null Model A.
+    1. Simulate change in total energy and total biomass under "no change in ISD" and "observed change in ISD" scenarios
+          1. We construct sampling ISDs for each time period, to characterize the probability of observing an individual of a given size in that time period. We draw individuals, fit GMMs, and characterize the probabilty density function as above. For this, because there is some sampling error, I draw 5 copies of the ISD and fit the GMM to the combined 5 draws. This doesn't affect anything in practice and is mostly inspired by a one-off comment from Allen Hurlbert about "sampling error" so I might drop it. We construct sampling ISDs for the "begin" and "end" time periods.
+          1. We then *re draw* individuals for each time period and shuffle the ISDs to produce scenarios.
+              1. First, we draw individuals for each year using the actual ISD for that time period (so the "begin" ISD for 1988-1992 and the "end" ISD for 2014-2018).
+              1. Then we draw individuals for each year, but using the "begin" ISD for all years.
+              1. We draw year-by-year, instead of the whole time period, because there is interannual, intratimeperiod variation in total abundance that we would like to capture. But we pool individuals within a time period to create the ISD to smooth out species accumulation.
+              1. Draws from sampling ISDs like this diverge slightly from draws from the raw species counts and sds. So we run everything through this pipeline for comparability.
+          1. We compute total energy use and total biomass for each year for each scenario. 
+          1. Again because there is some sampling error, we repeat the re-drawing of individuals 5 times and compute the mean total biomass/total energy use across draws. Again I don't think this really affects stuff in aggregate and I could be talked out of it. 
+    1. We use Bayesian linear models to test whether change in the "actual ISDs" vs "no change-ISDs" scenarios differs.
+        1. The "no-change ISDs" scenario reflects change in total energy/biomass due simply to changes in total abundance. The "actual ISDs" scenario reflects the combined effects of change in abundance and change in the ISD.
+        1. We evaluate change at the route level. I tried fitting everything within one  hierarchical model, but the hierarachical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also ridiculously hard to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in computing one slope. We care most about the *decoupling* of slopes at the route level. The use of a Bayesian framework helps us offset some of the issues around p-values if we were to do this many models in a frequentist setting. 
+        1. For each currency for each route, we fit 3 models:
+            1. `total_biomass ~ timeperiod * scenario`, `total_biomass ~ timeperiod`, `total_biomass ~ 1`
+            1. We used LOO-crossvalidation to select the best-fitting model as the simplest model with an ELPD within 1 SE of the best-fitting model.
+            1. We used `reloo` to correct for outliers.
+            1. We fit as Gaussians with default priors, run for 8000 iterations. We fit as Gaussians to avoid having to deal with back-transforming the parameter estimates (and because when I coerced to other family distributions I got tons of convergence issues). Running for 8000 iterations is extremely generous for these models.
+        1. If the best-fitting model does not include the scenario term, it means that the change in the ISD does not ~significantly decouple the dynamics of total energy/biomass from that which is driven by changes in abundance. If there is no **timeperiod** term, it means that there's not a ~significant change begin-end.
+        1. We extract parameter estimates from the best-fitting model to examine the magnitude and direction of change beginning-to-end and decoupling due to change in the ISD. 
 
 
 
