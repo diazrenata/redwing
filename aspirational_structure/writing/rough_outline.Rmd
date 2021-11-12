@@ -1,8 +1,8 @@
 ---
 output:
+   pdf_document: default
    word_document:
     reference_docx: default_gdoc.docx
-   pdf_document: default
 csl: ecology.csl
 bibliography: refs.bib
 ---
@@ -12,9 +12,12 @@ knitr::opts_chunk$set(echo = F, include = F, results = F, message = F, warning =
 library(dplyr)
 library(BBSsize)
 library(rwar)
+library(tidybayes)
+
 library(ggplot2)
 theme_set(theme_bw())
 dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
+load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
 ```
 
 # Introduction/Framing
@@ -63,20 +66,22 @@ dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
 
 
 1. We used data from the Breeding Bird Survey to compare community attributes along each route between the 5-year periods from 1988-1992 and 2014-2018.
-        1. We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in species composition and the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. 
-            1. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @balhai2021]. Developing continuous-time methods for analyzing complex, multidimensional community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
-        1. We used 5-year periods so as to smooth out interannual variability and to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004].
-            1. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. 
-            1. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from X to X and end dates ranging from X to X, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there). 
+    1. We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in species composition and the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. 
+        1. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @balhai2021]. Developing continuous-time methods for analyzing complex, multidimensional community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
+    1. We used 5-year periods so as to smooth out interannual variability and to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004].
+        1. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. 
+        1. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from X to X and end dates ranging from X to X, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there).
         1. This yielded 528 routes. 
             1. Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 (I believe).
+            
 ##  Estimated size data
-    1. BBS contains abundances for all species along a route in each year, but does not include measurements of individual body size. We generated body size estimates for individual birds assuming that intraspecific size distributions are normally distributed around a species’ mean body size (following @thibault2011; also recent Myers/Catano/Fristoe paper I believe).
-        1. Using records of species’ mean and standard deviation body sizes from @dunning2007, we drew individuals’ body sizes from the appropriate normal distributions.
-            1. For species for which there was not a standard deviation recorded in @dunning2007 (n =?), we estimated the standard deviation based on an allometric scaling relationship between mean and standard deviation in body mass (also described in @thibault2011). For species with multiple records in @dunning2007, we used the mean mean and standard deviation body sizes across all records (averaging across sexes, subspecies, and records from different locations). We performed this averaging after estimating any missing standard deviation measurements.
-        1. This method does not incorporate intraspecific variation in body size across geographies or over time [@dunning2007; @gardner2011]. However, it makes it possible to conduct macroecological studies of avian size distributions at a spatial and temporal scale that would otherwise be impossible [@thibault2011].
-        1. For each individual bird observed, we estimated metabolic rate as (parameters) [@fristoe2015]. 
-        1. For each route in a given year, we compute total energy use, total biomass, and total abundance by summing over all individuals observed on that route in that year. 
+
+1. BBS contains abundances for all species along a route in each year, but does not include measurements of individual body size. We generated body size estimates for individual birds assuming that intraspecific size distributions are normally distributed around a species’ mean body size (following @thibault2011; also recent Myers/Catano/Fristoe paper I believe).
+    1. Using records of species’ mean and standard deviation body sizes from @dunning2007, we drew individuals’ body sizes from the appropriate normal distributions.
+        1. For species for which there was not a standard deviation recorded in @dunning2007 (n =?), we estimated the standard deviation based on an allometric scaling relationship between mean and standard deviation in body mass (also described in @thibault2011). For species with multiple records in @dunning2007, we used the mean mean and standard deviation body sizes across all records (averaging across sexes, subspecies, and records from different locations). We performed this averaging after estimating any missing standard deviation measurements.
+    1. This method does not incorporate intraspecific variation in body size across geographies or over time [@dunning2007; @gardner2011]. However, it makes it possible to conduct macroecological studies of avian size distributions at a spatial and temporal scale that would otherwise be impossible [@thibault2011].
+    1. For each individual bird observed, we estimated metabolic rate as (parameters) [@fristoe2015]. 
+    1. For each route in a given year, we compute total energy use, total biomass, and total abundance by summing over all individuals observed on that route in that year. 
 
 ## Comparing ISDs over time
 
@@ -130,15 +135,18 @@ For this site, the KS test p value is `r round(isd_comparison$actual_p[1], 4)`. 
 1. To test whether change in the ISD results in decoupling of currencies, we can't just compare the slopes for total energy, total biomass, total abundance to each other. This is because the three different currencies are on radically different scales of measurement. We also can't rescale using the usual methods (e.g. scale to mean 0/sd 1, sqrt transform @dornelas2014; @gotelli2017) because these destroy information about the range of variability within a single currency.
 1. Instead, we test whether the observed change in biomass or energy use differs from the change that we would expect given observed changes in community-wide abundance, but with *no change* in the ISD from beginning to end. Enter Null Model A.
     1. Figures and functions walking through this procedure are at https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_01_change_over_time_sims.md but they're a little rough. 
-    1. Simulate change in total energy and total biomass under "no change in ISD" and "observed change in ISD" scenarios
-          1. We construct sampling ISDs for each time period, to characterize the probability of observing an individual of a given size in that time period. We draw individuals, fit GMMs, and characterize the probabilty density function as above. For this, because there is some sampling error, I draw 5 copies of the ISD and fit the GMM to the combined 5 draws. This doesn't affect anything in practice and is mostly inspired by a one-off comment from Allen Hurlbert about "sampling error" so I might drop it. We construct sampling ISDs for the "begin" and "end" time periods.
-          1. We then *re draw* individuals for each time period and shuffle the ISDs to produce scenarios.
-              1. First, we draw individuals for each year using the actual ISD for that time period (so the "begin" ISD for 1988-1992 and the "end" ISD for 2014-2018).
-              1. Then we draw individuals for each year, but using the "begin" ISD for all years.
-              1. We draw year-by-year, instead of the whole time period, because there is interannual, intratimeperiod variation in total abundance that we would like to capture. But we pool individuals within a time period to create the ISD to smooth out species accumulation.
-              1. Draws from sampling ISDs like this diverge slightly from draws from the raw species counts and sds. So we run everything through this pipeline for comparability.
-          1. We compute total energy use and total biomass for each year for each scenario. 
-          1. Again because there is some sampling error, we repeat the re-drawing of individuals 5 times and compute the mean total biomass/total energy use across draws. Again I don't think this really affects stuff in aggregate and I could be talked out of it. 
+1. Simulate change in total energy and total biomass under "no change in ISD" and "observed change in ISD" scenarios
+      1. We construct sampling GMM for each time period.
+          1. The "sampling GMM" is a probability density function with the probability of observing an individual of a given mass across the spectrum of possible masses. Sampling `$mass` with probability `$density` is a random number generator for sizes.
+          1. We construct this by drawing individuals (based on their species' abundances and mean and SD body sizes), fitting a GMM, and then rescaling the density function of the GMM so it sums to 1.
+          1.For this, because there is some sampling error, I draw 5 copies of the ISD and fit the GMM to the combined 5 draws. This doesn't affect anything in practice and is mostly inspired by a one-off comment from Allen Hurlbert about "sampling error" so I might drop it. We construct sampling ISDs for the "begin" and "end" time periods.
+      1. We then *re draw* individuals for each time period and shuffle the ISDs to produce scenarios.
+           1. First, we draw individuals for each year using the actual ISD for that time period (so the "begin" ISD for 1988-1992 and the "end" ISD for 2014-2018).
+          1. Then we draw individuals for each year, but using the "begin" ISD for all years.
+          1. We draw year-by-year, instead of the whole time period, because there is interannual, intratimeperiod variation in total abundance that we would like to capture. But we pool individuals within a time period to create the ISD to smooth out species accumulation.
+          1. Draws from sampling ISDs like this diverge slightly from draws from the raw species counts and sds. So we run everything through this pipeline for comparability.
+1. We compute total energy use and total biomass for each year for each scenario. 
+      1. Again because there is some sampling error, we repeat the re-drawing of individuals 5 times and compute the mean total biomass/total energy use across draws. Again I don't think this really affects stuff in aggregate and I could be talked out of it. 
 
 ```{r}
 
@@ -157,24 +165,57 @@ ggplot(ssims, aes(year, total_biomass, color = source)) + geom_point() + geom_sm
 
 ```
 
+Here, the "abundance" lines (red) reflect change in total biomass expected due only to changes in abundance. The "currency" lines reflect change in total biomass due to change in abundance *and* observed change in the size structure. Deviations in slope between the red and blue lines reflect change driven by the ISD. Note that the lines here are crude linear model smooths and not really suitable for inference, just visualization. 
+
 ### Testing change
 
-1. We use Bayesian linear models to test whether change in the "actual ISDs" vs "no change-ISDs" scenarios differs.
-    1. The "no-change ISDs" scenario reflects change in total energy/biomass due simply to changes in total abundance. The "actual ISDs" scenario reflects the combined effects of change in abundance and change in the ISD.
+1. We use Bayesian linear models to test whether change in the ISD decouples the dynamics of total biomass/total energy use from that which would be expected due to change in abundance.
     1. We evaluate change at the route level. I tried fitting everything within one  hierarchical model, but the hierarachical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also ridiculously hard to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in change in one currency per site. We care most about the *decoupling* of slopes at the route level. The use of a Bayesian framework helps us offset some of the issues around p-values if we were to do this many models in a frequentist setting. 
     1. Figures and functions here:  https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_02_testing_change.md (but rough)
-    1. For each currency for each route, we fit 3 models:
-         1. `total_biomass ~ timeperiod * scenario`, `total_biomass ~ timeperiod`, `total_biomass ~ 1`
-        1. We used LOO-crossvalidation to select the best-fitting model as the simplest model with an ELPD within 1 SE of the best-fitting model.
-        1. We used `reloo` to correct for outliers.
-       1. We fit as Gaussians with default priors, run for 8000 iterations. We fit as Gaussians to avoid having to deal with back-transforming the parameter estimates (and because when I coerced to other family distributions I got tons of convergence issues). Running for 8000 iterations is extremely generous for these models.
-    1. If the best-fitting model does not include the scenario term, it means that the change in the ISD does not ~significantly decouple the dynamics of total energy/biomass from that which is driven by changes in abundance. If there is no **timeperiod** term, it means that there's not a ~significant change begin-end.
-     1. We extract parameter estimates from the best-fitting model to examine the magnitude and direction of change beginning-to-end and decoupling due to change in the ISD. 
-    1. I ran this whole pipeline on some "quality control" sims where 1) neither abundance nor the ISD changes begin-end and 2) the ISD doesn't change begin-end for either scenario. It behaves as expected for those. 
+1. For each currency for each route, we fit 3 models:
+     1. `total_biomass ~ timeperiod * scenario`, `total_biomass ~ timeperiod`, `total_biomass ~ 1`
+    1. We used LOO-crossvalidation to select the best-fitting model as the simplest model with an ELPD within 1 SE of the best-fitting model.
+    1. We used `reloo` to correct for outliers.
+    1. We fit as Gaussians with default priors, run for 8000 iterations. We fit as Gaussians to avoid having to deal with back-transforming the parameter estimates (and because when I coerced to other family distributions I got tons of convergence issues). Running for 8000 iterations is extremely generous for these models.
+1. If the best-fitting model does not include the scenario term, it means that the change in the ISD does not ~significantly decouple the dynamics of total energy/biomass from that which is driven by changes in abundance. If there is no **timeperiod** term, it means that there's not a ~significant change begin-end.
+1. We extract parameter estimates from the best-fitting model to examine the magnitude and direction of change beginning-to-end and decoupling due to change in the ISD. 
+1. We do this for all the routes and tally:
+    1. How often the best model includes the "source" term (meaning there's a decoupling); how often there's a timeperiod but no source term (meaning there's change over time, but that biomass/energy use do not diverge from abundance); how often there's no timeperiod term (meaning no ~significant change begin to end)
+    1. For models with change over time (timeperiod, or timeperiod + source), how often the **abundance-driven** trajectory is increasing/decreasing (how often the 95% credible interval for the timeperiod term is >/< 0)
+    1. For models with change over time and a decoupling, how often the biomass/energy use offset is positive or negative (how often the 95% CI for the timeperiod:source term is >/< 0). Positive offsets mean that the change in biomass/energy use is less negative than change in abundance; negative offsets mean that the currency is more negative. 
+    1. We can then also visualize these offsets for a gauge of magnitude but it gets kind of gross. 
+1. I ran this whole pipeline on some "quality control" sims where 1) neither abundance nor the ISD changes begin-end and 2) the ISD doesn't change begin-end for either scenario. It behaves as expected for those. 
 
-1. Core-transient
-    1. We run this pipeline on the whole dataset, and using just core species (those present in >= 2/3 of timesteps).
-    1. We also explore a null model in which we restrict to the same richness as the core species richness but draw a random set of species.
+
+For this site, the winning models are:
+
+```{r, results = T, include = T}
+
+filter(all_winners, matssname == "bbs_rtrg_224_3") %>%
+  select(simtype, currency, model)
+
+```
+
+For the "actual" sims, here are the parameter estimates for the slope and offset. Thick bars are the 95% and thin bars are the 99% CIs. For both energy and biomass, the abundance-driven trajectory is an increase, but it's less of a strong increase for biomass. For both, the currency-driven offset is also an increase, meaning that the change in the ISD caused biomass to increase more than we expect it to just because of the increase in abundance. 
+
+
+```{r, results = T, include = T}
+
+these_qis <- filter(all_qis, simtype == "actual", matssname == "bbs_rtrg_224_3")
+
+ggplot(these_qis, aes(timeperiodend, currency)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper)) + ggtitle("Slope term") + geom_vline(xintercept = 0)
+
+
+ggplot(these_qis, aes(`timeperiodend:sourcecurrency`, currency)) + geom_pointinterval(aes(xmin = `timeperiodend:sourcecurrency.lower`, xmax = `timeperiodend:sourcecurrency.upper`)) + ggtitle("Offset due to currency term") + geom_vline(xintercept = 0)
+
+
+```
+
+
+### Core-transient
+
+1. We run this pipeline on the whole dataset, and using just core species (those present in >= 2/3 of timesteps).
+1. We also explore a null model in which we restrict to the same richness as the core species richness but draw a random set of species.
 
 
 
