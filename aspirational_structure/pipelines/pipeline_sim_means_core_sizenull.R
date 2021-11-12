@@ -100,7 +100,7 @@ methods <- drake_plan(
                    transform = map(fits_compare)),
   aw = target(dplyr::combine(winners),
               transform = combine(winners)),
-  all_winners  = target(dplyr::bind_rows(aw))#,
+  all_winners  = target(dplyr::bind_rows(aw)),
   # diag = target(rwar::extract_diagnostics(fits),
   #               transform = map(fits)),
  # adg = target(dplyr::combine(diag),
@@ -111,11 +111,11 @@ methods <- drake_plan(
   #ad = target(dplyr::combine(draws),
    #           transform = combine(draws)),
  # all_draws = target(dplyr::bind_rows(ad)),
- # qis = target(rwar::draw_wrapper(winners, fits),
-  #             transform = combine(winners, fits, .by = fits)),
-#  aq = target(dplyr::combine(qis),
- #             transform = combine(qis)),
- # all_qis = target(dplyr::bind_rows(aq))
+ qis = target(rwar::draw_wrapper(winners, fits),
+               transform = combine(winners, fits, .by = fits)),
+  aq = target(dplyr::combine(qis),
+             transform = combine(qis)),
+  all_qis = target(dplyr::bind_rows(aq))
 )
 
 all = bind_rows(datasets,core_datasets,  methods)
@@ -155,8 +155,8 @@ if(run_hpg) {
 
 }
 #
- loadd(all_sims, all_winners, cache = cache)#,  all_qis, all_diagnostics, cache = cache)
- save(all_sims, all_winners, file = "portable_results_coresizenull.Rds") # all_qis, all_diagnostics, file = "portable_results_coresizenull.Rds")
+ loadd(all_sims, all_winners, all_qis,cache = cache)#,  all_qis, all_diagnostics, cache = cache)
+ save(all_sims, all_winners,all_qis, file = "portable_results_coresizenull.Rds") # all_qis, all_diagnostics, file = "portable_results_coresizenull.Rds")
 }
 
 DBI::dbDisconnect(db)
