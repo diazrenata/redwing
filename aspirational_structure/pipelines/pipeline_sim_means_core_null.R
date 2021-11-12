@@ -109,8 +109,8 @@ if(run_hpg) {
 
 }
 #
- loadd(all_sims, all_winners, cache = cache)#,  all_qis, all_diagnostics, cache = cache)
- save(all_sims, all_winners , file = "portable_results_core_null.Rds")#all_qis, all_diagnostics, file = "portable_results_core_null.Rds")
+ loadd(all_sims, all_winners, all_qis, cache = cache)#,  all_qis, all_diagnostics, cache = cache)
+ save(all_sims, all_winners , all_qis, file = "portable_results_core_null.Rds")#all_qis, all_diagnostics, file = "portable_results_core_null.Rds")
 rm(all_sims)
 rm(all_winners)
 DBI::dbDisconnect(db)

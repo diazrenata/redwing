@@ -1,7 +1,7 @@
 Modeling approach & validation
 ================
 Renata Diaz
-2021-11-01
+2021-11-12
 
   - [How we get here](#how-we-get-here)
   - [Data](#data)
@@ -81,7 +81,7 @@ print(rwar::summarize_sims)
     ##   return(sims)
     ## 
     ## }
-    ## <bytecode: 0x7fd1f6c7e580>
+    ## <bytecode: 0x7fb174ab0410>
     ## <environment: namespace:rwar>
 
 ``` r
@@ -117,39 +117,39 @@ print(rwar::fit_stanlm)
 
     ## function(some_sims) {
     ## 
-    ##   # Fit a brm on total_energy
-    ##   te_brm_full <- rstanarm::stan_glm(total_energy ~ (timeperiod * source) , data = some_sims, iter =8000, thin = 4)
-    ##   te_brm_nosource <- rstanarm::stan_glm(total_energy ~ (timeperiod), data = some_sims, iter =8000, thin = 4)
-    ##   te_brm_notime <- rstanarm::stan_glm(total_energy ~ 1, data = some_sims, iter =8000, thin = 4)
+    ##   # Fit a stanlm on total_energy
+    ##   te_stanlm_full <- rstanarm::stan_glm(total_energy ~ (timeperiod * source) , data = some_sims, iter =8000, thin = 4)
+    ##   te_stanlm_nosource <- rstanarm::stan_glm(total_energy ~ (timeperiod), data = some_sims, iter =8000, thin = 4)
+    ##   te_stanlm_notime <- rstanarm::stan_glm(total_energy ~ 1, data = some_sims, iter =8000, thin = 4)
     ## 
-    ##   te_brms = list(
-    ##     te_brm_full = te_brm_full,
-    ##     te_brm_nosource = te_brm_nosource,
-    ##     te_brm_notime = te_brm_notime
+    ##   te_stanlms = list(
+    ##     te_stanlm_full = te_stanlm_full,
+    ##     te_stanlm_nosource = te_stanlm_nosource,
+    ##     te_stanlm_notime = te_stanlm_notime
     ##   )
     ## 
     ## 
-    ##   # Fit the brm on total_biomass
-    ##   tb_brm_full <- rstanarm::stan_glm(total_biomass ~ (timeperiod * source) , data = some_sims, iter = 8000, thin = 4)
-    ##   tb_brm_nosource <- rstanarm::stan_glm(total_biomass ~ (timeperiod) , data = some_sims, iter = 8000, thin = 4)
-    ##   tb_brm_notime <- rstanarm::stan_glm(total_biomass ~ 1 , data = some_sims, iter = 8000, thin = 4)
+    ##   # Fit the stanlm on total_biomass
+    ##   tb_stanlm_full <- rstanarm::stan_glm(total_biomass ~ (timeperiod * source) , data = some_sims, iter = 8000, thin = 4)
+    ##   tb_stanlm_nosource <- rstanarm::stan_glm(total_biomass ~ (timeperiod) , data = some_sims, iter = 8000, thin = 4)
+    ##   tb_stanlm_notime <- rstanarm::stan_glm(total_biomass ~ 1 , data = some_sims, iter = 8000, thin = 4)
     ## 
     ## 
-    ##   tb_brms = list(
-    ##     tb_brm_full = tb_brm_full,
-    ##     tb_brm_nosource = tb_brm_nosource,
-    ##     tb_brm_notime = tb_brm_notime
+    ##   tb_stanlms = list(
+    ##     tb_stanlm_full = tb_stanlm_full,
+    ##     tb_stanlm_nosource = tb_stanlm_nosource,
+    ##     tb_stanlm_notime = tb_stanlm_notime
     ##   )
     ## 
     ##   return(list(
-    ##     te_brms = te_brms,
-    ##     tb_brms = tb_brms,
+    ##     te_stanlms = te_stanlms,
+    ##     tb_stanlms = tb_stanlms,
     ##     matssname =some_sims$matssname[1],
     ##     simtype = some_sims$simtype[1]
     ##   ))
     ## 
     ## }
-    ## <bytecode: 0x7fd1f6da8d28>
+    ## <bytecode: 0x7fb1589e58b0>
     ## <environment: namespace:rwar>
 
 ## Compare models
@@ -160,39 +160,39 @@ print(rwar::fit_stanlm)
 print(rwar::compare_both_stanarms)
 ```
 
-    ## function(some_brms_fits) {
+    ## function(some_stanlms_fits) {
     ## 
-    ##   biomass <- compare_stanarms(brms_fits = some_brms_fits$tb_brms)
-    ##   energy <- compare_stanarms(brms_fits = some_brms_fits$te_brms)
+    ##   biomass <- compare_stanarms(stanlms_fits = some_stanlms_fits$tb_stanlms)
+    ##   energy <- compare_stanarms(stanlms_fits = some_stanlms_fits$te_stanlms)
     ## 
     ##   both_comparisons <- dplyr::bind_rows(biomass = biomass, energy = energy, .id = "currency") %>%
-    ##     dplyr::mutate(matssname = some_brms_fits$matssname,
-    ##                   simtype = some_brms_fits$simtype[1])
+    ##     dplyr::mutate(matssname = some_stanlms_fits$matssname,
+    ##                   simtype = some_stanlms_fits$simtype[1])
     ## 
     ## 
     ##   return(both_comparisons)
     ## 
     ## }
-    ## <bytecode: 0x7fd1d97e72a0>
+    ## <bytecode: 0x7fb1591912c0>
     ## <environment: namespace:rwar>
 
 ``` r
 print(rwar::compare_stanarms)
 ```
 
-    ## function(brms_fits) {
+    ## function(stanlms_fits) {
     ## 
-    ##   brms_loos<- lapply(brms_fits, rstanarm::loo, k_threshold= .7)
+    ##   stanlms_loos<- lapply(stanlms_fits, rstanarm::loo, k_threshold= .7)
     ## 
-    ##   brms_comparison <- rstanarm::loo_compare(brms_loos) %>%
+    ##   stanlms_comparison <- rstanarm::loo_compare(stanlms_loos) %>%
     ##     as.data.frame() %>%
     ##     dplyr::mutate(model = row.names(.),
     ##                   rank = dplyr::row_number())
     ## 
-    ##   return(brms_comparison)
+    ##   return(stanlms_comparison)
     ## 
     ## }
-    ## <bytecode: 0x7fd1da0566a8>
+    ## <bytecode: 0x7fb159205ff0>
     ## <environment: namespace:rwar>
 
 ## Select best model
@@ -225,7 +225,7 @@ print(rwar::loo_select)
     ## 
     ##   return(winners)
     ## }
-    ## <bytecode: 0x7fd1edd096c8>
+    ## <bytecode: 0x7fb1593d94f8>
     ## <environment: namespace:rwar>
 
 ``` r
