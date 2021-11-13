@@ -16,7 +16,7 @@ library(ggplot2)
 theme_set(theme_bw())
 
 #load(here::here("aspirational_structure", "pipelines", "portable_results.Rds"))
-load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
+load(here::here("aspirational_structure", "pipelines", "portable_results_all.Rds"))
 working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes_max10.csv"))
 ```
 

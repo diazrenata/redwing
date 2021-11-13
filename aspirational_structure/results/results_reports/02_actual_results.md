@@ -13,18 +13,20 @@ all_winners %>%
 
 | simtype      | currency | model                | count |
 | :----------- | :------- | :------------------- | ----: |
-| actual       | biomass  | tb\_stanlm\_full     |   178 |
-| actual       | biomass  | tb\_stanlm\_nosource |   208 |
-| actual       | biomass  | tb\_stanlm\_notime   |   142 |
-| actual       | energy   | te\_stanlm\_full     |    76 |
-| actual       | energy   | te\_stanlm\_nosource |   290 |
-| actual       | energy   | te\_stanlm\_notime   |   162 |
-| nochange     | biomass  | tb\_stanlm\_notime   |   528 |
-| nochange     | energy   | te\_stanlm\_notime   |   528 |
-| nosizechange | biomass  | tb\_stanlm\_nosource |   350 |
-| nosizechange | biomass  | tb\_stanlm\_notime   |   178 |
-| nosizechange | energy   | te\_stanlm\_nosource |   360 |
-| nosizechange | energy   | te\_stanlm\_notime   |   168 |
+| actual       | biomass  | tb\_stanlm\_full     |   134 |
+| actual       | biomass  | tb\_stanlm\_nosource |   218 |
+| actual       | biomass  | tb\_stanlm\_notime   |   176 |
+| actual       | energy   | te\_stanlm\_full     |    71 |
+| actual       | energy   | te\_stanlm\_nosource |   292 |
+| actual       | energy   | te\_stanlm\_notime   |   165 |
+| nochange     | biomass  | tb\_stanlm\_nosource |     4 |
+| nochange     | biomass  | tb\_stanlm\_notime   |   524 |
+| nochange     | energy   | te\_stanlm\_nosource |     1 |
+| nochange     | energy   | te\_stanlm\_notime   |   527 |
+| nosizechange | biomass  | tb\_stanlm\_nosource |   323 |
+| nosizechange | biomass  | tb\_stanlm\_notime   |   205 |
+| nosizechange | energy   | te\_stanlm\_nosource |   348 |
+| nosizechange | energy   | te\_stanlm\_notime   |   180 |
 
 </div>
 
@@ -36,9 +38,9 @@ actual_qis_95 <- filter(actual_qis, .width == .95)
 ggplot(actual_qis, aes(timeperiodend, matssname)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
 ```
 
-    ## Warning: Removed 284 rows containing missing values (geom_segment).
+    ## Warning: Removed 352 rows containing missing values (geom_segment).
 
-    ## Warning: Removed 324 rows containing missing values (geom_segment).
+    ## Warning: Removed 330 rows containing missing values (geom_segment).
 
 ![](02_actual_results_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
@@ -54,8 +56,8 @@ actual_qis_95 %>%
 
 | currency | percent\_with\_slope |
 | :------- | -------------------: |
-| biomass  |            0.7310606 |
-| energy   |            0.6931818 |
+| biomass  |            0.6666667 |
+| energy   |            0.6875000 |
 
 </div>
 
@@ -73,8 +75,8 @@ actual_qis_95 %>%
 
 | currency | percent\_decreasing | percent\_increasing | n\_with\_slope |
 | :------- | ------------------: | ------------------: | -------------: |
-| biomass  |           0.5777202 |           0.2279793 |            386 |
-| energy   |           0.6530055 |           0.2704918 |            366 |
+| biomass  |           0.6022727 |           0.2159091 |            352 |
+| energy   |           0.6804408 |           0.2506887 |            363 |
 
 </div>
 
@@ -94,8 +96,8 @@ actual_qis_95 %>%
 
 | currency | percent\_interaction |
 | :------- | -------------------: |
-| biomass  |            0.3371212 |
-| energy   |            0.1439394 |
+| biomass  |            0.2537879 |
+| energy   |            0.1344697 |
 
 </div>
 
@@ -113,8 +115,8 @@ actual_qis_95 %>%
 
 | currency | percent\_currency\_above\_abund | percent\_currency\_below\_abund | n\_with\_interaction |
 | :------- | ------------------------------: | ------------------------------: | -------------------: |
-| biomass  |                       0.8033708 |                       0.1966292 |                  178 |
-| energy   |                       0.7500000 |                       0.2368421 |                   76 |
+| biomass  |                       0.7388060 |                       0.2313433 |                  134 |
+| energy   |                       0.5915493 |                       0.3098592 |                   71 |
 
 </div>
 
@@ -122,9 +124,9 @@ actual_qis_95 %>%
 ggplot(actual_qis, aes(`timeperiodend:sourcecurrency`, matssname)) + geom_pointinterval(aes(xmin = `timeperiodend:sourcecurrency.lower`, xmax = `timeperiodend:sourcecurrency.upper`, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
 ```
 
-    ## Warning: Removed 700 rows containing missing values (geom_segment).
+    ## Warning: Removed 788 rows containing missing values (geom_segment).
 
-    ## Warning: Removed 904 rows containing missing values (geom_segment).
+    ## Warning: Removed 914 rows containing missing values (geom_segment).
 
 ![](02_actual_results_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
