@@ -18,6 +18,7 @@ library(ggplot2)
 theme_set(theme_bw())
 dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
 load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
+load(here::here("aspirational_structure", "pipelines", "portalbe_comps_all.Rds"))
 ```
 
 
@@ -46,8 +47,7 @@ We used data from the Breeding Bird Survey [@sauer2013] to compare community att
 We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @bahlai2021]. Developing continuous-time methods for analyzing community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
 
 We used 5-year periods to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004a]. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from 1970 to 1990 and end dates ranging from 2000 to 2018, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there). This yielded 528 routes. 
-
-Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238. Results are the same.
+å
             
 ##  Estimated size data
 
@@ -131,25 +131,28 @@ Here, the "abundance" line (red) reflects change in total biomass expected due o
 
 ### Testing change
 
-1. We use Bayesian linear models to test whether change in the ISD decouples the dynamics of total biomass/total energy use from that which would be expected due to change in abundance.
-    1. We evaluate change at the route level. I tried fitting everything within one  hierarchical model, but the hierarachical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also ridiculously hard to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in change in one currency per site. We care most about the *decoupling* of slopes at the route level. The use of a Bayesian framework helps us offset some of the issues around p-values if we were to do this many models in a frequentist setting. 
-    1. Figures and functions here:  https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_02_testing_change.md (but rough)
-1. For each currency for each route, we fit 3 models:
-     1. `total_biomass ~ timeperiod * scenario`, `total_biomass ~ timeperiod`, `total_biomass ~ 1`
-    1. We used LOO-crossvalidation to select the best-fitting model as the simplest model with an ELPD within 1 SE of the best-fitting model.
-    1. We used `reloo` to correct for outliers.
-    1. We fit as Gaussians with default priors, run for 8000 iterations. We fit as Gaussians to avoid having to deal with back-transforming the parameter estimates (and because when I coerced to other family distributions I got tons of convergence issues). Running for 8000 iterations is extremely generous for these models.
-1. If the best-fitting model does not include the scenario term, it means that the change in the ISD does not ~significantly decouple the dynamics of total energy/biomass from that which is driven by changes in abundance. If there is no **timeperiod** term, it means that there's not a ~significant change begin-end.
-1. We extract parameter estimates from the best-fitting model to examine the magnitude and direction of change beginning-to-end and decoupling due to change in the ISD. 
-1. We do this for all the routes and tally:
-    1. How often the best model includes the "source" term (meaning there's a decoupling); how often there's a timeperiod but no source term (meaning there's change over time, but that biomass/energy use do not diverge from abundance); how often there's no timeperiod term (meaning no ~significant change begin to end)
-    1. For models with change over time (timeperiod, or timeperiod + source), how often the **abundance-driven** trajectory is increasing/decreasing (how often the 95% credible interval for the timeperiod term is >/< 0)
-    1. For models with change over time and a decoupling, how often the biomass/energy use offset is positive or negative (how often the 95% CI for the timeperiod:source term is >/< 0). Positive offsets mean that the change in biomass/energy use is less negative than change in abundance; negative offsets mean that the currency is more negative. 
-    1. We can then also visualize these offsets for a gauge of magnitude but it gets kind of gross. 
-1. I ran this whole pipeline on some "quality control" sims where 1) neither abundance nor the ISD changes begin-end and 2) the ISD doesn't change begin-end for either scenario. It behaves as expected for those. 
+We use Bayesian linear models to test whether change in the ISD decouples the dynamics of total biomass/total energy use from that which would be expected due to change in abundance. 
+
+Figures and functions here:  https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_02_testing_change.md (but rough). I have also run this whole pipeline on a few toy sim scenarios to confirm that it behaves as expected. I can write that up for the supplement/include it here if it seems important. 
+
+We evaluate change at the route level, because we care most about the decoupling of slopes for "currency" and "abundance" at the route level. I tried fitting everything within one hierarchical model, but the hierarchical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also very intensive to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in change in one currency per site.
+
+For each currency for each route, we fit 3 models:
+
+1. `total_biomass ~ timeperiod * scenario`: I call this one "full"; this model has a slope for abundance, and an offset resulting in a *different* slope for currency
+1. `total_biomass ~ timeperiod`: I call this one "nosource"; this one has a slope for abundance but not a different slope for currency
+1. `total_biomass ~ 1`: Intercept-only model, no change over time. 
+1. Note I do not include a `total_biomass ~ timeperiod + scenario` model. That model would fit a separate intercept but not separate slope for "currency". Because of the sim structure, "abundance" and "currency" start with the same values (give or take sampling error) and therefore should have the same intercept. Including this model is nonsensical and sometimes messes up model selection, for example if it finds it can get away with fitting an intercept instead of the "full" model above. We want to force it to use a slope in that situation.
+    
+We fit as Gaussians with default priors, run for 8000 iterations. We fit as Gaussians to avoid having to deal with back-transforming the parameter estimates (and because when I coerced to other family distributions I got tons of convergence issues). We checked for convergence issues (high Rhat, low effective sample size, or divergent transitions), but running for 8000 iterations is extremely generous for these models and there were none. We used LOO-crossvalidation (as implemented in `rstanarm::loo`) to select the best-fitting model as the simplest model with an ELPD within 1 SE of the best-fitting model, using `reloo` to correct for outliers. 
+
+If the best-fitting model does not include the scenario term (i.e. "currency" separate from "abundance"), it means that the change in the ISD does not ~significantly decouple the dynamics of total energy/biomass from that which is driven by changes in abundance. If there is no **timeperiod** term, it means that there's not a ~significant change begin-end.
+
+We fit these models for `total_biomass` and `total_energy` for all routes. For each currency, we tallied:  1. How often the best model includes the "source" term (meaning there's a decoupling); 2. how often there's a timeperiod but no source term (meaning there's change over time, but that biomass/energy use do not diverge from abundance); 3. how often there's no timeperiod term (meaning no ~significant change begin to end). 
 
 
-For this site, the winning models are:
+
+For the example site we've been working with, here are the winning models. For the "actual" sims, both biomass and energy select the "full" model, meaning there's a decoupling between the size-based currencies and just abundance. This table includes two quality control sims. First, "nochange" sims - in which the abundances for the begin and end are held the same, and which correctly selects a "no change over time" model - and second, "nosizechange" sims - in which the ISD is held the same, and which correctly selects change over time, but no decoupling. 
 
 ```{r, results = T, include = T}
 
@@ -157,6 +160,9 @@ filter(all_winners, matssname == "bbs_rtrg_224_3") %>%
   select(simtype, currency, model)
 
 ```
+
+
+For models with slope  and/or offset terms, we extracted estimates for the slope for abundance, and the offset for currency, to examine the magnitude and direction of change and decoupling. We tallied how often the abundance slope was positive or negative (how often the 95% CI for the timeperiod term is >/< 0) and how often the offset for currency is positive or negative (how often the 95% CI for the timeperiod:source term is >/< 0). Positive offsets mean that the change in biomass/energy use is less negative than change in abundance; negative offsets mean that the currency is more negative. 
 
 For the "actual" sims, here are the parameter estimates for the slope and offset. Thick bars are the 95% and thin bars are the 99% CIs. For both energy and biomass, the abundance-driven trajectory is an increase, but it's less of a strong increase for biomass. For both, the currency-driven offset is also an increase, meaning that the change in the ISD caused biomass to increase more than we expect it to just because of the increase in abundance. 
 
@@ -173,11 +179,35 @@ ggplot(these_qis, aes(`timeperiodend:sourcecurrency`, currency)) + geom_pointint
 
 ```
 
+## Miscellany
+
+*These probably belong in figure captions/supplements, not as the methods.*
+
+### Relating change in the ISD to decoupling 
+
+The ISD may change without resulting in a detectable decoupling of the dynamics of biomass/energy use and abundance at the whole-system level, if the change in the ISD is relatively ~balanced above and below the mean body size. We tested whether communities with a decoupling showed greater change in the ISD than systems that did not, using a linear model of the form `isd_overlap ~ winning_model_type`. We also tested the extent to which change in mean body size was linked to change in the ISD using a quadratic model of the form `isd_overlap ~ logratio_mean_body_size + logratio_mean_body_size ^ 2`. We fit a quadratic model because we expected there to be a unimodal relationship, because high ISD overlap constrains there to be very little change in mean body size. 
+
 
 ### Core-transient
 
-1. We run this pipeline on the whole dataset, and using just core species (those present in >= 2/3 of timesteps).
-1. We also explore a null model in which we restrict to the same richness as the core species richness but draw a random set of species.
+Because core and transient species may have different dynamics, we ran this pipeline on whole communities, and using just core species (those present in >= 2/3 of timesteps).
+
+### Highly-sampled BCRs
+
+Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 routes total. Results are the same.
+
+#### Null models note
+
+I have an instinct that reviewers may ask about null models to distinguish "systematic" change in the ISD from random change in the ISD. There are real constraints on how deeply we can investigate that due to the structure of the data and the computation required for this pipeline. Because BBS doesn't have population parameters, we have to take populations sizes as face value as constraints for a null model - but some of the ISD change is baked into the population sizes. Null models in this space also have a high type II error rate; it can be very hard to deviate from them, especially if they're highly constrained. In my tests with contrived data/Portal, I have to have an almost pure change scenario to get a deviation - either *all* of the change in species' abundances has to be directional on the size axis, or *all* of the change has to be a like-for-like size replacement. And, this pipeline is computationally intensive to a degree that prohibits repeated runs (to the tune of 100-500 null repetitions). So, I am not leaning strongly on incorporating null models as a way of distinguishing "systematic" vs "non-size-structured" dynamics here.  
+
+That said - I have run null models *once* for intuition and may be able to coax it up to 10ish runs. From these runs and my past null models in this space, I don't see evidence of strong deviations from null models. I don't take this as compelling evidence that there is or isn't size structured change happening, but as an indication that we can't distinguish that at this scale. 
+
+# Results
+
+## Change in the ISD begin-to-end
+
+
+
 
 
 

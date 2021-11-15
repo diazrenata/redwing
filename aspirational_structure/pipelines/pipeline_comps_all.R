@@ -44,7 +44,7 @@ datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 # }
 
 methods <- drake_plan(
-  comps = target(rwar::be_comparison(dataset),
+  comps = target(rwar::be_comparison(dataset, n_isd_draws = 1),
                  transform = map(
                    dataset = !!rlang::syms(datasets$target)
                  ),
