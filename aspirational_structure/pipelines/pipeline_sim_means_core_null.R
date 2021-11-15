@@ -24,20 +24,20 @@ datasets <- datasets[ unique(c(1:max_caps[i], which(datasets$target %in% c("bbs_
 #datasets <- datasets[ which(datasets$target %in% c( "bbs_rtrg_116_18", "bbs_rtrg_224_3")), ]
 # datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
 
-null_seeds <- c(1989)
+null_seeds <- c(1989:1991)
 
-null_dataset <- drake_plan(
-  nd = target(rwar::local_null_model(dataset, n_isd_draws = 1, ndraws = 1),
+core_datasets <- drake_plan(
+  coredat = target(rwar::core_transient_null(dataset, core_only =T, null_seed= null_seed),
                    transform = cross(
                      dataset = !!rlang::syms(datasets$target),
                      null_seed = !!null_seeds
                    )
-))
+  ))
 
 methods <- drake_plan(
   ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 5, ndraws = 5),
                  transform = cross(
-                   dataset = !!rlang::syms(null_dataset$target),
+                   dataset = !!rlang::syms(core_datasets$target),
                    simtype = c("actual")#, "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),

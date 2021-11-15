@@ -44,11 +44,20 @@ datasets <- datasets[ unique(c(1:max_caps[i], which(datasets$target %in% c("bbs_
 #   draw_qis
 # }
 
+null_seeds <- c(1989)
+
+null_datasets <- drake_plan(
+  nulldat = target(rwar::shuffle_local(dataset, null_mod_seed = null_seed),
+                   transform = cross(
+                     dataset = !!rlang::syms(datasets$target),
+                     null_seed = !!null_seeds
+                   )
+  ))
 methods <- drake_plan(
   ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 1, ndraws = 1),
                  transform = cross(
-                   dataset = !!rlang::syms(datasets$target),
-                   simtype = c("actual", "nc", "nsc")
+                   dataset = !!rlang::syms(null_datasets$target),
+                   simtype = c("actual")#, "nc", "nsc")
                  ) ),
   as = target(dplyr::combine(ssims),
              transform = combine(ssims)),
@@ -82,7 +91,7 @@ methods <- drake_plan(
   all_qis = target(dplyr::bind_rows(aq))
 )
 
-all = bind_rows(datasets, methods)
+all = bind_rows(datasets,null_datasets, methods)
 
 
 ## Set up the cache and config
