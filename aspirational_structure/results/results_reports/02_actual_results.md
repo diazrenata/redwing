@@ -166,3 +166,139 @@ ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency)) + geom
 ```
 
 ![](02_actual_results_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+
+## Filtered to max 10
+
+Here is the above, but with a maximum of 10 routes per BCR (n = 238
+overall)
+
+``` r
+all_winners_f <- filter(all_winners, matssname %in% working_datasets$matssname)
+all_qis_f <- filter(all_qis, matssname %in% working_datasets$matssnam)
+all_winners_f %>%
+  group_by(simtype, currency, model) %>%
+  summarize(count = dplyr::n()) 
+```
+
+    ## `summarise()` has grouped output by 'simtype', 'currency'. You can override using the `.groups` argument.
+
+<div class="kable-table">
+
+| simtype      | currency | model                | count |
+| :----------- | :------- | :------------------- | ----: |
+| actual       | biomass  | tb\_stanlm\_full     |    57 |
+| actual       | biomass  | tb\_stanlm\_nosource |    93 |
+| actual       | biomass  | tb\_stanlm\_notime   |    88 |
+| actual       | energy   | te\_stanlm\_full     |    33 |
+| actual       | energy   | te\_stanlm\_nosource |   128 |
+| actual       | energy   | te\_stanlm\_notime   |    77 |
+| nochange     | biomass  | tb\_stanlm\_nosource |     1 |
+| nochange     | biomass  | tb\_stanlm\_notime   |   237 |
+| nochange     | energy   | te\_stanlm\_nosource |     1 |
+| nochange     | energy   | te\_stanlm\_notime   |   237 |
+| nosizechange | biomass  | tb\_stanlm\_nosource |   144 |
+| nosizechange | biomass  | tb\_stanlm\_notime   |    94 |
+| nosizechange | energy   | te\_stanlm\_nosource |   158 |
+| nosizechange | energy   | te\_stanlm\_notime   |    80 |
+
+</div>
+
+``` r
+actual_qis_f <- all_qis_f %>% 
+  filter(simtype == "actual") 
+actual_qis_95_f <- filter(actual_qis_f, .width == .95)
+
+ggplot(actual_qis_f, aes(timeperiodend, matssname)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
+```
+
+    ## Warning: Removed 176 rows containing missing values (geom_segment).
+
+    ## Warning: Removed 154 rows containing missing values (geom_segment).
+
+![](02_actual_results_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+Of models of actual,
+
+``` r
+actual_qis_95_f %>%
+  group_by(currency) %>%
+  summarize(percent_with_slope = mean(!is.na(timeperiodend)))
+```
+
+<div class="kable-table">
+
+| currency | percent\_with\_slope |
+| :------- | -------------------: |
+| biomass  |            0.6302521 |
+| energy   |            0.6764706 |
+
+</div>
+
+Of models with a slope…
+
+``` r
+actual_qis_95_f %>%
+  group_by(currency) %>%
+  summarize(percent_decreasing = mean(timeperiodend.upper < 0, na.rm = T),
+            percent_increasing = mean(timeperiodend.lower > 0, na.rm = T),
+            n_with_slope = sum(!is.na(timeperiodend)))
+```
+
+<div class="kable-table">
+
+| currency | percent\_decreasing | percent\_increasing | n\_with\_slope |
+| :------- | ------------------: | ------------------: | -------------: |
+| biomass  |           0.5933333 |           0.2200000 |            150 |
+| energy   |           0.6708075 |           0.2484472 |            161 |
+
+</div>
+
+using a 95% CI above or below 0. This can sum to less than 1 if there is
+a model with an interaction in which the abundance-slope is over 0, but
+the currency offset is nonzero.
+
+Of all models, here’s the proportion with an interaction:
+
+``` r
+actual_qis_95_f %>%
+  group_by(currency) %>%
+  summarize(percent_interaction = mean(!is.na(`timeperiodend:sourcecurrency`), na.rm = T))
+```
+
+<div class="kable-table">
+
+| currency | percent\_interaction |
+| :------- | -------------------: |
+| biomass  |            0.2394958 |
+| energy   |            0.1386555 |
+
+</div>
+
+Of models with an interaction…
+
+``` r
+actual_qis_95_f %>%
+  group_by(currency) %>%
+  summarize(percent_currency_above_abund = mean((`timeperiodend:sourcecurrency.lower` >0), na.rm = T),
+            percent_currency_below_abund = mean((`timeperiodend:sourcecurrency.upper` <0), na.rm = T),
+            n_with_interaction = sum(!is.na(`timeperiodend:sourcecurrency`)))
+```
+
+<div class="kable-table">
+
+| currency | percent\_currency\_above\_abund | percent\_currency\_below\_abund | n\_with\_interaction |
+| :------- | ------------------------------: | ------------------------------: | -------------------: |
+| biomass  |                       0.7543860 |                       0.1929825 |                   57 |
+| energy   |                       0.6666667 |                       0.2424242 |                   33 |
+
+</div>
+
+``` r
+ggplot(actual_qis_f, aes(`timeperiodend:sourcecurrency`, matssname)) + geom_pointinterval(aes(xmin = `timeperiodend:sourcecurrency.lower`, xmax = `timeperiodend:sourcecurrency.upper`, width = .width)) + geom_vline(xintercept = 0) + facet_wrap(vars(currency), scales = "free")
+```
+
+    ## Warning: Removed 362 rows containing missing values (geom_segment).
+
+    ## Warning: Removed 410 rows containing missing values (geom_segment).
+
+![](02_actual_results_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->

@@ -20,83 +20,45 @@ dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
 load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
 ```
 
+
 # Introduction/Framing
 
-1. Understanding the interrelated dynamics of size- and -abundance based dimensions of biodiversity is key to understanding biodiversity change in the Anthropocene. 
-    1. Total abundance - i.e. the total number of individual organisms present in a system - and size-based currencies, such as the total biomass or total metabolic flux (“energy use”) of a system, are intertwined, but nonequivalent, measures of biological function. 
-    1. Abundance is more closely tied to species-level population dynamics, while size-based metrics more directly reflect assemblage-level resource use and contributions to materials fluxes at the broader ecosystem scale [@morlon2009; @dornelas2011; @white2007; @connolly2005]
-    1. While these currencies are naturally linked [@henderson2010; @morlon2009), changes in size composition can decouple the dynamics of one currency from another (@dornelas2011; @white2004; @white2007; @ernest2009; @yen2017]. 
-    1. This can mean that intuition from one currency may be misleading about others; a trend in numerical abundance might mask something else going on with biomass [@white2004].
-    1. Changes in size composition strong enough to decouple currencies may be symptomatic of important changes in ecosystem status
-          1. E.g. abundance-biomass comparison curves [@petchey2010]; size-biased extinctions [@young2016; @smith2018]
-          1. This underscores the need to understand how these dynamics are playing out in the Anthropocene [@fisher2010] 
-1. Looking at the relationship between size and abundance dynamics at the **community scale** tells us about important functional dynamics
-    1. This is the scale at which ecological processes (i.e. compensatory dynamics, niche tracking, functional replacement) come into play - in contrast to population or global trends [@mcgill2015; @dornelas2014; @white2007].
-    1. To the extent that size is a proxy for other functional traits, changes or consistency in the community-level size structure over time may reflect processes related to niche structure [@white2007; @petchey2010]
-      1. Scenarios:
-          1. Strong size shifts can decouple the relationship between abundance and biomass. 
-             1. This is well established in aquatic systems, where changes in the scaling between abundance and biomass often signal ecosystem degradation [@petchey2010; @kerr2001; @warwick1994 and refs therein]
-          1. Or, compensatory shifts in the size structure can buffer community function (in terms of biomass or energy use) against changes in abundance [@terry2015; @ernest2009; @white2004] 
-         1. Or, consistency in the size structure may maintain the relationship between size- and -abundance based currencies, even as species composition, total abundance, and total biomass/total energy use fluctuate over time. 
-              1. Low turnover, or size-structured replacement - either of which could reflect consistency in the niche structure over time [@holling1992]
-          1. Random dynamics/drift may also contribute to the dynamics of the size spectrum
-             1. Either via neutral population dynamics, or through systematic change on axes orthogonal to size. 
-    1. Different subsets of a community may respond in different ways.
-       1. Core and transient species have different biology and respond to different cues.
-1. It is important to improve our understanding of these dynamics for terrestrial animal communities in particular.
-    1. Terrestrial animal communities are relatively unknown in terms of size spectrum work [@white2007]; but see classic bugs, classic birds, [@ernest2005; @thibault2011; @yen2017].
-    1. However, they:
-        1. Exhibit size structure [@ernest2005; @thibault2011]
-        1. Are experiencing serious and potentially size-structured change, with implications at community, ecosystem, and global scales [@young2016; @schmitz2018]  
-    1. Case studies have demonstrated that size shifts can decouple N from E for terrestrial animals [@white2004; @yen2017] while others have them moving together [@hernandez2011]
-1. Establishing general commonalities regarding these dynamics has been constrained by 1) a lack of macroecological-scale timeseries data on species and size composition for terrestrial animal communities [@white2007; @thibault2011], and 2) appropriate methods for working with ISDs
-    1. Data requirements: A consistent sampling protocol; many communities; long temporal extent; size *AND* abundance data (for a particular taxon, often size or abundance - but not both - is the traditional unit of measure); for the community (not population or global) scale
-    1. ISD challenges: the ISDs for determinate growers (mammals, birds…) are not simple power laws [@thibault2011; @ernest2005]. Quantifying change is not as straightforward as computing a slope. (Neither is *comparing* change across currencies.)
-    1. As a result, we do not have a synthetic understanding of either 1) the extent to which changes in the size structure decouple the dynamics of abundance, biomass, and energy use in these systems, or of 2) the underlying changes in community structure that account for these effects. 
-1. Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. Specifically, 
-    1. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018:
-        1. How often do these currencies change together vs. have decoupled dynamics?
-        1. What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies?
-    1. We examined how these changes differ between core species and the whole-community (i.e. including transients). 
+Understanding the interrelated dynamics of size- and -abundance based dimensions of biodiversity is key to understanding biodiversity change in the Anthropocene. Total abundance - i.e. the total number of individual organisms present in a system - and size-based currencies, such as the total biomass or total metabolic flux (“energy use”) of a system, are intertwined, but nonequivalent, measures of biological function. Abundance is more closely tied to species-level population dynamics, while size-based metrics more directly reflect assemblage-level resource use and contributions to materials fluxes at the broader ecosystem scale [@morlon2009; @dornelas2011; @white2007; @connolly2005]. While these currencies are naturally linked [@henderson2010; @morlon2009], changes in size composition can decouple the dynamics of one currency from another [@dornelas2011; @white2004; @white2007; @ernest2009; @yen2017]. This can mean that intuition from one currency may be misleading about others; a trend in numerical abundance might mask something else going on with biomass [@white2004]. Changes in size composition strong enough to decouple currencies may be symptomatic of important changes in ecosystem status- e.g. abundance-biomass comparison curves [@petchey2010]; size-biased extinctions [@young2016; @smith2018]. This underscores the need to understand how these dynamics are playing out in the Anthropocene [@fisher2010]. 
 
+
+At the **community scale**, changes in the relationship between size and abundance tells us about important functional shifts. This is the scale at which ecological processes (i.e. compensatory dynamics, niche tracking, functional replacement) come into play - in contrast to population or global trends [@mcgill2015; @dornelas2014; @white2007]. To the extent that size is a proxy for other functional traits, changes or consistency in the community-level size structure (individiual size distribution, ISD) over time may reflect processes related to niche structure [@white2007; @petchey2010]. Strong size shifts can decouple the relationship between abundance and biomass. In aquatic systems, such changes in the scaling between abundance and biomass often signal ecosystem degradation [@petchey2010; @kerr01; @warwick1994 and refs therein]. Compensatory shifts in the size structure can buffer community function (in terms of biomass or energy use) against changes in abundance [@terry2015; @ernest2009; @white2004]. Consistency in the size structure may maintain the relationship between size- and -abundance based currencies, even as species composition, total abundance, and total biomass/total energy use fluctuate over time, which can reflect consistency in the niche structure over time [@holling1992]. 
+
+
+It is important to improve our understanding of these dynamics for terrestrial animal communities in particular. In contrast to terrestrial trees and aquatic systems [@kerr01; @white2007], how the relationship between size and abundance changes over time, and the consequences of these changes for ecosystem-level properties, remain relatively unknown for terrestrial animals (but see @white2004). Terrestrial animal communities exhibit size structure [@ernest2005; @thibault2011], and case studies have demonstrated that size shifts can either decouple N from E for terrestrial animals [@white2004; @yen2017], but not always [@hernandez2011]. Establishing generalities in these dynamics is especially pertinent in the Anthropocene, as these communities are experiencing extensive and potentially size-structured change, with implications at community, ecosystem, and global scales [@young2016; @schmitz2018].
+
+Macroecological-scale synthesis on the interrelated dynamics of the ISD, total abundance, and community function for terrestrial animals has been constrained by 1) a lack of community-level size and abundance timeseries data for these systems [@white2007; @thibault2011], and 2) appropriate statistical methods for relating change in the size structure to changes in abundance and function [@thibault2011; @yen2017]. In contrast to aquatic and forest systems, most long-term surveys of animal communities do not collect data on individuals' *sizes* across a full community (with the exception of small mammal studies, which have made major contributions to our understanding of the dynamics of size, abundance, and function for these systems; [@ernest2005; @white2004; @hernandez2011; @kelt2015]). Global, continental, or population-wide studies capture different phenomena [@white2007; this is a nod to a few studies looking at the size structure *across britain* or something]. The ISDs for terrestrial animals, and specifically for determinate growing taxa (e.g. mammals, birds), are often complex, multimodal distributions [@holling1992; @ernest2005; @thibault2011; @yen2017], and less statistically tractable than the power-law ISDs found in aquatic and tree systems [@kerr01; @white2007; more]. Quantifying change in the size structure, and relating this to change in community-wide abundance and function, is not as straightforward as computing and comparing slopes. As a result, we do not have a general understanding of either 1) the extent to which changes in the ISD decouple the community-level dynamics of abundance, biomass, and energy use in these systems, or of 2) the underlying changes in community structure that account for these effects. 
+
+Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018. Specifically, we examined: 1) How often do these currencies change together vs. have decoupled dynamics?; 2) What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies? We also examined how these changes differ between core species and the whole-community (i.e. including transients), which currently comes completely out of left  field in this introduction (sorry!).
 
 # Methods
 
 ## Bird abundance data
 
 
-1. We used data from the Breeding Bird Survey to compare community attributes along each route between the 5-year periods from 1988-1992 and 2014-2018.
-    1. We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in species composition and the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. 
-        1. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @balhai2021]. Developing continuous-time methods for analyzing complex, multidimensional community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
-    1. We used 5-year periods so as to smooth out interannual variability and to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004].
-        1. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. 
-        1. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from X to X and end dates ranging from X to X, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there).
-        1. This yielded 528 routes. 
-            1. Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 (I believe).
+We used data from the Breeding Bird Survey [@sauer2013] to compare community attributes along each route between the 5-year periods from 1988-1992 and 2014-2018. We take the route to be the "community" scale [@thibault2011; others]. BBS (BBS methods background). We filtered the data to remove taxa that are poorly sampled through these methods, following (literally everyone). We accessed the data, and performed this preliminary cleaning and filtering, using the R package `MATSS` [ye2020]. 
+
+
+We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @bahlai2021]. Developing continuous-time methods for analyzing community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
+
+We used 5-year periods to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004a]. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from 1970 to 1990 and end dates ranging from 2000 to 2018, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there). This yielded 528 routes. 
+
+Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238. Results are the same.
             
 ##  Estimated size data
 
-1. BBS contains abundances for all species along a route in each year, but does not include measurements of individual body size. We generated body size estimates for individual birds assuming that intraspecific size distributions are normally distributed around a species’ mean body size (following @thibault2011; also recent Myers/Catano/Fristoe paper I believe).
-    1. Using records of species’ mean and standard deviation body sizes from @dunning2007, we drew individuals’ body sizes from the appropriate normal distributions.
-        1. For species for which there was not a standard deviation recorded in @dunning2007 (n =?), we estimated the standard deviation based on an allometric scaling relationship between mean and standard deviation in body mass (also described in @thibault2011). For species with multiple records in @dunning2007, we used the mean mean and standard deviation body sizes across all records (averaging across sexes, subspecies, and records from different locations). We performed this averaging after estimating any missing standard deviation measurements.
-    1. This method does not incorporate intraspecific variation in body size across geographies or over time [@dunning2007; @gardner2011]. However, it makes it possible to conduct macroecological studies of avian size distributions at a spatial and temporal scale that would otherwise be impossible [@thibault2011].
-    1. For each individual bird observed, we estimated metabolic rate as (parameters) [@fristoe2015]. 
-    1. For each route in a given year, we compute total energy use, total biomass, and total abundance by summing over all individuals observed on that route in that year. 
+BBS contains abundances for all species along a route in each year, but does not include measurements of individual body size. We generated body size estimates for individual birds assuming that intraspecific size distributions are normally distributed around a species’ mean body size (following @thibault2011). Using records of species’ mean and standard deviation body sizes from @dunning2007, we drew individuals’ body sizes from the appropriate normal distributions. For species for which there was not a standard deviation recorded in @dunning2007 (185 species affected, of 421 total), we estimated the standard deviation based on an allometric scaling relationship between mean and standard deviation in body mass ($log(variance) = -5.273 + (log(mass) * 1.995))$; model R2 .86; see also @thibault2011). For species with multiple records in @dunning2007, we used the mean mean and standard deviation body sizes across all records (averaging across sexes, subspecies, and records from different locations). We performed this averaging after estimating any missing standard deviation measurements. For each individual bird observed, we estimated metabolic rate as $10.5 * (mass ^.713)$ [@fristoe2015; @nagy2005; @mcnab2009]. For each route in a given year, we compute total energy use, total biomass, and total abundance by summing over all individuals observed on that route in that year. This method does not incorporate intraspecific variation in body size across geographies or over time [@dunning2007; @gardner2011]. However, it makes it possible to conduct macroecological studies of avian size distributions at a spatial and temporal scale that would otherwise be impossible [@thibault2011].
+
 
 ## Comparing ISDs over time
 
-1. Characterizing the ISD
-    1. For a given route and time period, we draw the appropriate numbers of individuals of each species from their corresponding normal distributions.
-    1. We use two approaches to test whether the ISD for 1988-1992 is significantly different from the one for 2014-2018
-        1. Kolmogorov-Smirnov test on the vector of masses for the begin vs end time periods
-        1. Bootstrap resampling of individuals [pretty sure this derives from @ernest2005]:
-            1. From the pool of all individuals "observed" in both timeperiods, draw the appropriate number for each time period without replacement.
-            1. KS test comparing "begin" and "end" for the reshuffled communities
-            1. Repeat 500x and retain the test statistic (D) for all tests
-            1. Compute the percentile and standardized effect size [@gotelli_SES] for the test statistic for the *actual* time periods to the distribution of test statistics for the reshuffles
-    1. For an intuitive measure of the magnitude of change over time, we compute an overlap measure derived from [@read2018]:
-        1. We characterize the ISD as a smooth function by fitting a Gaussian mixture model (to logarithm of mass, up to 15 Gaussians, select best using BIC, all following @thibault2011). We evaluate the density function of the GMM at points for a size range from 0-exp(15), which covers the range of sizes in this dataset with ample padding on each side. We then rescale the density function so the total area under the ISD is 1.
-        1. We calculate the overlap between two ISDs as the sum of the minimum density at each evaluation point. This ranges from 0 (no overlap) to 1 (complete overlap).
+For each route, we used two approaches to test whether the ISD for 1988-1992 is significantly different from the one for 2014-2018. First, we used a Kolmogorov-Smirnov test on the vector of masses for the beginning and end time periods. Second, we performed bootstrap resampling to test whether the observed degree of dissimilarity between the two time periods exceeded that which would be expected if the probability of an individual being a particular size did not depend on which time period it was observed in (I believe following @ernest2005). From the pool of all individuals observed in both timeperiods, we re-assigned individuals to each time period at random and without replacement, and computed the Kolmogorov-Smirnov test statistic $D$ comparing the resulting vectors of masses for each time period. We repeated this 500 times, and calculated the percentile score and standardized effect size (SES) of Kolmogorov-Smirnov $D$ for the *observed* ISDs compared to the distribution of $D$s from the bootstrap samples. Percentile scores > 95 and SES > 2 correspond to an observed pair of ISDs significantly more dissimilar than the bootstrap samples. 
+
+For an intuitive measure of the *magnitude* of change in the ISD over time, we compute an overlap measure (see @read2018 for this measure applied to species-level body size distributions). We characterize the ISD as a smooth function by fitting a Gaussian mixture model (to logarithm of mass, up to 15 Gaussians, select best using BIC, all following @thibault2011). We evaluate the density function of the GMM at points for a size range from 0-exp(15), which covers the range of sizes in this dataset with ample padding on each side. We rescale the density function so the total area under the ISD is 1. We calculate the overlap between two ISDs as the sum of the minimum density at each evaluation point. This ranges from 0 (no overlap) to 1 (complete overlap) [@read2018]. 
 
 ```{r ks demo}
 
@@ -112,60 +74,60 @@ shuffled_isd <- one_isd %>%
   mutate(mass = sample(mass, size = nrow(one_isd), replace = F))
 
 
+begin_actual_isd <- add_gmm(filter(one_isd, year %in% 1988:1992)) %>% mutate(timeperiod = "begin")
+end_actual_isd <- add_gmm(filter(one_isd, year %in% 2014:2018)) %>% mutate(timeperiod = "end")
+
+actual_isd <- bind_rows(begin_actual_isd, end_actual_isd)
+
+
+begin_bootstrap_isd <- add_gmm(filter(shuffled_isd, year %in% 1988:1992)) %>% mutate(timeperiod = "begin")
+end_bootstrap_isd <- add_gmm(filter(shuffled_isd, year %in% 2014:2018)) %>% mutate(timeperiod = "end")
+
+bootstrap_isd <- bind_rows(begin_bootstrap_isd, end_bootstrap_isd)
 
 ```
 
 ```{r, results=T, include=T}
 
-ggplot(one_isd, aes(log(mass), fill = timeperiod)) + geom_density(alpha = .5) + ggtitle("Actual") 
+ggplot(actual_isd, aes(mass, density, color = timeperiod)) + geom_line(alpha = .5) + ggtitle("Actual") 
 
-ggplot(shuffled_isd, aes(log(mass), fill = timeperiod)) + geom_density(alpha = .5) + ggtitle("Shuffled (one shuffle)")
+ggplot(bootstrap_isd, aes(mass, density, color = timeperiod)) + geom_line(alpha = .5) + ggtitle("Shuffled (one shuffle)")
 
 
 
 ```
 
 
-For this site, the KS test p value is `r round(isd_comparison$actual_p[1], 4)`. The observed test statistic has a percentile of `r round(isd_comparison$d_percentile[1],2)` and  SES of `r round(isd_comparison$d_ses[1], 2)` compared to 500 shuffles. The observed ISDs have an overlap of `r round(isd_comparison$overlap, 2)`.
+For this site (`r dat$metadata$location$routename`, `r dat$metadata$location$regionname`), the KS test p value is `r round(isd_comparison$actual_p[1], 4)`. The observed test statistic has a percentile of `r round(isd_comparison$d_percentile[1],2)` and  SES of `r round(isd_comparison$d_ses[1], 2)` compared to 500 bootstraps. The observed ISDs have an overlap of `r round(isd_comparison$overlap, 2)`.
 
 ## Decoupling of dynamics in total abundance, biomass, and energy use over time
 
 ### Sims
 
-1. To test whether change in the ISD results in decoupling of currencies, we can't just compare the slopes for total energy, total biomass, total abundance to each other. This is because the three different currencies are on radically different scales of measurement. We also can't rescale using the usual methods (e.g. scale to mean 0/sd 1, sqrt transform @dornelas2014; @gotelli2017) because these destroy information about the range of variability within a single currency.
-1. Instead, we test whether the observed change in biomass or energy use differs from the change that we would expect given observed changes in community-wide abundance, but with *no change* in the ISD from beginning to end. Enter Null Model A.
-    1. Figures and functions walking through this procedure are at https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_01_change_over_time_sims.md but they're a little rough. 
-1. Simulate change in total energy and total biomass under "no change in ISD" and "observed change in ISD" scenarios
-      1. We construct sampling GMM for each time period.
-          1. The "sampling GMM" is a probability density function with the probability of observing an individual of a given mass across the spectrum of possible masses. Sampling `$mass` with probability `$density` is a random number generator for sizes.
-          1. We construct this by drawing individuals (based on their species' abundances and mean and SD body sizes), fitting a GMM, and then rescaling the density function of the GMM so it sums to 1.
-          1.For this, because there is some sampling error, I draw 5 copies of the ISD and fit the GMM to the combined 5 draws. This doesn't affect anything in practice and is mostly inspired by a one-off comment from Allen Hurlbert about "sampling error" so I might drop it. We construct sampling ISDs for the "begin" and "end" time periods.
-      1. We then *re draw* individuals for each time period and shuffle the ISDs to produce scenarios.
-           1. First, we draw individuals for each year using the actual ISD for that time period (so the "begin" ISD for 1988-1992 and the "end" ISD for 2014-2018).
-          1. Then we draw individuals for each year, but using the "begin" ISD for all years.
-          1. We draw year-by-year, instead of the whole time period, because there is interannual, intratimeperiod variation in total abundance that we would like to capture. But we pool individuals within a time period to create the ISD to smooth out species accumulation.
-          1. Draws from sampling ISDs like this diverge slightly from draws from the raw species counts and sds. So we run everything through this pipeline for comparability.
-1. We compute total energy use and total biomass for each year for each scenario. 
-      1. Again because there is some sampling error, we repeat the re-drawing of individuals 5 times and compute the mean total biomass/total energy use across draws. Again I don't think this really affects stuff in aggregate and I could be talked out of it. 
+To test whether change in biomass or energy use deviates from the change in abundance, we can't just compare the slopes for total energy, total biomass, and total abundance to each other. This is because the three different currencies are on radically different scales of measurement. We also can't rescale using the usual methods (e.g. scale to mean 0/sd 1, sqrt transform @dornelas2014; @gotelli2017) because these destroy information about the range of variability within a single currency. Instead, we test whether the observed change in biomass or energy use differs from the change that we would expect given observed changes in community-wide abundance, but with *no change* in the ISD from beginning to end. 
+
+Figures and functions walking through this procedure are at https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_01_change_over_time_sims.md but they're a little rough. 
+
+
+We simulate change in total energy and total biomass under "no change in ISD" and "observed change in ISD" scenarios. We use the GMM smooth procedure described above to characterize a "sampling GMM" for each time period. The "sampling GMM" is a probability density function with the probability of observing an individual of a given mass across the spectrum of possible masses. Sampling `$mass` with probability `$density` is a random number generator for sizes. We then *re draw* individuals for each year under different scenarios. First, we draw individuals for each year using the actual ISD for that time period (so the "begin" ISD for 1988-1992 and the "end" ISD for 2014-2018). Second, we draw individuals for each year, but using the "begin" ISD for all years, to estimate community properties if the ISD had not changed from beginning to end. We compute the total energy use and total biomass for each year under each scenario. 
+
+Note that we pool individuals within a time period to create the ISD, to smooth out species accumulation, but we draw individuals and compute total energy and biomass year-by-year, instead of pooling individuals over the whole time period, to capture interannual, intratimeperiod variation in total abundance (which propagates to total energy use and total biomass). 
 
 ```{r}
 
-raw_sims <- make_actual_sims(dat = dat, initial_isd_seed_gmm = 1989, n_isd_draws = 1, ndraws = 5, initial_draw_seed = 1989) %>%
-  mutate(sim_iteration = paste0(sim_iteration, source))
-
-ssims <- ssims_wrapper(dat, "actual", 1989, 1, 5, 1989)
+ssims <- ssims_wrapper(dat, "actual", 1989, 1, 1, 1989)
 
 ```
 
 ```{r, results=T, include=T, fig.dim = c(3.5, 3.5)}
 
-ggplot(raw_sims, aes(year, total_biomass, color = source, group = as.character(sim_iteration))) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Five sims") + theme(legend.position = "bottom")
+ggplot(ssims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Biomass") + theme(legend.position = "bottom")
 
-ggplot(ssims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Five sims summarized to mean") + theme(legend.position = "bottom")
+ggplot(ssims, aes(year, total_energy, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Energy use") + theme(legend.position = "bottom")
 
 ```
 
-Here, the "abundance" lines (red) reflect change in total biomass expected due only to changes in abundance. The "currency" lines reflect change in total biomass due to change in abundance *and* observed change in the size structure. Deviations in slope between the red and blue lines reflect change driven by the ISD. Note that the lines here are crude linear model smooths and not really suitable for inference, just visualization. 
+Here, the "abundance" line (red) reflects change in total biomass expected due only to changes in abundance. The "currency" line reflects change in total biomass due to change in abundance *and* observed change in the size structure. Deviations in slope between the red and blue lines reflect change driven by the ISD. Note that the lines here are crude linear model smooths and not really suitable for inference, just visualization. 
 
 ### Testing change
 

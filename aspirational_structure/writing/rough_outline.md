@@ -1,8 +1,8 @@
 ---
 output:
-  pdf_document: default
   word_document:
     reference_docx: default_gdoc.docx
+  pdf_document: default
 csl: ecology.csl
 bibliography: refs.bib
 ---
@@ -10,42 +10,18 @@ bibliography: refs.bib
 
 # Introduction/Framing
 
-1. Understanding the interrelated dynamics of size- and -abundance based dimensions of biodiversity is key to understanding biodiversity change in the Anthropocene. 
-    1. Total abundance - i.e. the total number of individual organisms present in a system - and size-based currencies, such as the total biomass or total metabolic flux (“energy use”) of a system, are intertwined, but nonequivalent, measures of biological function. 
-    1. Abundance is more closely tied to species-level population dynamics, while size-based metrics more directly reflect assemblage-level resource use and contributions to materials fluxes at the broader ecosystem scale [@morlon2009; @dornelas2011; @white2007; @connolly2005]
-    1. While these currencies are naturally linked [@henderson2010; @morlon2009), changes in size composition can decouple the dynamics of one currency from another (@dornelas2011; @white2004; @white2007; @ernest2009; @yen2017]. 
-    1. This can mean that intuition from one currency may be misleading about others; a trend in numerical abundance might mask something else going on with biomass [@white2004].
-    1. Changes in size composition strong enough to decouple currencies may be symptomatic of important changes in ecosystem status
-          1. E.g. abundance-biomass comparison curves [@petchey2010]; size-biased extinctions [@young2016; @smith2018]
-          1. This underscores the need to understand how these dynamics are playing out in the Anthropocene [@fisher2010] 
-1. Looking at the relationship between size and abundance dynamics at the **community scale** tells us about important functional dynamics
-    1. This is the scale at which ecological processes (i.e. compensatory dynamics, niche tracking, functional replacement) come into play - in contrast to population or global trends [@mcgill2015; @dornelas2014; @white2007].
-    1. To the extent that size is a proxy for other functional traits, changes or consistency in the community-level size structure over time may reflect processes related to niche structure [@white2007; @petchey2010]
-      1. Scenarios:
-          1. Strong size shifts can decouple the relationship between abundance and biomass. 
-             1. This is well established in aquatic systems, where changes in the scaling between abundance and biomass often signal ecosystem degradation [@petchey2010; @kerr2001; @warwick1994 and refs therein]
-          1. Or, compensatory shifts in the size structure can buffer community function (in terms of biomass or energy use) against changes in abundance [@terry2015; @ernest2009; @white2004] 
-         1. Or, consistency in the size structure may maintain the relationship between size- and -abundance based currencies, even as species composition, total abundance, and total biomass/total energy use fluctuate over time. 
-              1. Low turnover, or size-structured replacement - either of which could reflect consistency in the niche structure over time [@holling1992]
-          1. Random dynamics/drift may also contribute to the dynamics of the size spectrum
-             1. Either via neutral population dynamics, or through systematic change on axes orthogonal to size. 
-    1. Different subsets of a community may respond in different ways.
-       1. Core and transient species have different biology and respond to different cues.
-1. It is important to improve our understanding of these dynamics for terrestrial animal communities in particular.
-    1. Terrestrial animal communities are relatively unknown in terms of size spectrum work [@white2007]; but see classic bugs, classic birds, [@ernest2005; @thibault2011; @yen2017].
-    1. However, they:
-        1. Exhibit size structure [@ernest2005; @thibault2011]
-        1. Are experiencing serious and potentially size-structured change, with implications at community, ecosystem, and global scales [@young2016; @schmitz2018]  
-    1. Case studies have demonstrated that size shifts can decouple N from E for terrestrial animals [@white2004; @yen2017] while others have them moving together [@hernandez2011]
-1. Establishing general commonalities regarding these dynamics has been constrained by 1) a lack of macroecological-scale timeseries data on species and size composition for terrestrial animal communities [@white2007; @thibault2011], and 2) appropriate methods for working with ISDs
-    1. Data requirements: A consistent sampling protocol; many communities; long temporal extent; size *AND* abundance data (for a particular taxon, often size or abundance - but not both - is the traditional unit of measure); for the community (not population or global) scale
-    1. ISD challenges: the ISDs for determinate growers (mammals, birds…) are not simple power laws [@thibault2011; @ernest2005]. Quantifying change is not as straightforward as computing a slope. (Neither is *comparing* change across currencies.)
-    1. As a result, we do not have a synthetic understanding of either 1) the extent to which changes in the size structure decouple the dynamics of abundance, biomass, and energy use in these systems, or of 2) the underlying changes in community structure that account for these effects. 
-1. Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. Specifically, 
-    1. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018:
-        1. How often do these currencies change together vs. have decoupled dynamics?
-        1. What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies?
-    1. We examined how these changes differ between core species and the whole-community (i.e. including transients). 
+Understanding the interrelated dynamics of size- and -abundance based dimensions of biodiversity is key to understanding biodiversity change in the Anthropocene. Total abundance - i.e. the total number of individual organisms present in a system - and size-based currencies, such as the total biomass or total metabolic flux (“energy use”) of a system, are intertwined, but nonequivalent, measures of biological function. Abundance is more closely tied to species-level population dynamics, while size-based metrics more directly reflect assemblage-level resource use and contributions to materials fluxes at the broader ecosystem scale [@morlon2009; @dornelas2011; @white2007; @connolly2005]. While these currencies are naturally linked [@henderson2010; @morlon2009], changes in size composition can decouple the dynamics of one currency from another [@dornelas2011; @white2004; @white2007; @ernest2009; @yen2017]. This can mean that intuition from one currency may be misleading about others; a trend in numerical abundance might mask something else going on with biomass [@white2004]. Changes in size composition strong enough to decouple currencies may be symptomatic of important changes in ecosystem status- e.g. abundance-biomass comparison curves [@petchey2010]; size-biased extinctions [@young2016; @smith2018]. This underscores the need to understand how these dynamics are playing out in the Anthropocene [@fisher2010]. 
+
+
+At the **community scale**, changes in the relationship between size and abundance tells us about important functional shifts. This is the scale at which ecological processes (i.e. compensatory dynamics, niche tracking, functional replacement) come into play - in contrast to population or global trends [@mcgill2015; @dornelas2014; @white2007]. To the extent that size is a proxy for other functional traits, changes or consistency in the community-level size structure (individiual size distribution, ISD) over time may reflect processes related to niche structure [@white2007; @petchey2010]. Strong size shifts can decouple the relationship between abundance and biomass. In aquatic systems, such changes in the scaling between abundance and biomass often signal ecosystem degradation [@petchey2010; @kerr01; @warwick1994 and refs therein]. Compensatory shifts in the size structure can buffer community function (in terms of biomass or energy use) against changes in abundance [@terry2015; @ernest2009; @white2004]. Consistency in the size structure may maintain the relationship between size- and -abundance based currencies, even as species composition, total abundance, and total biomass/total energy use fluctuate over time, which can reflect consistency in the niche structure over time [@holling1992]. 
+
+
+
+It is important to improve our understanding of these dynamics for terrestrial animal communities in particular. In contrast to terrestrial trees and aquatic systems [@kerr01; @white2007], how the relationship between size and abundance changes over time, and the consequences of these changes for ecosystem-level properties, remain relatively unknown for terrestrial animals (but see @white2004). Terrestrial animal communities exhibit size structure [@ernest2005; @thibault2011], and case studies have demonstrated that size shifts can either decouple N from E for terrestrial animals [@white2004; @yen2017], but not always [@hernandez2011]. Establishing generalities in these dynamics is especially pertinent in the Anthropocene, as these communities are experiencing extensive and potentially size-structured change, with implications at community, ecosystem, and global scales [@young2016; @schmitz2018].
+
+Macroecological-scale synthesis on the interrelated dynamics of the ISD, total abundance, and community function for terrestrial animals has been constrained by 1) a lack of community-level size and abundance timeseries data for these systems [@white2007; @thibault2011], and 2) appropriate statistical methods for relating change in the size structure to changes in abundance and function [@thibault2011; @yen2017]. In contrast to aquatic and forest systems, most long-term surveys of animal communities do not collect data on individuals' *sizes* across a full community (with the exception of small mammal studies, which have made major contributions to our understanding of the dynamics of size, abundance, and function for these systems; [@ernest2005; @white2004; @hernandez2011; @kelt2015]). Global, continental, or population-wide studies capture different phenomena [@white2007; this is a nod to a few studies looking at the size structure *across britain* or something]. The ISDs for terrestrial animals, and specifically for determinate growing taxa (e.g. mammals, birds), are often complex, multimodal distributions [@holling1992; @ernest2005; @thibault2011; @yen2017], and less statistically tractable than the power-law ISDs found in aquatic and tree systems [@kerr01; @white2007; more]. Quantifying change in the size structure, and relating this to change in community-wide abundance and function, is not as straightforward as computing and comparing slopes. As a result, we do not have a general understanding of either 1) the extent to which changes in the ISD decouple the community-level dynamics of abundance, biomass, and energy use in these systems, or of 2) the underlying changes in community structure that account for these effects. 
+
+Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018. Specifically, we examined: 1) How often do these currencies change together vs. have decoupled dynamics?; 2) What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies? We also examined how these changes differ between core species and the whole-community (i.e. including transients), which currently comes completely out of left  field in this introduction (sorry!).
 
 
 # Methods
