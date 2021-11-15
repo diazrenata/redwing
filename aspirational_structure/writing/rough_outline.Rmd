@@ -18,7 +18,7 @@ library(ggplot2)
 theme_set(theme_bw())
 dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
 load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
-load(here::here("aspirational_structure", "pipelines", "portalbe_comps_all.Rds"))
+load(here::here("aspirational_structure", "pipelines", "portable_comps_all.Rds"))
 ```
 
 
@@ -196,7 +196,7 @@ Because core and transient species may have different dynamics, we ran this pipe
 
 Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 routes total. Results are the same.
 
-#### Null models note
+### Null models note
 
 I have an instinct that reviewers may ask about null models to distinguish "systematic" change in the ISD from random change in the ISD. There are real constraints on how deeply we can investigate that due to the structure of the data and the computation required for this pipeline. Because BBS doesn't have population parameters, we have to take populations sizes as face value as constraints for a null model - but some of the ISD change is baked into the population sizes. Null models in this space also have a high type II error rate; it can be very hard to deviate from them, especially if they're highly constrained. In my tests with contrived data/Portal, I have to have an almost pure change scenario to get a deviation - either *all* of the change in species' abundances has to be directional on the size axis, or *all* of the change has to be a like-for-like size replacement. And, this pipeline is computationally intensive to a degree that prohibits repeated runs (to the tune of 100-500 null repetitions). So, I am not leaning strongly on incorporating null models as a way of distinguishing "systematic" vs "non-size-structured" dynamics here.  
 
@@ -206,13 +206,130 @@ That said - I have run null models *once* for intuition and may be able to coax 
 
 ## Change in the ISD begin-to-end
 
+### "Significance"
+
+In `r sum(all_comps$actual_p < .05)` of `r nrow(all_comps)` routes, the KS-test finds a significant difference in the raw ISDs begin-to-end. In `r sum(all_comps$d_percentile > .95)` of `r nrow(all_comps)`, the percentile score of the KS-test statistic (relative to the bootstrap model) is greater than .95. In `r sum(all_comps$d_ses > 2)` of `r nrow(all_comps)`, the SES > 2. We proceed as though the "begin" and "end" ISDs are always "significantly" different, and investigate the magnitude and consequences of these differences. 
+
+### Magnitude
+
+```{r, include =T, results = T}
+
+ggplot(all_comps, aes(overlap)) + geom_histogram() + xlab("ISD overlap") + ylab("Count") 
 
 
+summary(all_comps$overlap)
+```
+
+For most sites, these significant differences translate into about 80% overlap/20% change in the distribution of density under the ISD - similar to the degree of change in the example shown above. 
+
+## Change in abundance and function
+
+### Model tallies
+
+```{r, include = T, results = T, fig.dim = c(5, 3)}
+
+actual_winners <- filter(all_winners, simtype == "actual")
+
+actual_winners_boxplot <- actual_winners %>% group_by(currency, model) %>% summarize(n = dplyr::n(),
+                                                           percent = 100 * dplyr::n() / 528) %>%
+  mutate(model_name = ifelse(grepl("full", model), "Decoupling", ifelse(grepl("nosource", model), "Slope", "Intercept-only"))) %>%
+  mutate(omodel_name = ordered(model_name, levels = c("Decoupling", "Slope", "Intercept-only"))) %>%
+  mutate(currency = stringr::str_to_title(currency))
+
+ggplot(actual_winners_boxplot, aes(omodel_name, percent, fill = currency)) + geom_col() + facet_wrap(vars(currency), scales = "free_x") + ylim(0, 100) + theme(legend.position = "none") + xlab("Best model") + ylab("Percent of routes") + geom_text(aes(y = percent + 5, label = paste0("n = ", n)))
+
+```
+
+For `r round(100*mean(!grepl("notime", actual_winners[ which(actual_winners$currency == "energy"),]$model)))` percent (for energy use) and `r round(100*mean(!grepl("notime", actual_winners[ which(actual_winners$currency == "biomass"),]$model)))` percent (for biomass) of routes, there is a detectable change in abundance and/or one of the currencies from begin to end. 
+
+For `r round(100*mean(grepl("full", actual_winners[ which(actual_winners$currency == "energy"),]$model)))` percent (for energy) and `r round(100*mean(grepl("full", actual_winners[ which(actual_winners$currency == "biomass"),]$model)))` percent (for biomass) of routes, there is a *decoupling* of the dynamics of the currency from what would be expected given change in abundance alone.
+
+### Direction of change in abundance
+
+```{r, results = T, include = T, fig.dim = c(5,3)}
+
+actual_qis_95 <- filter(all_qis, simtype == "actual", .width == .95)
+
+ggplot(actual_qis_95, aes((timeperiodend + `(Intercept)`) / `(Intercept)`, fill = currency)) + geom_histogram() + xlab("Change relative to start value\n(end_value - start_value) / start_value") + ylab("Count") + facet_wrap(vars(currency))+ theme(legend.position = "none")
+
+actual_qis_95 %>%
+  mutate(increasing = timeperiodend.lower > 0,
+         decreasing = timeperiodend.upper < 0) %>%
+  group_by(currency) %>%
+  summarize(prop_increasing = mean(increasing, na.rm =T),
+            prop_decreasing = mean(decreasing, na.rm=T))
+
+```
+
+For about 60% of models *with a change beginning to end*, abundance is decreasing. Note that the number that are increasing vs. decreasing can sum to less than 1 if there are models with an interaction in which the abundance-slope is over 0, but the currency offset is nonzero. 
 
 
+### Direction of offset due to ISD
+
+```{r, results = T, include = T, fig.dim = c(5,3)}
+
+ggplot(actual_qis_95, aes(((`timeperiodend:sourcecurrency` + `(Intercept)` + timeperiodend) /  (`(Intercept)` + timeperiodend)), fill = currency)) + geom_histogram() + xlab("Currency final value / abunance-driven final value") + ylab("Count") + facet_wrap(vars(currency))+ theme(legend.position = "none")
 
 
+actual_qis_95 %>%
+  group_by(currency) %>%
+  summarize(percent_currency_above_abund = mean((`timeperiodend:sourcecurrency.lower` >0), na.rm = T),
+            percent_currency_below_abund = mean((`timeperiodend:sourcecurrency.upper` <0), na.rm = T),
+            n_with_interaction = sum(!is.na(`timeperiodend:sourcecurrency`)))
 
+```
+For models with a currency offset, nearly **80% of the time** that offset is towards the currency-slope being less negative than for abundance. 
+
+```{r, results = T, include = T, fig.dim = c(5,4)}
+
+raw_changes <- all_sims %>%
+  filter(simtype == "actual") %>%
+  group_by(matssname, source, timeperiod) %>%
+  summarize(total_energy = mean(total_energy),
+            total_biomass = mean(total_biomass)) %>%
+  ungroup() %>%
+  tidyr::pivot_wider(id_cols = c(matssname, source), names_from = timeperiod, values_from = c(total_energy, total_biomass)) %>%
+  mutate(energy_ratio = total_energy_end / total_energy_begin,
+         biomass_ratio = total_biomass_end / total_biomass_begin) %>%
+  select(matssname, source, energy_ratio, biomass_ratio) %>%
+  tidyr::pivot_wider(id_cols = matssname, names_from = source, values_from = c(energy_ratio, biomass_ratio))
+
+sig_changes <- raw_changes %>%
+  left_join(actual_qis_95) %>%
+  mutate(abund_slope_nonzero = (timeperiodend.upper < 0 | timeperiodend.lower > 0) & !is.na(timeperiodend),
+         currency_offset_nonzero =(`timeperiodend:sourcecurrency.upper` < 0 | `timeperiodend:sourcecurrency.lower` > 0) & !is.na(`timeperiodend:sourcecurrency`))
+ 
+ggplot(sig_changes, aes(energy_ratio_abundance, energy_ratio_currency)) + geom_point(alpha = .1) + geom_point(data =filter(sig_changes, abund_slope_nonzero), aes(color = currency_offset_nonzero), alpha = 1) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "bottom") + ggtitle("Energy")
+
+```
+
+```{r, results = T, include = T, fig.dim = c(5,4)}
+
+ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency)) + geom_point(alpha = .1) + geom_point(data =filter(sig_changes, !is.na(timeperiodend)), aes(color = currency_offset_nonzero), alpha = 1) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "bottom") + ggtitle("Biomass")
+```
+
+## Relating change in the ISD to decoupling
+
+There's a lot of change in the ISD that doesn't translate into decoupling.
+
+```{r}
+
+winners_comps <- left_join(actual_winners, all_comps)
+
+ggplot(winners_comps, aes(overlap, fill = currency)) + geom_density() + facet_wrap(vars(currency, model), scales = "free", ncol = 2, dir = "v") + theme(legend.position = "none")
+
+ggplot(winners_comps, aes(log(end_mean_size / begin_mean_size), overlap)) + geom_point()
+
+ggplot(winners_comps, aes(log(end_mean_e / begin_mean_e), overlap)) + geom_point()
+```
+
+## Core-transient
+
+Everything stays the same **except for** the 80%.
+
+## Highly sampled BCRs
+
+Totally the same. 
 <!-- Discussion points -->
 <!-- Overall, a signal of ~parallel dynamics, and particularly decreases, in abundance, biomass, and energy use over time -->
 <!-- About 50% of the time, not significant. But when significant, overwhelmingly 1) a decrease and 2) changing together. -->
