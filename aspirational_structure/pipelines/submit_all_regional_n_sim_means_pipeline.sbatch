@@ -13,4 +13,4 @@
 
 #This is a generic R submission script
 module load R
-Rscript ../../aspirational_structure/pipelines/pipeline_sim_means_all_regoinaln.R
+Rscript ../../aspirational_structure/pipelines/pipeline_sim_means_all_regionaln.R
