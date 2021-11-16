@@ -1,8 +1,12 @@
 ---
 output:
-   pdf_document: default
-   word_document:
+  word_document:
     reference_docx: default_gdoc.docx
+    df_print: kable
+  html_document:
+    df_print: kable
+  pdf_document: 
+    df_print: kable
 csl: ecology.csl
 bibliography: refs.bib
 ---
@@ -35,6 +39,8 @@ It is important to improve our understanding of these dynamics for terrestrial a
 Macroecological-scale synthesis on the interrelated dynamics of the ISD, total abundance, and community function for terrestrial animals has been constrained by 1) a lack of community-level size and abundance timeseries data for these systems [@white2007; @thibault2011], and 2) appropriate statistical methods for relating change in the size structure to changes in abundance and function [@thibault2011; @yen2017]. In contrast to aquatic and forest systems, most long-term surveys of animal communities do not collect data on individuals' *sizes* across a full community (with the exception of small mammal studies, which have made major contributions to our understanding of the dynamics of size, abundance, and function for these systems; [@ernest2005; @white2004; @hernandez2011; @kelt2015]). Global, continental, or population-wide studies capture different phenomena [@white2007; this is a nod to a few studies looking at the size structure *across britain* or something]. The ISDs for terrestrial animals, and specifically for determinate growing taxa (e.g. mammals, birds), are often complex, multimodal distributions [@holling1992; @ernest2005; @thibault2011; @yen2017], and less statistically tractable than the power-law ISDs found in aquatic and tree systems [@kerr01; @white2007; more]. Quantifying change in the size structure, and relating this to change in community-wide abundance and function, is not as straightforward as computing and comparing slopes. As a result, we do not have a general understanding of either 1) the extent to which changes in the ISD decouple the community-level dynamics of abundance, biomass, and energy use in these systems, or of 2) the underlying changes in community structure that account for these effects. 
 
 Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018. Specifically, we examined: 1) How often do these currencies change together vs. have decoupled dynamics?; 2) What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies? We also examined how these changes differ between core species and the whole-community (i.e. including transients), which currently comes completely out of left  field in this introduction (sorry!).
+
+\newpage
 
 # Methods
 
@@ -87,7 +93,7 @@ bootstrap_isd <- bind_rows(begin_bootstrap_isd, end_bootstrap_isd)
 
 ```
 
-```{r, results=T, include=T}
+```{r, results=T, include=T, fig.dim =c(3,2)}
 
 ggplot(actual_isd, aes(mass, density, color = timeperiod)) + geom_line(alpha = .5) + ggtitle("Actual") 
 
@@ -106,9 +112,6 @@ For this site (`r dat$metadata$location$routename`, `r dat$metadata$location$reg
 
 To test whether change in biomass or energy use deviates from the change in abundance, we can't just compare the slopes for total energy, total biomass, and total abundance to each other. This is because the three different currencies are on radically different scales of measurement. We also can't rescale using the usual methods (e.g. scale to mean 0/sd 1, sqrt transform @dornelas2014; @gotelli2017) because these destroy information about the range of variability within a single currency. Instead, we test whether the observed change in biomass or energy use differs from the change that we would expect given observed changes in community-wide abundance, but with *no change* in the ISD from beginning to end. 
 
-Figures and functions walking through this procedure are at https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_01_change_over_time_sims.md but they're a little rough. 
-
-
 We simulate change in total energy and total biomass under "no change in ISD" and "observed change in ISD" scenarios. We use the GMM smooth procedure described above to characterize a "sampling GMM" for each time period. The "sampling GMM" is a probability density function with the probability of observing an individual of a given mass across the spectrum of possible masses. Sampling `$mass` with probability `$density` is a random number generator for sizes. We then *re draw* individuals for each year under different scenarios. First, we draw individuals for each year using the actual ISD for that time period (so the "begin" ISD for 1988-1992 and the "end" ISD for 2014-2018). Second, we draw individuals for each year, but using the "begin" ISD for all years, to estimate community properties if the ISD had not changed from beginning to end. We compute the total energy use and total biomass for each year under each scenario. 
 
 Note that we pool individuals within a time period to create the ISD, to smooth out species accumulation, but we draw individuals and compute total energy and biomass year-by-year, instead of pooling individuals over the whole time period, to capture interannual, intratimeperiod variation in total abundance (which propagates to total energy use and total biomass). 
@@ -119,7 +122,7 @@ ssims <- ssims_wrapper(dat, "actual", 1989, 1, 1, 1989)
 
 ```
 
-```{r, results=T, include=T, fig.dim = c(3.5, 3.5)}
+```{r, results=T, include=T, fig.dim = c(3, 2)}
 
 ggplot(ssims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Biomass") + theme(legend.position = "bottom")
 
@@ -165,12 +168,12 @@ filter(all_winners, matssname == "bbs_rtrg_224_3") %>%
 
 For models with slope  and/or offset terms, we extracted estimates for the slope for abundance, and the offset for currency, to examine the magnitude and direction of change and decoupling. We tallied how often the abundance slope was positive or negative (how often the 95% CI for the timeperiod term is >/< 0) and how often the offset for currency is positive or negative (how often the 95% CI for the timeperiod:source term is >/< 0). Positive offsets mean that the change in biomass/energy use is less negative than change in abundance; negative offsets mean that the currency is more negative. 
 
-For the "actual" sims, here are the parameter estimates for the slope and offset. Thick bars are the 95% and thin bars are the 99% CIs. For both energy and biomass, the abundance-driven trajectory is an increase, but it's less of a strong increase for biomass. For both, the currency-driven offset is also an increase, meaning that the change in the ISD caused biomass to increase more than we expect it to just because of the increase in abundance. 
+For the example route we've been working through, here are the parameter estimates for the slope and offset (means and 95% CIs). For both energy and biomass, the abundance-driven trajectory is an increase, although biomass gets closer to over 0. For both, the currency-driven offset is also an increase, meaning that the change in the ISD caused biomass to increase more than we expect it to just because of the increase in abundance. 
 
 
 ```{r, results = T, include = T}
 
-these_qis <- filter(all_qis, simtype == "actual", matssname == "bbs_rtrg_224_3")
+these_qis <- filter(all_qis, simtype == "actual", matssname == "bbs_rtrg_224_3", .width == .95)
 
 ggplot(these_qis, aes(timeperiodend, currency)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper)) + ggtitle("Slope term") + geom_vline(xintercept = 0)
 
@@ -180,18 +183,14 @@ ggplot(these_qis, aes(`timeperiodend:sourcecurrency`, currency)) + geom_pointint
 
 ```
 
-## Miscellany
+## Relating change in the ISD to decoupling 
 
-*These probably belong in figure captions/supplements, not as the methods.*
-
-### Relating change in the ISD to decoupling 
-
-The ISD may change without resulting in a detectable decoupling of the dynamics of biomass/energy use and abundance at the whole-system level, if the change in the ISD is relatively ~balanced above and below the mean body size. We tested whether communities with a decoupling showed greater change in the ISD than systems that did not, using a linear model of the form `isd_overlap ~ winning_model_type`. We also tested the extent to which change in mean body size was linked to change in the ISD using a quadratic model of the form `isd_overlap ~ logratio_mean_body_size + logratio_mean_body_size ^ 2`. We fit a quadratic model because we expected there to be a unimodal relationship, because high ISD overlap constrains there to be very little change in mean body size. 
+The ISD may change without resulting in a detectable decoupling of the dynamics of biomass/energy use and abundance at the whole-system level, if the change in the ISD is relatively ~balanced above and below the mean body size. We tested whether communities with a decoupling showed greater change in the ISD than systems that did not, using a linear model of the form `isd_overlap ~ winning_model_type` using both the winning models for energy use and for biomass. We also tested the extent to which change in mean body size was linked to change in the ISD using a quadratic model of the form `isd_overlap ~ logratio_mean_body_size + logratio_mean_body_size ^ 2`. We fit a quadratic model because we expected there to be a unimodal relationship, because high ISD overlap constrains there to be very little change in mean body size. 
 
 
-### Core-transient
+## Core-transient
 
-Because core and transient species may have different dynamics, we ran this pipeline on whole communities, and using just core species (those present in >= 2/3 of timesteps).
+Because core and transient species may have different dynamics, we ran this pipeline on whole communities, communities with transients removed (those present in < 1/3 of timesteps), and using just core species (those present in >= 2/3 of timesteps).
 
 <!-- ### Highly-sampled BCRs -->
 
@@ -203,7 +202,20 @@ Because core and transient species may have different dynamics, we ran this pipe
 
 <!-- That said - I have run null models *once* for intuition and may be able to coax it up to 10ish runs. From these runs and my past null models in this space, I don't see evidence of strong deviations from null models. I don't take this as compelling evidence that there is or isn't size structured change happening, but as an indication that we can't distinguish that at this scale.  -->
 
+\newpage
+
 # Results
+
+## Overview
+
+Here are the key points - more detailed plots and tables follow:
+
+- The ISD is almost always "different" from beginning to end. The question is, what are the consequences of this change?
+- About 1/3 of routes do not find a significant change in abundance, energy use, or biomass beginning to end.
+- For routes with change in abundance from beginning to end, the majority of the time this is a **decrease in total abundance**. (70% of changes in abundance are a decrease).
+- About 1/3 of the time (for biomass) and 1/6 of the time (for energy use) change in the ISD drives the currency change away from the change driven by just abundance. When this happens, **75-80% of the time** the change for the currency is less negative than the change in abundance (corresponding crudely to an increase in mean body size/per capita metabolic rate).
+- There is not a strong relationship between the magnitude of change in the ISD overall and a) whether a route has a slope or decoupling or b) shifts in mean body size.
+- If we restrict to only core species, 1) we see decoupling less frequently; 2) for core species, the decoupling due to change in the ISD is evenly distributed between decreases and increases (whereas, if we include all species, it is skewed towards increases in body size/metabolic rate resulting in less negative slopes for biomass/energy use than for abundance). Changes in abundance remain predominately decreases. 
 
 ## Change in the ISD begin-to-end
 
@@ -223,6 +235,8 @@ summary(all_comps$overlap)
 
 For most sites, these significant differences translate into about 80% overlap/20% change in the distribution of density under the ISD - similar to the degree of change in the example shown above. 
 
+\newpage
+
 ## Change in abundance and function
 
 ### Model tallies
@@ -232,13 +246,14 @@ For most sites, these significant differences translate into about 80% overlap/2
 actual_winners <- filter(all_winners, simtype == "actual")
 
 
-actual_winners_boxplot <- actual_winners %>% group_by(currency, model) %>% summarize(n = dplyr::n(),
+all_spp_winners_boxplot <- actual_winners %>% group_by(currency, model) %>% summarize(n = dplyr::n(),
                                                                                      percent = 100 * dplyr::n() / 528) %>%
   mutate(model_name = ifelse(grepl("full", model), "Decoupling", ifelse(grepl("nosource", model), "Slope", "Intercept-only"))) %>%
   mutate(omodel_name = ordered(model_name, levels = c("Decoupling", "Slope", "Intercept-only"))) %>%
-  mutate(currency = stringr::str_to_title(currency))
+  mutate(currency = stringr::str_to_title(currency)) %>%
+  mutate(spp = "all")
 
-actual_winners_boxplot
+all_spp_winners_boxplot
 # 
 # ggplot(actual_winners_boxplot, aes(omodel_name, percent, fill = currency)) + geom_col() + facet_wrap(vars(currency), scales = "free_x") + ylim(0, 100) + theme(legend.position = "none") + xlab("Best model") + ylab("Percent of routes") + geom_text(aes(y = percent + 5, label = paste0("n = ", n)))
 
@@ -252,20 +267,21 @@ For `r round(100*mean(grepl("full", actual_winners[ which(actual_winners$currenc
 
 ```{r, results = T, include = T, fig.dim = c(5,3)}
 
-actual_qis_95 <- filter(all_qis, simtype == "actual", .width == .95)
+all_spp_actual_qis_95 <- filter(all_qis, simtype == "actual", .width == .95)
 # 
 # ggplot(actual_qis_95, aes((timeperiodend + `(Intercept)`) / `(Intercept)`, fill = currency)) + geom_histogram() + xlab("Change relative to start value\n(end_value - start_value) / start_value") + ylab("Count") + facet_wrap(vars(currency))+ theme(legend.position = "none")
 
-actual_qis_95 %>%
+all_spp_actual_qis_95_summary <- all_spp_actual_qis_95 %>%
   mutate(increasing = timeperiodend.lower > 0,
          decreasing = timeperiodend.upper < 0) %>%
+  filter(increasing | decreasing) %>%
   group_by(currency) %>%
   summarize(prop_increasing = mean(increasing, na.rm =T),
             prop_decreasing = mean(decreasing, na.rm=T))
-
+all_spp_actual_qis_95_summary
 ```
 
-For about 60% of models *with a change beginning to end*, abundance is decreasing. Note that the number that are increasing vs. decreasing can sum to less than 1 if there are models with an interaction in which the abundance-slope is over 0, but the currency offset is nonzero. 
+For about 70% of models *with an abundance slope that does not include 0*, abundance is decreasing. 
 
 
 ### Direction of offset due to ISD
@@ -275,16 +291,16 @@ For about 60% of models *with a change beginning to end*, abundance is decreasin
 # ggplot(actual_qis_95, aes(((`timeperiodend:sourcecurrency` + `(Intercept)` + timeperiodend) /  (`(Intercept)` + timeperiodend)), fill = currency)) + geom_histogram() + xlab("Currency final value / abunance-driven final value") + ylab("Count") + facet_wrap(vars(currency))+ theme(legend.position = "none")
 
 
-actual_qis_95 %>%
+all_spp_actual_qis_95_summary2 <- all_spp_actual_qis_95 %>%
   group_by(currency) %>%
   summarize(percent_currency_above_abund = mean((`timeperiodend:sourcecurrency.lower` >0), na.rm = T),
             percent_currency_below_abund = mean((`timeperiodend:sourcecurrency.upper` <0), na.rm = T),
             n_with_interaction = sum(!is.na(`timeperiodend:sourcecurrency`)))
-
+all_spp_actual_qis_95_summary2
 ```
 For models with a currency offset, nearly **80% of the time** that offset is towards the currency-slope being less negative than for abundance. 
 
-```{r, results = T, include = T, fig.dim = c(5,4)}
+```{r, results = T, include = T, fig.dim = c(7,7)}
 
 raw_changes <- all_sims %>%
   filter(simtype == "actual") %>%
@@ -293,43 +309,189 @@ raw_changes <- all_sims %>%
             total_biomass = mean(total_biomass)) %>%
   ungroup() %>%
   tidyr::pivot_wider(id_cols = c(matssname, source), names_from = timeperiod, values_from = c(total_energy, total_biomass)) %>%
-  mutate(energy_ratio = (total_energy_end - total_energy_begin) / total_energy_begin,
-         biomass_ratio = (total_biomass_end - total_biomass_begin) / total_biomass_begin) %>%
+  mutate(energy_ratio = (total_energy_end) / total_energy_begin,
+         biomass_ratio = (total_biomass_end) / total_biomass_begin) %>%
   select(matssname, source, energy_ratio, biomass_ratio) %>%
   tidyr::pivot_wider(id_cols = matssname, names_from = source, values_from = c(energy_ratio, biomass_ratio))
 
 sig_changes <- raw_changes %>%
-  left_join(actual_qis_95) %>%
-  mutate(abund_slope_nonzero = (timeperiodend.upper < 0 | timeperiodend.lower > 0) & !is.na(timeperiodend),
-         currency_offset_nonzero =(`timeperiodend:sourcecurrency.upper` < 0 | `timeperiodend:sourcecurrency.lower` > 0) & !is.na(`timeperiodend:sourcecurrency`))
+  left_join(all_spp_actual_qis_95) %>%
+  mutate(any_slopes =  !is.na(timeperiodend),
+         currency_offset_nonzero =(`timeperiodend:sourcecurrency.upper` < 0 | `timeperiodend:sourcecurrency.lower` > 0) & !is.na(`timeperiodend:sourcecurrency`)) %>%
+  mutate(color_key = ifelse(
+    !any_slopes, "No slopes",
+    ifelse(currency_offset_nonzero, "Decoupling", "Change but no decoupling")
+  ))
 
-ggplot(sig_changes, aes(energy_ratio_abundance, energy_ratio_currency)) + geom_point(alpha = .51) + geom_point(data =filter(sig_changes, abund_slope_nonzero), aes(color = currency_offset_nonzero), alpha = 1) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + theme(legend.position = "bottom") + ggtitle("Energy")
 
+
+library(multipanelfigure)
+
+e_bigplot <- ggplot(sig_changes, aes(energy_ratio_abundance, energy_ratio_currency, color = color_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Energy") + xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
+
+
+
+b_biglot <- ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency, color = color_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Biomass")+ xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
+
+
+
+all_panels <- multi_panel_figure(columns = 1, rows =2) %>%
+  fill_panel(e_bigplot) %>%
+  fill_panel(b_biglot) 
+
+all_panels
 ```
 
-```{r, results = T, include = T, fig.dim = c(5,4)}
+##### Figure 1. Changes in biomass and energy use due to changes in the ISD vs. just abundance. 
 
-ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency)) + geom_point(alpha = .51) + geom_point(data =filter(sig_changes, !is.na(timeperiodend)), aes(color = currency_offset_nonzero), alpha = 1) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + theme(legend.position = "bottom") + ggtitle("Biomass")
-```
+*Axes:* The x-axis is the change in the currency (energy use, top, or biomass, bottom) expected due only to change in abundance (as the mean for 2014:2018 divided by the mean for 1988:1992). The y-axis is the change in energy use/biomass taking into account change in the ISD. The sloped line marks the 1:1 line, which corresponds to change incorporating the ISD mirroring change due just to abundance. The crossbars mark 1, which corresponds to the beginning and the ending values being the same. The points are colored as follows: Blue means there is no slope term (intercept-only). Red means there is a change in abundance, but no difference in slopes between abundance and the currency (i.e. incorporating the ISD). Green means there is a decoupling. 
+
+*Interpretation:*
+
+- There is a concentration towards decreases
+- There is good correspondence to the 1:1 line. To a point.
+- Jitter off the 1:1 line is concentrated above it, meaning the ISD is resulting in a less negative change over time. This is most pronounced for biomass.
+- These plots give a sense of the magnitude of change that you can't get from summary tables, etc. 
+
+\newpage
 
 ## Relating change in the ISD to decoupling
 
-There's a lot of change in the ISD that doesn't translate into decoupling.
 
-```{r}
+```{r, results = T, include = T, fig.dim = c(5,3)}
 
-winners_comps <- left_join(actual_winners, all_comps)
+winners_comps <- left_join(actual_winners, all_comps) %>%
+  mutate(model_complexityf = as.factor(model_complexity)) %>% 
+  mutate(model_name = ifelse(grepl("full", model), "Decoupling", ifelse(grepl("nosource", model), "Slope", "Intercept-only"))) 
 
-ggplot(winners_comps, aes(overlap, fill = currency)) + geom_density() + facet_wrap(vars(currency, model), scales = "free", ncol = 2, dir = "v") + theme(legend.position = "none")
 
-ggplot(winners_comps, aes(log(end_mean_size / begin_mean_size), overlap)) + geom_point()
+overlap_lm_e <- lm(overlap ~ model_complexityf, data = filter(winners_comps, currency == "energy"))
 
-ggplot(winners_comps, aes(log(end_mean_e / begin_mean_e), overlap)) + geom_point()
+overlap_lm_b <- lm(overlap ~ model_complexityf, data = filter(winners_comps, currency == "biomass"))
+
+
+ggplot(winners_comps, aes(overlap, fill = model_name, color = model_name)) + geom_density(alpha = .2) + facet_wrap(vars(currency), scales = "free") + theme(legend.position = "bottom")
+
 ```
+
+This figure shows the density distributions of overlap values for routes that are best-characterized using the different models (color scale).  They don't really differ (p values > .8 for both energy and biomass).
+
+
+
+```{r, results = T, include = T, fig.dim = c(4,3)}
+
+winners_comps <- winners_comps %>%
+  mutate(logratio_mean_size = log(end_mean_size / begin_mean_size),
+         logratio_mean_e = log(end_mean_e / begin_mean_e)) %>%
+  mutate(logratio_mean_size_squared = logratio_mean_size ^ 2,
+         logratio_mean_e_squared = logratio_mean_e ^ 2)
+
+
+winners_comps_distinct <- select(winners_comps, matssname, overlap, logratio_mean_size, logratio_mean_size_squared, logratio_mean_e, logratio_mean_e_squared)
+meansize_qm <- lm(overlap ~ logratio_mean_size + logratio_mean_size_squared, data = winners_comps_distinct)
+meansize_qm_summ <- summary(meansize_qm)
+
+winners_comps_distinct <- winners_comps_distinct %>%
+  mutate(meansize_pred = predict(meansize_qm))
+
+ggplot(winners_comps_distinct, aes(logratio_mean_size, overlap)) + geom_point() + geom_line(aes(y = meansize_pred)) + geom_vline(xintercept = 0) + xlab("Change in mean size\nlog(end_mean_size / begin_mean_size)") + ylab("ISD overlap\nRanges 0-1, 1 is less change") + geom_text(aes(-.3, .5, label = paste0("R2 = ", signif(meansize_qm_summ$r.squared, 3))), data = winners_comps_distinct[1,])+ geom_text(aes(-.3, .55, label = "p < 0.001"), data = winners_comps_distinct[1,])
+
+```
+
+##### Figure 2. Change in the ISD vs. change in mean size.
+
+*Axes:* The x axis is the log ratio of mean body size for a route. The y-axis is the ISD overlap for that route (ranges 0-1, with 1 being identical ISDs). The points are individual routes; the curved line is the prediction from a quadratic model fitting `overlap ~ logratio_mean_body_size`. The vertical line marks 0 for no change. 
+
+*Interpretation*: The relationship between overall change in the ISD (overlap) and change *in mean body size* is a very messy one; R2 = .07. It's not possible to have a *lot* of change in mean body size without some change in the ISD, hence the quadratic relationship. However, there is often considerable change in the ISD that does not translate into a shift in mean body size. 
+
+\newpage
 
 ## Core-transient
 
-Everything stays the same **except for** the 80%.
+### Model tally comparison:
+
+```{r, include = T, results = T, fig.dim =c(4,3)}
+load(here::here("aspirational_structure", "pipelines", "portable_results_core.Rds"))
+
+actual_winners <- filter(all_winners, simtype == "actual")
+
+
+core_winners_boxplot <- actual_winners %>% group_by(currency, model) %>% summarize(n = dplyr::n(),
+                                                                                     percent = 100 * dplyr::n() / 528) %>%
+  mutate(model_name = ifelse(grepl("full", model), "Decoupling", ifelse(grepl("nosource", model), "Slope", "Intercept-only"))) %>%
+  mutate(omodel_name = ordered(model_name, levels = c("Decoupling", "Slope", "Intercept-only"))) %>%
+  mutate(currency = stringr::str_to_title(currency)) %>%
+  mutate(spp = "core") %>%
+  select(model_name, percent, currency)
+colnames(core_winners_boxplot) <- paste0(colnames(core_winners_boxplot), "_core")
+
+both_winners_boxplot <- all_spp_winners_boxplot %>%
+  select(model_name, currency, percent) %>%
+  left_join(core_winners_boxplot, by =c( "model_name" = "model_name_core", "currency" = "currency_core"))
+
+both_winners_boxplot
+```
+
+Restricting to just core species, we see fewer instances of decoupling, mostly for biomass.
+
+
+Looking at the direction of change, first here is for all species for comparison: 
+
+```{r, include= T, results = T}
+core_actual_qis_95 <- filter(all_qis, simtype == "actual", .width == .95) 
+
+
+# 
+# ggplot(actual_qis_95, aes((timeperiodend + `(Intercept)`) / `(Intercept)`, fill = currency)) + geom_histogram() + xlab("Change relative to start value\n(end_value - start_value) / start_value") + ylab("Count") + facet_wrap(vars(currency))+ theme(legend.position = "none")
+
+core_actual_qis_95_summary <- core_actual_qis_95 %>%
+  mutate(increasing = timeperiodend.lower > 0,
+         decreasing = timeperiodend.upper < 0) %>%
+    filter(increasing | decreasing) %>%
+
+  group_by(currency) %>%
+  summarize(prop_increasing = mean(increasing, na.rm =T),
+            prop_decreasing = mean(decreasing, na.rm=T))
+
+all_spp_actual_qis_95_summary
+```
+
+And here is for core:
+
+```{r, include= T, results = T}
+
+core_actual_qis_95_summary
+
+```
+
+The skew towards decreases in abundance is slightly more pronounced for core than for "all" species. 
+
+
+Looking at the currency offsets, again here is "all species" for comparison:
+
+```{r, include= T, results = T}
+
+core_actual_qis_95_summary2 <- core_actual_qis_95 %>%
+  group_by(currency) %>%
+  summarize(percent_currency_above_abund = mean((`timeperiodend:sourcecurrency.lower` >0), na.rm = T),
+            percent_currency_below_abund = mean((`timeperiodend:sourcecurrency.upper` <0), na.rm = T),
+            n_with_interaction = sum(!is.na(`timeperiodend:sourcecurrency`)))
+
+colnames(core_actual_qis_95_summary2) <- paste0(colnames(core_actual_qis_95_summary2)
+, "_core")
+all_spp_actual_qis_95_summary2
+```
+
+And just for core:
+
+```{r, include= T, results = T}
+
+core_actual_qis_95_summary2
+
+
+```
+
+**Restricted to core species, the decoupling is balanced above and below abundance**. It is changes in transient (and "intermediate") species' effects on the size structure that drive the skew towards increases in body size producing less-negative slopes for energy/biomass than what would happen just because of abundance. 
 
 <!-- ## Highly sampled BCRs -->
 
@@ -358,6 +520,41 @@ Everything stays the same **except for** the 80%.
 <!-- BBS is on intact habitats in systems that may have been recovering - counter to global trends or trends in areas of particular concern -->
 <!-- Next steps should include specifically exploring systems that have undergone major disturbances, and/or a large degree of taxonomic turnover.  -->
 <!-- And greater taxonomic coverage - comparative work between mammals and birds, for example -->
+
+\newpage
+
+# Discussion
+
+## Short results interpretation
+
+1. While changes in size-based currencies usually scale with abundance, in a substantial minority of instances they do not. Meaning, there has been directional shift in the size structure that changes the outcome for function vs abundance. 
+    1. This means we should extrapolate from "abundance" to "function" with some care. 
+    1. And when these strong size shifts occur, it is also a prompt to dig deeper into what's going on in that system. 
+1. When they diverge, it is usually in the direction of less-negative-change. Because abundance is usually decreasing, this is generally partially offsetting the decline in energy use/biomass that would be expected just given abundance. 
+    1. This contrasts with general in-the-ether concerns about size-biased declines disproportionately affecting large species. However, the increase in body size is consistent with other observations specific to BBS, possibly reflecting forests in recovery across North America. 
+    1. This skew towards an increase-in-size appears to be driven by the contributions of transient and intermediate species. Transients may be tracking different environmental cues than core species.
+1. An absence of decoupling does not imply an absence of change in the ISD. Systems without a decoupling do not have more static ISDs than systems with a decoupling - it's just that the change is not strongly skewed towards an increase or decrease. 
+
+## Considerations beyond the scope
+        
+1. Diagnosing process
+    1. Detecting change in the ISD and decoupling of the currencies is agnostic about why these changes have occurred. Niche shifts are a possiblity, but so is drift.
+    1. At this scale, I do not generally find deviations from null models in these results (although I am not sure because the computational requirements are too great to run this very many times). However, null models for these data have major constraints:
+        1. A lot of the dynamics of change are baked into population sizes. There is not support to fit a neutral population dynamics model for BBS, so we have to take them as face-value constraints on dynamics. These strongly constrain the null models and limit the scope of what we can test using a null model.
+        1. Highly-constrained null models for distinguishing process-driven vs drift in functional vs. taxonomic turnover tend to have a high type II error rate. When I have tested for ISDs, you need to have "pure" change (all the change in the ISD is towards an increase in body size, or all the change in the ISD is like-for-like size structured replacement) in order to deviate from the null model. 
+    1. Rather than trying to distinguish process-driven from random change at the continental scale, I therefore suggest using these dynamics to guide more focused investigations at the route level. 
+
+1. Attributing change in the size structure to species' dynamics
+    1. Why do the results for core v. all species differ? 
+    1. Is it the same species continent-wide accounting for shifts or does it vary geographically?
+    1. Do shifts in the size structure map onto changes in land use? ETC. 
+
+1. Extrapolating beyond BBS
+    1. BBS routes may not be represntative of biodiversity change for other taxa or (especially) globally
+    2. The current method cannot account for intraspecific size shifts, which may be important. 
+
+## Wider significance
+
 
 \newpage
 # References
