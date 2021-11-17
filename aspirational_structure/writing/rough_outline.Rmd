@@ -17,7 +17,7 @@ library(dplyr)
 library(BBSsize)
 library(rwar)
 library(tidybayes)
-
+library(multipanelfigure)
 library(ggplot2)
 theme_set(theme_bw())
 dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
@@ -25,6 +25,40 @@ load(here::here("aspirational_structure", "pipelines", "portable_results_compare
 load(here::here("aspirational_structure", "pipelines", "portable_comps_all.Rds"))
 ```
 
+
+# Abstract
+
+## Aim
+
+Testing the relationship between change in community-level abundance and community function (biomass and energy use), as mediated by change in the individual size distribution. 
+
+This is the first macroecological-scale study of the interrelated dynamics of ISDs, abundance, and function for terrestrial animal communities. 
+
+## Location
+
+North America, north of Mexico.
+
+## Time period
+
+1988-2018
+
+## Major taxa studied
+
+Breeding birds
+
+## Methods
+
+We simulated ISDs for the time periods 1988-1992 and 2014-2018 for 528 routes in the Breeding Bird Survey. We evaluated 1) the extent of change in the ISDs from the beginning to the end time periods; 2) the change in total biomass and total energy use over this time span; 3) the extent to which the observed changes in biomass and energy use reflect changes in numerical *abundance* vs. change in the ISD. 
+
+## Results
+
+Nearly all ISDs have changed detectably over time, but in most instances this does not result in a decoupling between biomass/energy use and numerical abundance. However, in a substantial minority of communities - 30% of routes overall for biomass, and 14% overall for energy use - directional shifts in the ISD result in a decoupling. In 80% of instances of decoupling, the deviation is towards an increase in body size/per capita metabolic rate, resulting in a less negative change in function than the change driven by numerical abundance. 
+
+## Main conclusions
+
+Terrestrial animal ISDs are dynamic; these dynamics matter; and this study provides tools and motivation for examining these dynamics!
+
+\newpage
 
 # Introduction/Framing
 
@@ -53,7 +87,7 @@ We used data from the Breeding Bird Survey [@sauer2013] to compare community att
 We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @bahlai2021]. Developing continuous-time methods for analyzing community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
 
 We used 5-year periods to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004a]. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from 1970 to 1990 and end dates ranging from 2000 to 2018, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there). This yielded 528 routes. 
-å
+
 
 ##  Estimated size data
 
@@ -93,18 +127,23 @@ bootstrap_isd <- bind_rows(begin_bootstrap_isd, end_bootstrap_isd)
 
 ```
 
-```{r, results=T, include=T, fig.dim =c(3,2)}
+```{r, results=T, include=T, fig.dim =c(5, 2.5)}
 
-ggplot(actual_isd, aes(mass, density, color = timeperiod)) + geom_line(alpha = .5) + ggtitle("Actual") 
+real_plot <- ggplot(actual_isd, aes(mass, density, color = timeperiod)) + geom_line() + ggtitle("Actual") + theme(legend.position="none")
 
-ggplot(bootstrap_isd, aes(mass, density, color = timeperiod)) + geom_line(alpha = .5) + ggtitle("Shuffled (one shuffle)")
+sim_plot <- ggplot(bootstrap_isd, aes(mass, density, color = timeperiod)) + geom_line() + ggtitle("Shuffled (one shuffle)")+ theme(legend.position="none")
 
+isd_panels <- multi_panel_figure(columns = 2, rows =1) %>%
+  fill_panel(real_plot) %>%
+  fill_panel(sim_plot) 
+
+isd_panels
 
 
 ```
 
 
-For this site (`r dat$metadata$location$routename`, `r dat$metadata$location$regionname`), the KS test p value is `r round(isd_comparison$actual_p[1], 4)`. The observed test statistic has a percentile of `r round(isd_comparison$d_percentile[1],2)` and  SES of `r round(isd_comparison$d_ses[1], 2)` compared to 500 bootstraps. The observed ISDs have an overlap of `r round(isd_comparison$overlap, 2)`.
+Here is an example of a real set of "begin" (red) and "end" (blue) ISDs, and the results of a single bootstrap shuffle. For this site (`r dat$metadata$location$routename`, `r dat$metadata$location$regionname`), the KS test p value is `r round(isd_comparison$actual_p[1], 4)`. The observed test statistic has a percentile of `r round(isd_comparison$d_percentile[1],2)` and  SES of `r round(isd_comparison$d_ses[1], 2)` compared to 500 bootstraps. The observed ISDs have an overlap of `r round(isd_comparison$overlap, 2)`.
 
 ## Decoupling of dynamics in total abundance, biomass, and energy use over time
 
@@ -122,12 +161,19 @@ ssims <- ssims_wrapper(dat, "actual", 1989, 1, 1, 1989)
 
 ```
 
-```{r, results=T, include=T, fig.dim = c(3, 2)}
+```{r, results=T, include=T, fig.dim = c(5, 2.5)}
 
-ggplot(ssims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Biomass") + theme(legend.position = "bottom")
+biom <- ggplot(ssims, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Biomass") + theme(legend.position = "bottom")
 
-ggplot(ssims, aes(year, total_energy, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Energy use") + theme(legend.position = "bottom")
+ener <- ggplot(ssims, aes(year, total_energy, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("Energy use") + theme(legend.position = "bottom")
 
+
+
+change_panels <- multi_panel_figure(columns = 2, rows =1) %>%
+  fill_panel(biom) %>%
+  fill_panel(ener) 
+
+change_panels
 ```
 
 Here, the "abundance" line (red) reflects change in total biomass expected due only to changes in abundance. The "currency" line reflects change in total biomass due to change in abundance *and* observed change in the size structure. Deviations in slope between the red and blue lines reflect change driven by the ISD. Note that the lines here are crude linear model smooths and not really suitable for inference, just visualization. 
@@ -171,16 +217,21 @@ For models with slope  and/or offset terms, we extracted estimates for the slope
 For the example route we've been working through, here are the parameter estimates for the slope and offset (means and 95% CIs). For both energy and biomass, the abundance-driven trajectory is an increase, although biomass gets closer to over 0. For both, the currency-driven offset is also an increase, meaning that the change in the ISD caused biomass to increase more than we expect it to just because of the increase in abundance. 
 
 
-```{r, results = T, include = T}
+```{r, results = T, include = T, fig.dim = c(5,2.5)}
 
 these_qis <- filter(all_qis, simtype == "actual", matssname == "bbs_rtrg_224_3", .width == .95)
 
-ggplot(these_qis, aes(timeperiodend, currency)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper)) + ggtitle("Slope term") + geom_vline(xintercept = 0)
+slopeplot<-ggplot(these_qis, aes(timeperiodend, currency)) + geom_pointinterval(aes(xmin = timeperiodend.lower, xmax = timeperiodend.upper)) + ggtitle("Slope term") + geom_vline(xintercept = 0)
 
 
-ggplot(these_qis, aes(`timeperiodend:sourcecurrency`, currency)) + geom_pointinterval(aes(xmin = `timeperiodend:sourcecurrency.lower`, xmax = `timeperiodend:sourcecurrency.upper`)) + ggtitle("Offset due to currency term") + geom_vline(xintercept = 0)
+offsetplot <-ggplot(these_qis, aes(`timeperiodend:sourcecurrency`, currency)) + geom_pointinterval(aes(xmin = `timeperiodend:sourcecurrency.lower`, xmax = `timeperiodend:sourcecurrency.upper`)) + ggtitle("Offset due to currency term") + geom_vline(xintercept = 0)
 
 
+par_panels <- multi_panel_figure(columns = 2, rows =1) %>%
+  fill_panel(slopeplot) %>%
+  fill_panel(offsetplot) 
+
+par_panels
 ```
 
 ## Relating change in the ISD to decoupling 
@@ -190,7 +241,7 @@ The ISD may change without resulting in a detectable decoupling of the dynamics 
 
 ## Core-transient
 
-Because core and transient species may have different dynamics, we ran this pipeline on whole communities, communities with transients removed (those present in < 1/3 of timesteps), and using just core species (those present in >= 2/3 of timesteps).
+Because core and transient species may have different dynamics, we ran this pipeline on whole communities, and using just core species (those present in >= 2/3 of timesteps).
 
 <!-- ### Highly-sampled BCRs -->
 
@@ -325,7 +376,6 @@ sig_changes <- raw_changes %>%
 
 
 
-library(multipanelfigure)
 
 e_bigplot <- ggplot(sig_changes, aes(energy_ratio_abundance, energy_ratio_currency, color = color_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Energy") + xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
 
@@ -525,7 +575,7 @@ core_actual_qis_95_summary2
 
 # Discussion
 
-## Short results interpretation
+## Results interpretation
 
 1. While changes in size-based currencies usually scale with abundance, in a substantial minority of instances they do not. Meaning, there has been directional shift in the size structure that changes the outcome for function vs abundance. 
     1. This means we should extrapolate from "abundance" to "function" with some care. 
@@ -538,22 +588,30 @@ core_actual_qis_95_summary2
 ## Considerations beyond the scope
         
 1. Diagnosing process
-    1. Detecting change in the ISD and decoupling of the currencies is agnostic about why these changes have occurred. Niche shifts are a possiblity, but so is drift.
-    1. At this scale, I do not generally find deviations from null models in these results (although I am not sure because the computational requirements are too great to run this very many times). However, null models for these data have major constraints:
-        1. A lot of the dynamics of change are baked into population sizes. There is not support to fit a neutral population dynamics model for BBS, so we have to take them as face-value constraints on dynamics. These strongly constrain the null models and limit the scope of what we can test using a null model.
-        1. Highly-constrained null models for distinguishing process-driven vs drift in functional vs. taxonomic turnover tend to have a high type II error rate. When I have tested for ISDs, you need to have "pure" change (all the change in the ISD is towards an increase in body size, or all the change in the ISD is like-for-like size structured replacement) in order to deviate from the null model. 
-    1. Rather than trying to distinguish process-driven from random change at the continental scale, I therefore suggest using these dynamics to guide more focused investigations at the route level. 
-
-1. Attributing change in the size structure to species' dynamics
-    1. Why do the results for core v. all species differ? 
-    1. Is it the same species continent-wide accounting for shifts or does it vary geographically?
-    1. Do shifts in the size structure map onto changes in land use? ETC. 
-
+    1. Attributing change in the size structure to species' dynamics
+       1. Why do the results for core v. all species differ? 
+        1. Is it the same species continent-wide accounting for shifts or does it vary geographically?
+        1. Do shifts in the size structure map onto changes in land use? ETC. 
+    1. Disentangling process-driven shifts from drift. 
+        1. Null models at this scale are severely constrained in what they can tell us.
+            1. A lot of the dynamics of change are baked into population sizes. There is not support to fit a neutral population dynamics model for BBS, so we have to take them as face-value constraints on dynamics. These strongly constrain the null models and limit the scope of what we can test using a null model.
+            1. Highly-constrained null models for distinguishing process-driven vs drift in functional vs. taxonomic turnover tend to have a high type II error rate. When I have tested for ISDs, you need to have "pure" change (all the change in the ISD is towards an increase in body size, or all the change in the ISD is like-for-like size structured replacement) in order to deviate from the null model. 
+        1. That said, I don't generally find deviations from null models in these results (although I am not sure because the computational requirements are too great to run this very many times).
+        1. Rather than trying to distinguish process-driven from random change at the continental scale, I therefore suggest using these dynamics to guide more focused investigations at the route level.         
+        
 1. Extrapolating beyond BBS
     1. BBS routes may not be represntative of biodiversity change for other taxa or (especially) globally
-    2. The current method cannot account for intraspecific size shifts, which may be important. 
+
+1. The current method cannot account for **intraspecific** size variation over time or space, which may be important. 
 
 ## Wider significance
+
+
+1. The interrelated dynamics of the size structure, total abundance, and community function have a rich history in aquatic and tree systems. This study is a first step towards translating this approach to terrestrial animal systems.
+1. We show that terrestrial animal ISDs change over time, and that these changes can have significant cascading effects on the scaling between abundance and size-based measures of function.
+1. Incorporating the ISD is important to fully characterize biodiversity change, especially in the Anthropocene.
+1. Our study provides the motivation and a quantitative approach for studying these dynamics, which can be applied either in greater depth (to understand the processes driving change in specific communities) or in novel taxonomic or geographic contexts (e.g. mammals, birds beyond BBS). 
+1. We hope that this can launch a new chapter of research on the size spectrum and its relation to community function in terrestrial systems. 
 
 
 \newpage
