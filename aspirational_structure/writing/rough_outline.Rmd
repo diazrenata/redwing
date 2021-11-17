@@ -1,11 +1,11 @@
 ---
 output:
-  pdf_document: 
+  word_document:
+    reference_docx: default_gdoc.docx
     df_print: kable
   html_document:
     df_print: kable
-  word_document:
-    reference_docx: default_gdoc.docx
+  pdf_document: 
     df_print: kable
 csl: ecology.csl
 bibliography: refs.bib
@@ -56,7 +56,7 @@ Nearly all ISDs have changed detectably over time, but in most instances this do
 
 ## Main conclusions
 
-Terrestrial animal ISDs are dynamic; these dynamics matter; and this study provides tools and motivation for examining these dynamics!
+Terrestrial animal ISDs are dynamic; these dynamics have consequences for the scaling of abundance and function; and this study provides tools and motivation for examining these dynamics!
 
 \newpage
 
@@ -70,9 +70,10 @@ At the **community scale**, changes in the relationship between size and abundan
 
 It is important to improve our understanding of these dynamics for terrestrial animal communities in particular. In contrast to terrestrial trees and aquatic systems [@kerr01; @white2007], how the relationship between size and abundance changes over time, and the consequences of these changes for ecosystem-level properties, remain relatively unknown for terrestrial animals (but see @white2004). Terrestrial animal communities exhibit size structure [@ernest2005; @thibault2011], and case studies have demonstrated that size shifts can either decouple N from E for terrestrial animals [@white2004; @yen2017], but not always [@hernandez2011]. Establishing generalities in these dynamics is especially pertinent in the Anthropocene, as these communities are experiencing extensive and potentially size-structured change, with implications at community, ecosystem, and global scales [@young2016; @schmitz2018].
 
-Macroecological-scale synthesis on the interrelated dynamics of the ISD, total abundance, and community function for terrestrial animals has been constrained by 1) a lack of community-level size and abundance timeseries data for these systems [@white2007; @thibault2011], and 2) appropriate statistical methods for relating change in the size structure to changes in abundance and function [@thibault2011; @yen2017]. In contrast to aquatic and forest systems, most long-term surveys of animal communities do not collect data on individuals' *sizes* across a full community (with the exception of small mammal studies, which have made major contributions to our understanding of the dynamics of size, abundance, and function for these systems; [@ernest2005; @white2004; @hernandez2011; @kelt2015]). Global, continental, or population-wide studies capture different phenomena [@white2007; this is a nod to a few studies looking at the size structure *across britain* or something]. The ISDs for terrestrial animals, and specifically for determinate growing taxa (e.g. mammals, birds), are often complex, multimodal distributions [@holling1992; @ernest2005; @thibault2011; @yen2017], and less statistically tractable than the power-law ISDs found in aquatic and tree systems [@kerr01; @white2007; more]. Quantifying change in the size structure, and relating this to change in community-wide abundance and function, is not as straightforward as computing and comparing slopes. As a result, we do not have a general understanding of either 1) the extent to which changes in the ISD decouple the community-level dynamics of abundance, biomass, and energy use in these systems, or of 2) the underlying changes in community structure that account for these effects. 
+Macroecological-scale synthesis on the interrelated dynamics of the ISD, total abundance, and community function for terrestrial animals has been constrained by 1) a lack of community-level size and abundance timeseries data for these systems [@white2007; @thibault2011], and 2) appropriate statistical methods for relating change in the size structure to changes in abundance and function [@thibault2011; @yen2017]. In contrast to aquatic and forest systems, most long-term surveys of animal communities do not collect data on individuals' *sizes* across a full community (with the exception of small mammal studies, which have made major contributions to our understanding of the dynamics of size, abundance, and function for these systems; [@ernest2005; @white2004; @hernandez2011; @kelt2015]). Global, continental, or population-wide studies capture different phenomena [@white2007; this is a nod to a few studies looking at the size structure *across britain* or something]. The ISDs for terrestrial animals, and specifically for determinate growing taxa (e.g. mammals, birds), are often complex, multimodal distributions [@holling1992; @ernest2005; @thibault2011; @yen2017], and less statistically tractable than the power-law ISDs found in aquatic and tree systems [@kerr01; @white2007; more]. Quantifying change in the size structure, and relating this to change in community-wide abundance and function, is not as straightforward as computing and comparing slopes. As a result, we do not have a general understanding of either 1) how these ISDs behave over time or 2) the extent to which changes in the ISD decouple the community-level dynamics of abundance, biomass, and energy use in these systems.
 
-Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018. Specifically, we examined: 1) How often do these currencies change together vs. have decoupled dynamics?; 2) What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies? We also examined how these changes differ between core species and the whole-community (i.e. including transients), which currently comes completely out of left  field in this introduction (sorry!).
+
+Here, we begin to address this gap by exploring how temporal changes in species composition and the size spectrum modulate the relationship between total abundance, energy, and biomass for communities of North American breeding birds. We used allometric scaling to estimate community size and abundance data for the North American Breeding Bird Survey, and evaluated how changes in total abundance, biomass, and energy use have co-varied from 1988-2018. Specifically, we examined: 1) How often do these currencies change together vs. have decoupled dynamics?; 2) What are the dominant directions and magnitudes of the overall change and any decoupling between the currencies?; 3) To what extent do changes in the ISD translate into decoupling between abundance and function?
 
 \newpage
 
@@ -84,7 +85,7 @@ Here, we begin to address this gap by exploring how temporal changes in species 
 We used data from the Breeding Bird Survey [@sauer2013] to compare community attributes along each route between the 5-year periods from 1988-1992 and 2014-2018. We take the route to be the "community" scale [@thibault2011; others]. BBS (BBS methods background). We filtered the data to remove taxa that are poorly sampled through these methods, following (literally everyone). We accessed the data, and performed this preliminary cleaning and filtering, using the R package `MATSS` [@ye2020]. 
 
 
-We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @bahlai2021]. Developing continuous-time methods for analyzing community distributions such as the size spectrum is an important and ongoing area of methodological development (e.g. @yen2017). 
+We used a discrete time-period comparison (as opposed to continuous-time over the full timeseries) to simplify comparisons between temporal turnover in the size structure - which are complex, multidimensional distributions - and changes in community-wide total abundance, biomass, and energy use. We acknowledge that a continuous-time perspective may be better equipped to detect nonlinear dynamics [@macgregor2019] and account for artefacts related to the selected beginning and ending dates [@cusser2020; @bahlai2021]. Developing continuous-time methods for analyzing community distributions such as multimodal size spectra is an important and ongoing area of methodological development (e.g. @yen2017). 
 
 We used 5-year periods to account for sampling accumulation effects in characterizing the bird community in each time period [@white2004a]. We used the same begin and end dates for all routes in the analysis so as to have a consistent window. We explored the number of routes in the dataset with complete sampling coverage for two five-year “begin” and “end” periods with start dates ranging from 1970 to 1990 and end dates ranging from 2000 to 2018, and selected beginning and ending dates of 1988 and 2018 so as to obtain a large number of routes from diverse bird conservation regions, and span a relatively long window of time (could ref @cusser2020 there). This yielded 528 routes. 
 
@@ -236,22 +237,17 @@ par_panels
 
 ## Relating change in the ISD to decoupling 
 
-The ISD may change without resulting in a detectable decoupling of the dynamics of biomass/energy use and abundance at the whole-system level, if the change in the ISD is relatively ~balanced above and below the mean body size. We tested whether communities with a decoupling showed greater change in the ISD than systems that did not, using a linear model of the form `isd_overlap ~ winning_model_type` using both the winning models for energy use and for biomass. We also tested the extent to which change in mean body size was linked to change in the ISD using a quadratic model of the form `isd_overlap ~ logratio_mean_body_size + logratio_mean_body_size ^ 2`. We fit a quadratic model because we expected there to be a unimodal relationship, because high ISD overlap constrains there to be very little change in mean body size. 
-
+The ISD may change without resulting in a detectable decoupling of the dynamics of biomass/energy use and abundance at the whole-system level, if the change in the ISD is relatively ~balanced above and below the mean body size. We tested whether communities with a decoupling showed greater change in the ISD than systems that did not, using a linear model of the form `isd_overlap ~ winning_model_type` using both the winning models for energy use and for biomass. We also tested the extent to which change in mean body size was linked to change in the ISD using a linear model of the form `absolute_log_ratio_mean_size ~ isd_overlap`.
 
 ## Core-transient
 
 Because core and transient species may have different dynamics, we ran this pipeline on whole communities, and using just core species (those present in >= 2/3 of timesteps).
 
-<!-- ### Highly-sampled BCRs -->
+## Highly-sampled BCRs
 
-<!-- Sometimes I subsample the 528 to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 routes total. Results are the same. -->
+I subsampled the 528 routes to get a maximum of 10 routes per bird conservation region, so that the highly-sampled BCRs don't  dominate aggregate analyses [@thibault2011]. That yields 238 routes total. Results are the same; I haven't included them in this document.
 
-<!-- ### Null models note -->
 
-<!-- I have an instinct that reviewers may ask about null models to distinguish "systematic" change in the ISD from random change in the ISD. There are real constraints on how deeply we can investigate that due to the structure of the data and the computation required for this pipeline. Because BBS doesn't have population parameters, we have to take populations sizes as face value as constraints for a null model - but some of the ISD change is baked into the population sizes. Null models in this space also have a high type II error rate; it can be very hard to deviate from them, especially if they're highly constrained. In my tests with contrived data/Portal, I have to have an almost pure change scenario to get a deviation - either *all* of the change in species' abundances has to be directional on the size axis, or *all* of the change has to be a like-for-like size replacement. And, this pipeline is computationally intensive to a degree that prohibits repeated runs (to the tune of 100-500 null repetitions). So, I am not leaning strongly on incorporating null models as a way of distinguishing "systematic" vs "non-size-structured" dynamics here.   -->
-
-<!-- That said - I have run null models *once* for intuition and may be able to coax it up to 10ish runs. From these runs and my past null models in this space, I don't see evidence of strong deviations from null models. I don't take this as compelling evidence that there is or isn't size structured change happening, but as an indication that we can't distinguish that at this scale.  -->
 
 \newpage
 
@@ -369,19 +365,19 @@ sig_changes <- raw_changes %>%
   left_join(all_spp_actual_qis_95) %>%
   mutate(any_slopes =  !is.na(timeperiodend),
          currency_offset_nonzero =(`timeperiodend:sourcecurrency.upper` < 0 | `timeperiodend:sourcecurrency.lower` > 0) & !is.na(`timeperiodend:sourcecurrency`)) %>%
-  mutate(color_key = ifelse(
-    !any_slopes, "No slopes",
-    ifelse(currency_offset_nonzero, "Decoupling", "Change but no decoupling")
+  mutate(model_key = ifelse(
+    grepl("full", modtype), "Decoupling",
+    ifelse(grepl("source", modtype), "Change due to abundance", "No slopes")
   ))
 
 
 
 
-e_bigplot <- ggplot(sig_changes, aes(energy_ratio_abundance, energy_ratio_currency, color = color_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Energy") + xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
+e_bigplot <- ggplot(filter(sig_changes, currency == "energy"), aes(energy_ratio_abundance, energy_ratio_currency, color = model_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Energy") + xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
 
 
 
-b_biglot <- ggplot(sig_changes, aes(biomass_ratio_abundance, biomass_ratio_currency, color = color_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Biomass")+ xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
+b_biglot <- ggplot(filter(sig_changes, currency == "biomass"), aes(biomass_ratio_abundance, biomass_ratio_currency, color = model_key)) + geom_point(alpha = .5) + geom_abline(slope= 1, intercept = 0) + geom_vline(xintercept = 1) + geom_hline(yintercept = 1) + theme(legend.position = "right", legend.direction = "vertical") + ggtitle("Biomass")+ xlab("Change due to abundance\n(end value) / (begin_value)") + ylab("Change due to abundance +\nchange in ISD\n(end_value) / (begin_value)")
 
 
 
@@ -434,25 +430,31 @@ winners_comps <- winners_comps %>%
   mutate(logratio_mean_size = log(end_mean_size / begin_mean_size),
          logratio_mean_e = log(end_mean_e / begin_mean_e)) %>%
   mutate(logratio_mean_size_squared = logratio_mean_size ^ 2,
-         logratio_mean_e_squared = logratio_mean_e ^ 2)
+         logratio_mean_e_squared = logratio_mean_e ^ 2,
+         abs_logratio_mean_size = abs(logratio_mean_size))
 
 
-winners_comps_distinct <- select(winners_comps, matssname, overlap, logratio_mean_size, logratio_mean_size_squared, logratio_mean_e, logratio_mean_e_squared)
+winners_comps_distinct <- select(winners_comps, matssname, overlap, logratio_mean_size, logratio_mean_size_squared, logratio_mean_e, logratio_mean_e_squared,abs_logratio_mean_size) %>% distinct()
 meansize_qm <- lm(overlap ~ logratio_mean_size + logratio_mean_size_squared, data = winners_comps_distinct)
 meansize_qm_summ <- summary(meansize_qm)
 
-winners_comps_distinct <- winners_comps_distinct %>%
-  mutate(meansize_pred = predict(meansize_qm))
+meansize_lograt_lm <- lm(abs_logratio_mean_size ~ overlap, data = winners_comps_distinct)
+meansize_lograt_summ <- summary(meansize_lograt_lm)
 
-ggplot(winners_comps_distinct, aes(logratio_mean_size, overlap)) + geom_point() + geom_line(aes(y = meansize_pred)) + geom_vline(xintercept = 0) + xlab("Change in mean size\nlog(end_mean_size / begin_mean_size)") + ylab("ISD overlap\nRanges 0-1, 1 is less change") + geom_text(aes(-.3, .5, label = paste0("R2 = ", signif(meansize_qm_summ$r.squared, 3))), data = winners_comps_distinct[1,])+ geom_text(aes(-.3, .55, label = "p < 0.001"), data = winners_comps_distinct[1,])
+winners_comps_distinct <- winners_comps_distinct %>%
+  mutate(meansize_pred = predict(meansize_lograt_lm))
+
+ggplot(winners_comps_distinct, aes(overlap, abs_logratio_mean_size)) + geom_point() + geom_line(aes(y = meansize_pred)) + 
+  xlab("ISD overlap\nRanges 0-1, 1 is less change") + 
+  ylab("Absolute log ratio of mean size\nabs(log(mean_size_end/ mean_size_end))") + geom_text(aes(.85, .4, label = paste0("R2 = ", signif(meansize_lograt_summ$r.squared, 3))), data = winners_comps_distinct[1,])+ geom_text(aes(.85, .45, label = "p < 0.001"), data = winners_comps_distinct[1,])
 
 ```
 
 ##### Figure 2. Change in the ISD vs. change in mean size.
 
-*Axes:* The x axis is the log ratio of mean body size for a route. The y-axis is the ISD overlap for that route (ranges 0-1, with 1 being identical ISDs). The points are individual routes; the curved line is the prediction from a quadratic model fitting `overlap ~ logratio_mean_body_size`. The vertical line marks 0 for no change. 
+*Axes:* The x axis is the ISD overlap for a route (ranges 0-1, with 1 being identical ISDs), and the y axis is the absolute log ratio of mean body size for the end vs the beginning. The points are individual routes; the line is the prediction from a quadratic model fitting `absolute_log_ratio ~ isd_overlap`. 
 
-*Interpretation*: The relationship between overall change in the ISD (overlap) and change *in mean body size* is a very messy one; R2 = .07. It's not possible to have a *lot* of change in mean body size without some change in the ISD, hence the quadratic relationship. However, there is often considerable change in the ISD that does not translate into a shift in mean body size. 
+*Interpretation*: The relationship between overall change in the ISD (overlap) and change *in mean body size* is a very messy one; R2 = .06. It's not possible to have a *lot* of change in mean body size if there is very high ISD overlap, hence the slight negative relationship. However, for any given amount of change in the ISD there is a lot of variability in the effect on mean size. 
 
 \newpage
 
