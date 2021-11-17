@@ -1,11 +1,11 @@
 ---
 output:
-  word_document:
-    reference_docx: default_gdoc.docx
+  pdf_document: 
     df_print: kable
   html_document:
     df_print: kable
-  pdf_document: 
+  word_document:
+    reference_docx: default_gdoc.docx
     df_print: kable
 csl: ecology.csl
 bibliography: refs.bib
