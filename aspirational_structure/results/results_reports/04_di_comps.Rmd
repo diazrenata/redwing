@@ -1,0 +1,58 @@
+---
+title: "How many models come out which way"
+output: 
+      github_document:
+          df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(rwar)
+library(BBSsize)
+library(brms)
+library(tidybayes)
+library(ggplot2)
+theme_set(theme_bw())
+
+#load(here::here("aspirational_structure", "pipelines", "portable_results.Rds"))
+load(here::here("aspirational_structure", "pipelines", "portable_results_all.Rds"))
+load(here::here("aspirational_structure", "pipelines", "portable_comps_all.Rds"))
+working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes_max10.csv"))
+```
+
+
+```{r}
+
+actual_winners <- all_winners %>%
+  filter(simtype == "actual") %>%
+  left_join(all_comps)
+
+ggplot(actual_winners, aes(model, bcd)) + geom_boxplot() + facet_wrap(vars(currency), scales = "free")
+
+ggplot(actual_winners, aes(model, bcd_binary)) + geom_boxplot() + facet_wrap(vars(currency), scales = "free")
+
+
+ggplot(actual_winners, aes(model, jac)) + geom_boxplot() + facet_wrap(vars(currency), scales = "free")
+
+ggplot(actual_winners, aes(model, jac_binary)) + geom_boxplot() + facet_wrap(vars(currency), scales = "free")
+
+ggplot(actual_winners, aes(overlap, bcd_binary)) + geom_point() + geom_point(aes(y = bcd), color = "blue")
+
+ggplot(actual_winners, aes(overlap, bcd_binary)) + geom_point()
+
+dev_dirs <- all_qis %>% filter(simtype == "actual", .width == .95) %>%
+  mutate(dev_up = `timeperiodend:sourcecurrency.lower` > 0,
+         dev_down = `timeperiodend:sourcecurrency.upper` < 0) %>%
+  group_by_all() %>%
+  mutate(dev_sum = sum(dev_up, dev_down)) %>%
+  ungroup() %>%
+  select(currency, matssname, simtype, dev_up, dev_down) 
+
+actual_winners <- actual_winners  %>%
+  left_join(dev_dirs)
+
+ggplot(actual_winners, aes(dev_up, bcd_binary)) + geom_boxplot()
+
+```
+
