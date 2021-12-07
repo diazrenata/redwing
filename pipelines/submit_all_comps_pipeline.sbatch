@@ -13,4 +13,4 @@
 
 #This is a generic R submission script
 module load R
-Rscript ../../pipelines/pipeline_comps_all.R
+Rscript pipeline_comps_all.R
