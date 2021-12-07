@@ -18,31 +18,6 @@ for(i in 1:length(max_caps)) {
   datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
 
   datasets <- datasets[ unique(c(1:max_caps[i], which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
-  #
-  #datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")), ]
-
-  # datasets <- datasets[ which(datasets$target %in% c("bbs_rtrg_116_18")), ]
-
-  #
-  # sim_plan <- drake_plan(
-  #   actual_sims = target(rwar::ssims_wrapper(dataset, simtype = "actual"),
-  #                        transform = map(
-  #                          dataset = !!rlang::syms(datasets$target)
-  #                        )),
-  #   nc_sims = target(rwar::ssims_wrapper(dataset, simtype = "nc"),
-  #                    transform = map(
-  #                      dataset = !!rlang::syms(datasets$target)
-  #                    )),
-  #   nsc_sims = target(rwar::ssims_wrapper(dataset, simtype = "nsc"),
-  #                     transform = map(
-  #                     ))
-  # )
-  #
-  # draw_wrapper <- function(winners, fits) {
-  #   draws = rwar::winner_draws(winners, fits)
-  #   draw_qis = rwar::winner_qis(draws)
-  #   draw_qis
-  # }
 
   methods <- drake_plan(
     ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 1, ndraws = 1),
@@ -57,9 +32,9 @@ for(i in 1:length(max_caps)) {
                   transform = map(ssims)),
     fits_compare = target(rwar::compare_both_stanarms(fits),
                           transform = map(fits)),
-    af = target(dplyr::combine(fits_compare),
-                transform = combine(fits_compare)),
-    all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
+    # af = target(dplyr::combine(fits_compare),
+    #             transform = combine(fits_compare)),
+    # all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
     winners = target(rwar::loo_select(fits_compare),
                      transform = map(fits_compare)),
     aw = target(dplyr::combine(winners),
@@ -120,7 +95,7 @@ for(i in 1:length(max_caps)) {
   }
   #
   loadd(all_sims, all_winners,  all_qis, all_diagnostics, cache = cache)
-  save(all_sims, all_winners,  all_qis, all_diagnostics, file = here::here("resulst", "results_objects", "portable_results_all.Rds"))
+  save(all_sims, all_winners,  all_qis, all_diagnostics, file = here::here("results", "results_objects", "portable_results_all.Rds"))
   rm(all_sims)
   rm(all_winners)
   rm(all_qis)
