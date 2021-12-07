@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=4            # Number of cores per MPI rank
 #SBATCH --mem-per-cpu=4GB
 #SBATCH --time=6:00:00       #Time limit hrs:min:sec
-#SBATCH --output ../../drake_caches/logs/all_c%j.out
-#SBATCH --error ../../drake_caches/logs/all_c%j.err
+#SBATCH --output ../drake_caches/logs/all_c%j.out
+#SBATCH --error ../drake_caches/logs/all_c%j.err
 
 #This is a generic R submission script
 module load R
