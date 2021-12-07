@@ -1,10 +1,10 @@
 ---
 output:
-  word_document:
-    reference_docx: default_gdoc.docx
-    df_print: kable
-  html_document:
-    df_print: kable
+  # word_document:
+  #   reference_docx: default_gdoc.docx
+  #   df_print: kable
+  # html_document:
+  #   df_print: kable
   pdf_document: 
     df_print: kable
 csl: ecology.csl
@@ -21,8 +21,8 @@ library(multipanelfigure)
 library(ggplot2)
 theme_set(theme_bw())
 dat <- MATSS::get_bbs_route_region_data(route = 224, region = 3)
-load(here::here("aspirational_structure", "pipelines", "portable_results_compare.Rds"))
-load(here::here("aspirational_structure", "pipelines", "portable_comps_all.Rds"))
+load(here::here("results", "results_objects", "portable_results_compare.Rds"))
+load(here::here("results", "results_objects", "portable_comps_all.Rds"))
 ```
 
 
@@ -183,7 +183,7 @@ Here, the "abundance" line (red) reflects change in total biomass expected due o
 
 We use Bayesian linear models to test whether change in the ISD decouples the dynamics of total biomass/total energy use from that which would be expected due to change in abundance. 
 
-<!-- Figures and functions here:  https://github.com/diazrenata/redwing/blob/resim-cleanup/aspirational_structure/methods_vignettes/change_over_time/02_02_testing_change.md (but rough). I have also run this whole pipeline on a few toy sim scenarios to confirm that it behaves as expected. I can write that up for the supplement/include it here if it seems important.  -->
+<!-- Figures and functions here:  https://github.com/diazrenata/redwing/blob/resim-cleanup/methods_vignettes/change_over_time/02_02_testing_change.md (but rough). I have also run this whole pipeline on a few toy sim scenarios to confirm that it behaves as expected. I can write that up for the supplement/include it here if it seems important.  -->
 
 We evaluate change at the route level, because we care most about the decoupling of slopes for "currency" and "abundance" at the route level. <!--I tried fitting everything within one hierarchical model, but the hierarchical model attributes a lot of variation to getting the right intercept for each route (which we don't care about) and does a really bad job estimating within-route slopes and decoupling (which is what we do care about). It's also very intensive to compute for a large number of routes and I never managed to run it on the full dataset. These are challenges you don't run into if - like @dornelas2014 - you're only interested in change in one currency per site.-->
 
@@ -463,7 +463,7 @@ ggplot(winners_comps_distinct, aes(overlap, abs_logratio_mean_size)) + geom_poin
 ### Model tally comparison:
 
 ```{r, include = T, results = T, fig.dim =c(4,3)}
-load(here::here("aspirational_structure", "pipelines", "portable_results_core.Rds"))
+load(here::here("results", "results_objects", "portable_results_core.Rds"))
 
 actual_winners <- filter(all_winners, simtype == "actual")
 
