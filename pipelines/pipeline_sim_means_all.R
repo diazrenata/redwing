@@ -7,7 +7,7 @@ library(brms)
 library(tidybayes)
 
 run_hpg = T
-max_caps <- c(125, 350, 528)
+max_caps <- c(75, 150, 225, 300, 375, 450, 528)
 for(i in 1:length(max_caps)) {
   datasets <- MATSS::build_bbs_datasets_plan()
 
