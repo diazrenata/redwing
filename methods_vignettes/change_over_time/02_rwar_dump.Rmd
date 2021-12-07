@@ -1,0 +1,85 @@
+---
+title: "Just quoting rwar fxns"
+output: 
+  github_document:
+    toc: TRUE
+    df_print: kable
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = T, warning = F, message = F)
+library(BBSsize)
+library(rwar)
+library(ggplot2)
+library(dplyr)
+theme_set(theme_bw())
+```
+
+# Sims stuff
+
+## Drawing of sims
+
+```{r}
+
+print(ssims_wrapper)
+
+print(make_actual_sims)
+
+print(construct_sampling_gmm)
+
+print(draw_communities_wrapper)
+```
+
+## Model fitting
+
+```{r}
+
+print(fit_stanlm)
+
+```
+
+## Model selection
+
+```{r}
+
+print(compare_both_stanarms)
+
+
+print(compare_stanarms)
+
+print(loo_select)
+```
+
+## QIs
+
+```{r}
+
+print(draw_wrapper)
+
+print(winner_draws)
+
+print(winner_qis)
+```
+
+
+## Diagnostics
+
+```{r}
+print(extract_diagnostics)
+
+```
+
+
+# Comps
+
+```{r}
+
+print(be_comparison)
+
+print(ks_comparison)
+
+print(overlap_comparison)
+
+print(sp_comparison)
+```
