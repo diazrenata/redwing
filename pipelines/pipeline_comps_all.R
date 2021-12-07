@@ -11,7 +11,7 @@ run_hpg = T
 datasets <- MATSS::build_bbs_datasets_plan()
 
 
-working_datasets <- read.csv(here::here("aspirational_structure", "supporting_data", "working_routes.csv"))
+working_datasets <- read.csv(here::here( "supporting_data", "working_routes.csv"))
 
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
@@ -58,7 +58,7 @@ all = bind_rows(datasets, methods)
 
 
 ## Set up the cache and config
-db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "comps_all.sqlite"))
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here( "drake_caches", "comps_all.sqlite"))
 cache <- storr::storr_dbi("datatable", "keystable", db)
 cache$del(key = "lock", namespace = "session")
 
@@ -92,7 +92,7 @@ if(run_hpg) {
 }
 #
  loadd(all_comps, cache = cache)
- save(all_comps, file = "portable_comps_all.Rds")
+ save(all_comps, file = here::here("results", "results_objects","portable_comps_all.Rds"))
 
 DBI::dbDisconnect(db)
 rm(cache)
