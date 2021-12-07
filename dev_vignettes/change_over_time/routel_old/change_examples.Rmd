@@ -1,0 +1,344 @@
+---
+title: "Exploring on some examples"
+output: 
+  github_document:
+     toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F)
+library(dplyr)
+library(drake)
+library(ggplot2)
+library(multipanelfigure)
+theme_set(theme_bw())
+```
+
+```{r}
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "dev-change-cache.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+
+```
+
+```{r, echo = F, include = F}
+
+qi_plots_scaled <- function(qis_df, to_95 = T) {
+  
+  if(to_95) {
+    
+    qis_df <- qis_df %>%
+      filter(.width <= .95)
+  }
+  
+  
+  cplot <- ggplot(qis_df, aes(currency, x = currency_intercept, xmin = currency_intercept.lower, xmax = currency_intercept.upper)) + tidybayes::geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
+  
+  
+nslope <- ggplot(qis_df, aes(currency, x = abundance_slope_scaled, xmin = abundance_slope_scaled.lower, xmax = abundance_slope_scaled.upper)) + tidybayes::geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
+
+coffset <- ggplot(qis_df, aes(currency, x = currency_offset_scaled, xmin = currency_offset_scaled.lower, xmax = currency_offset_scaled.upper)) + tidybayes::geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
+
+cslope <- ggplot(qis_df, aes(currency, x = currency_slope_scaled, xmin = currency_slope_scaled.lower, xmax = currency_slope_scaled.upper)) + tidybayes::geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
+
+  
+  multi_panel_figure(columns = 2, rows = 2) %>%
+    fill_panel(cplot) %>%
+    fill_panel(nslope) %>%
+    fill_panel(coffset) %>%
+    fill_panel(cslope)
+
+}
+
+
+
+actual_plots <- function(sims_df) {
+  
+  ep <- ggplot(sims_df, aes(year, total_energy, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("energy") + theme(legend.position = "bottom")
+  
+  bp <- ggplot(sims_df, aes(year, total_biomass, color = source)) + geom_point() + geom_smooth(method = "lm", se = F) + ggtitle("biomass") + theme(legend.position = "bottom")
+  
+  
+  multi_panel_figure(columns = 2, rows =1) %>%
+    fill_panel(ep) %>%
+    fill_panel(bp)
+  
+}
+
+
+qi_plots <- function(qis_df, to_95 = T) {
+  
+  if(to_95) {
+    
+    qis_df <- qis_df %>%
+      filter(.width <= .95)
+  }
+  
+  cplot <- ggplot(qis_df, aes(currency, x = currency_intercept, xmin = currency_intercept.lower, xmax = currency_intercept.upper)) + tidybayes::geom_pointinterval() + ggtitle("Currency intercept - should be on 0") + geom_vline(xintercept = 0)
+  
+  
+  
+nslope <- ggplot(qis_df, aes(currency, x = abundance_slope, xmin = abundance_slope.lower, xmax = abundance_slope.upper)) + tidybayes::geom_pointinterval() + ggtitle("Slope for abundance") + geom_vline(xintercept = 0)
+
+coffset <- ggplot(qis_df, aes(currency, x = currency_offset, xmin = currency_offset.lower, xmax = currency_offset.upper)) + tidybayes::geom_pointinterval() + ggtitle("Offset from currency") + geom_vline(xintercept = 0)
+
+cslope <- ggplot(qis_df, aes(currency, x = currency_slope, xmin = currency_slope.lower, xmax = currency_slope.upper)) + tidybayes::geom_pointinterval() + ggtitle("Slope for currency") + geom_vline(xintercept = 0)
+
+  
+  multi_panel_figure(columns = 2, rows =2) %>%
+    fill_panel(cplot) %>%
+    fill_panel(nslope) %>%
+    fill_panel(coffset) %>%
+    fill_panel(cslope)
+
+}
+
+
+summarize_draws <- function(draws_df) {
+  
+  negative <- function(vector) {
+    mean(vector < 0)
+  }
+  
+
+draws_df %>%
+  select(b_Intercept,
+         b_timeperiodend,
+         b_sourcecurrency,
+         `b_timeperiodend:sourcecurrency`,
+         currency) %>%
+  group_by(currency) %>%
+  summarize_all(.funs = negative)
+
+}
+
+```
+
+```{r, results= F}
+
+cached(cache = cache)
+```
+
+# 19_7
+
+## "actual" dyanmics
+
+```{r}
+
+loadd(sims_sgmms_bbs_rtrg_19_7, cache = cache)
+
+
+
+actual_plots(sims_sgmms_bbs_rtrg_19_7)
+
+
+```
+
+## Models
+
+### Diagnostics
+
+```{r}
+
+loadd(fits_sims_sgmms_bbs_rtrg_19_7, cache = cache)
+
+summary(fits_sims_sgmms_bbs_rtrg_19_7$te_brm)
+summary(fits_sims_sgmms_bbs_rtrg_19_7$tb_brm)
+
+```
+
+
+### Summary plots
+
+```{r}
+
+loadd(qis_draws_fits_sims_sgmms_bbs_rtrg_19_7, cache = cache)
+
+qi_plots(qis_draws_fits_sims_sgmms_bbs_rtrg_19_7)
+
+qi_plots_scaled(qis_draws_fits_sims_sgmms_bbs_rtrg_19_7)
+
+
+```
+
+### Probabilities from draws
+
+```{r}
+
+loadd(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_19_7, cache = cache)
+
+
+summarize_draws(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_19_7)
+
+```
+
+
+# 224_3
+
+## "actual" dyanmics
+
+```{r}
+
+loadd(sims_sgmms_bbs_rtrg_224_3, cache = cache)
+
+
+
+actual_plots(sims_sgmms_bbs_rtrg_224_3)
+
+
+```
+
+## Models
+
+### Diagnostics
+
+```{r}
+
+loadd(fits_sims_sgmms_bbs_rtrg_224_3, cache = cache)
+
+summary(fits_sims_sgmms_bbs_rtrg_224_3$te_brm)
+summary(fits_sims_sgmms_bbs_rtrg_224_3$tb_brm)
+
+```
+
+
+### Summary plots
+
+```{r}
+
+loadd(qis_draws_fits_sims_sgmms_bbs_rtrg_224_3, cache = cache)
+
+qi_plots(qis_draws_fits_sims_sgmms_bbs_rtrg_224_3)
+
+qi_plots_scaled(qis_draws_fits_sims_sgmms_bbs_rtrg_224_3)
+
+
+```
+
+### Probabilities from draws
+
+```{r}
+
+loadd(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_224_3, cache = cache)
+
+
+summarize_draws(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_224_3)
+
+```
+
+# 318_3
+
+## "actual" dyanmics
+
+```{r}
+
+loadd(sims_sgmms_bbs_rtrg_318_3, cache = cache)
+
+
+
+actual_plots(sims_sgmms_bbs_rtrg_318_3)
+
+
+```
+
+## Models
+
+### Diagnostics
+
+```{r}
+
+loadd(fits_sims_sgmms_bbs_rtrg_318_3, cache = cache)
+
+summary(fits_sims_sgmms_bbs_rtrg_318_3$te_brm)
+summary(fits_sims_sgmms_bbs_rtrg_318_3$tb_brm)
+
+```
+
+
+### Summary plots
+
+```{r}
+
+loadd(qis_draws_fits_sims_sgmms_bbs_rtrg_318_3, cache = cache)
+
+qi_plots(qis_draws_fits_sims_sgmms_bbs_rtrg_318_3)
+
+qi_plots_scaled(qis_draws_fits_sims_sgmms_bbs_rtrg_318_3)
+
+
+```
+
+### Probabilities from draws
+
+```{r}
+
+loadd(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_318_3, cache = cache)
+
+
+summarize_draws(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_318_3)
+
+```
+
+
+# 116_18 (granby)
+
+## "actual" dyanmics
+
+```{r}
+
+loadd(sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+
+
+actual_plots(sims_sgmms_bbs_rtrg_116_18)
+
+
+```
+
+## Models
+
+### Diagnostics
+
+```{r}
+
+loadd(fits_sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+summary(fits_sims_sgmms_bbs_rtrg_116_18$te_brm)
+summary(fits_sims_sgmms_bbs_rtrg_116_18$tb_brm)
+
+```
+
+
+### Summary plots
+
+```{r}
+
+loadd(qis_draws_fits_sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+qi_plots(qis_draws_fits_sims_sgmms_bbs_rtrg_116_18)
+
+qi_plots_scaled(qis_draws_fits_sims_sgmms_bbs_rtrg_116_18)
+
+
+```
+
+### Probabilities from draws
+
+```{r}
+
+loadd(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_116_18, cache = cache)
+
+
+summarize_draws(dfdraws_draws_fits_sims_sgmms_bbs_rtrg_116_18)
+
+```
+
+```{r}
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
+```

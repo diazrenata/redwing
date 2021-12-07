@@ -1,0 +1,43 @@
+---
+title: "Range map notes"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Range maps accessed via request submitted to BirdLife in August 2021.
+
+From metadata:
+
+> The global dataset should be cited as:
+> 
+> BirdLife International and Handbook of the Birds of the World (2020) Bird species distribution maps of the world. Version 2020.1. Available at http://datazone.birdlife.org/species/requestdis.
+
+## Species cross-matching
+
+Global dataset of bird species (`bird_names.csv`) cross-matched with species *that are present in the cleaned BBS data*. While there may be species whose ranges overlap the routes that are not included in the BBS data, this may be because those species are poorly sampled via BBS methods. 
+
+519 of 544 records match perfectly on Scientific Name (genus species). Of those that don't:
+
+- Spotted doves are listed as two species (Eastern/Western) in BirdLife. I will use the union of the two species' range maps for the spotted dove range.
+- Hoary redpoll is not present in BirdLife. I will leave it in the regional species pools for routes where it has been observed, but will not include it in other regional pools.
+- The remaining mismatches can all be resolved as synonyms or name changes. Notes iterating through this are in `hand_matched.csv`.
+- The final list of bird species names, spIDs from BBS, and record IDs in BirdLife are in `matched_names_done.csv`. 
+
+## Defining species' ranges
+
+- created ArcGIS Pro project "bird_ranges"
+- Open connection to BOTW.gdb
+- Use "Export Feature as Shapefile"
+    - Select features with query `SISID IN ( 22679993, 22680061....)` over all SISIDs in `matched_names_done.csv`.
+- Define species range as where it is EXTANT as RESIDENT or BREEDING
+
+    
+## Route locations
+
+From https://www.sciencebase.gov/catalog/item/5d65256ae4b09b198a26c1d7,
+2019 lat/long data are in decimal degrees, NAD 83. https://spatialreference.org/ref/epsg/4269/proj4js/
+
+

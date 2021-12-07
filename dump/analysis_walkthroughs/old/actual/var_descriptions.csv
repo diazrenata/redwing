@@ -1,0 +1,63 @@
+var_name,description
+p_ts_abundance,p-value of lm(abundance ~ year) for full timeseries
+p_ts_energy,p-value of lm(energy ~ year) for full timeseries
+p_ts_mean_energy,p-value of lm(mean_energy ~ year) for full timeseries
+p_ts_biomass,p-value of lm(biomass ~ year) for full timeseries
+p_ts_mean_biomass,p-value of lm(mean_biomass~year) for full timeseries
+r2_ts_abundance,r2 of lm(abundance ~ year) for full timeseries
+r2_ts_energy,r2 of lm(energy ~ year) for full timeseries
+r2_ts_mean_energy,r2 of lm(mean_energy ~ year) for full timeseries
+r2_ts_biomass,r2 of lm(biomass ~ year) for full timeseries
+r2_ts_mean_biomass,r2 of lm(mean_biomass ~ year) for full timeseries
+slope_ts_abundance,slope of lm(abundance ~ year) for full timeseries
+slope_ts_energy,slope of lm(energy ~ year) for full timeseries
+slope_ts_mean_energy,slope of lm(mean_energy ~ year) for full timeseries
+slope_ts_biomass,slope of lm(biomass ~ year) for full timeseries
+slope_ts_mean_biomass,slope of lm(mean_biomass ~ year) for full timeseries
+fitted_ratio_ts_abundance,ratio of last fitted value to first fitted value of lm(abundance ~ year) for full timeseries
+fitted_ratio_ts_energy,ratio of last fitted value to first fitted value of lm(energy ~ year) for full timeseries
+fitted_ratio_ts_mean_energy,ratio of last fitted value to first fitted value of lm(mean_energy ~ year) for full timeseries
+fitted_ratio_ts_biomass,ratio of last fitted value to first fitted value of lm(biomass ~ year) for full timeseries
+fitted_ratio_ts_mean_biomass,ratio of last fitted value to first fitted value of lm(mean_biomass ~ year) for full timeseries
+p_be_abundance,p-value of lm(abundance ~ year) for first and last 5-year periods
+p_be_energy,p-value of lm(energy ~ year) for first and last 5-year periods
+p_be_mean_energy,p-value of lm(mean_energy ~ year) for first and last 5-year periods
+p_be_biomass,p-value of lm(biomass ~ year) for first and last 5-year periods
+p_be_mean_biomass,p-value of lm(mean_biomass~year) for first and last 5-year periods
+r2_be_abundance,r2 of lm(abundance ~ year) for first and last 5-year periods
+r2_be_energy,r2 of lm(energy ~ year) for first and last 5-year periods
+r2_be_mean_energy,r2 of lm(mean_energy ~ year) for first and last 5-year periods
+r2_be_biomass,r2 of lm(biomass ~ year) for first and last 5-year periods
+r2_be_mean_biomass,r2 of lm(mean_biomass ~ year) for first and last 5-year periods
+slope_be_abundance,slope of lm(abundance ~ year) for first and last 5-year periods
+slope_be_energy,slope of lm(energy ~ year) for first and last 5-year periods
+slope_be_mean_energy,slope of lm(mean_energy ~ year) for first and last 5-year periods
+slope_be_biomass,slope of lm(biomass ~ year) for first and last 5-year periods
+slope_be_mean_biomass,slope of lm(mean_biomass ~ year) for first and last 5-year periods
+fitted_ratio_be_abundance,ratio of last fitted value to first fitted value of lm(abundance ~ year) for first and last 5-year periods
+fitted_ratio_be_energy,ratio of last fitted value to first fitted value of lm(energy ~ year) for first and last 5-year periods
+fitted_ratio_be_mean_energy,ratio of last fitted value to first fitted value of lm(mean_energy ~ year) for first and last 5-year periods
+fitted_ratio_be_biomass,ratio of last fitted value to first fitted value of lm(biomass ~ year) for first and last 5-year periods
+fitted_ratio_be_mean_biomass,ratio of last fitted value to first fitted value of lm(mean_biomass ~ year) for first and last 5-year periods
+raw_ratio_abundance,ratio of total abundance in the last five years to the total abundance summed over the first five years
+raw_ratio_energy,ratio of total energy in the last five years to the total energy summed over the first five years
+raw_ratio_mean_energy,ratio of total energy / total abundance in the last five years to the total energy / total abundance summed over the first five years
+raw_ratio_biomass,ratio of total biomass in the last five years to the total biomass summed over the first five years
+raw_ratio_mean_biomass,ratio of total biomass / total abundance in the last five years to the total biomass / total abundance summed over the first five years
+isd_turnover,difference between ISD in the first five years and ISD in the last five years
+species_turnover,difference in species composition in the first five years and last five years
+bcd,bray-curtis dissimilarity (vegan::vegdist)
+countrynum,from BBS
+statenum,"also the ""rg"" for ""bbs_rt_rg_X_Y"""
+route,"also the ""rt"" for ""bbs_rt_rg_X_Y"""
+routename,from BBS
+active,from BBS
+latitude,from BBS
+longitude,from BBS
+stratum,from BBS
+bcr,from BBS
+routetypeid,from BBS
+routetypedetailid,from BBS
+regionname,from BBS
+beginyears,"which five years are the ""first five years"""
+endyears,"which five years are the ""last five years"""

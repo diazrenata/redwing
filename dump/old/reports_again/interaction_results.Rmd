@@ -1,0 +1,179 @@
+---
+title: "Actual results"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+      toc: true
+      df_print: kable
+
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(drake)
+theme_set(theme_bw())
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+loadd(all_results, cache = cache)
+
+DBI::dbDisconnect(db)
+rm(cache)
+rm(db)
+
+max10 <- read.csv(here::here("working_routes_max10.csv"))
+
+all_results <- all_results %>%
+  mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) #%>%
+#  filter(matssname %in% max10$matssname)
+
+
+onetoone <- geom_abline(slope = 1, intercept = 0)
+```
+
+This whole approach bugs me because of the sheer number of comparisons being made and the .05 threshold. So, don't overinterpret in any single instance.
+
+
+```{r}
+
+ggplot(all_results, aes(overall_p)) +geom_histogram()
+
+all_results_adj <- all_results %>%
+  select(overall_p, `Pr(>|t|)_timeperiodend:currencybiomass`, `Pr(>|t|)_timeperiodend:currencyenergy`, `Pr(>|t|)_timeperiodend`, matssname) %>%
+  tidyr::pivot_longer(-matssname, names_to = "comparison", values_to = "p") %>%
+  mutate(padj = p.adjust(p, "fdr")) %>%
+  tidyr::pivot_wider(id_cols = matssname, names_from = comparison, values_from = c(p, padj))
+
+
+mean(all_results_adj$padj_overall_p < .05)
+
+all_results_adj_sig <- filter(all_results_adj, padj_overall_p < .05)
+
+mean(all_results_adj_sig$`padj_Pr(>|t|)_timeperiodend` < .05)
+mean(all_results_adj_sig$`padj_Pr(>|t|)_timeperiodend:currencyenergy` < .05)
+mean(all_results_adj_sig$`padj_Pr(>|t|)_timeperiodend:currencybiomass` < .05)
+
+all_results <- all_results %>%
+  group_by_all() %>%
+  mutate(any_terms_sig = all(overall_p < .05, any(
+    `Pr(>|t|)_timeperiodend:currencybiomass` < .05,
+    `Pr(>|t|)_timeperiodend:currencyenergy` < .05,
+    `Pr(>|t|)_timeperiodend` < .05
+  )),
+  any_contrasts_sig = any(
+    abundance_contrastp.value < .05,
+    energy_contrastp.value < .05,
+    biomass_contrastp.value < .05
+  ),
+  abundance_up = abundance_raw_ratio >=1,
+  biomass_up = biomass_raw_ratio >=1,
+  energy_up = energy_raw_ratio >=1) %>%
+  ungroup()
+```
+
+```{r}
+mean(all_results$overall_sig)
+mean(all_results$overall_sig_rs)
+
+mean(all_results$change_sig)
+mean(all_results$change_sig_rs)
+
+mean(filter(all_results, change_sig)$currency_slopes_different)
+mean(filter(all_results, change_sig_rs)$currency_slopes_different_rs)
+
+
+```
+
+So `r mean(all_results$any_terms_sig)` percent of the time we have both the overall lm significant and at least one **slope** term is significant. (There are 25 (in the full dataset/16 in the max-10 subset) routes where the overall model is significant but it's either the intercept or one of the currency intercepts). 
+
+
+```{r}
+
+sig_model <- all_results %>% 
+  filter(change_sig)%>%
+  group_by_all() %>%
+  mutate(all_together = all(
+    `Pr(>|t|)_timeperiodend:currencybiomass` > .05,
+    `Pr(>|t|)_timeperiodend:currencyenergy` > .05,
+    `Pr(>|t|)_timeperiodend` < .05
+  )) %>%
+  ungroup()
+
+```
+
+
+```{r}
+
+mean(sig_model$all_together)
+
+```
+
+
+Of the models that are significant overall and have a significant slope, `r mean(sig_model$all_together)` of them have a significant time slope but not a significant interaction of time x currency. Meaning that biomass, energy use, and abundance have all *changed* but have not changed *differently from each other*.
+
+When they **are** all changing, but changing together:
+
+```{r}
+
+all_together <- filter(sig_model, all_together)
+
+ggplot(all_together, aes(abundance_raw_ratio)) + geom_histogram()
+ggplot(all_together, aes(biomass_raw_ratio)) + geom_histogram()
+ggplot(all_together, aes(energy_raw_ratio)) + geom_histogram()
+
+summary(all_together$abundance_raw_ratio)
+summary(all_together$energy_raw_ratio)
+summary(all_together$biomass_raw_ratio)
+
+mean(all_together$abundance_up)
+
+```
+
+It's usually a decrease - 65/35 decrease/increase. The median is for end to be 75% of begin.
+
+
+When they **aren't** changing all together...
+
+```{r}
+
+not_together <- filter(sig_model, !all_together)
+
+not_together %>%
+  group_by(abundance_up) %>%
+  summarize(e_up = sum(energy_up),
+            b_up = sum(biomass_up),
+            totaln = dplyr::n()) %>%
+  ungroup()
+
+
+
+```
+
+When abundance increases, energy decreases 6/13 times. When abundance decreases, energy increases 25/59 times. So that 31/72 incidences of a change in direction for *energy*.
+
+When abundance increases, biomass decreases 8/13 times. When abundance decreases, biomass increases 44/59 times. So that 52/72 incidences of a change in direction for *biomass*.
+
+If it's not a change in direction, it's an intensification/dampening of the *slope* of change. 
+
+```{r}
+
+ggplot(sig_model, aes(abundance_raw_ratio, energy_raw_ratio, color = all_together)) + geom_point() + onetoone
+
+
+ggplot(sig_model, aes(abundance_raw_ratio, biomass_raw_ratio, color = all_together)) + geom_point() + onetoone
+
+```
+
+
+```{r}
+
+ggplot(sig_model, aes(isd_turnover)) + geom_histogram()
+ggplot(sig_model, aes(isd_turnover)) + geom_histogram() + facet_wrap(vars(all_together))
+
+```

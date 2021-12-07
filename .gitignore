@@ -46,11 +46,30 @@ drake-cache-rats.sqlite
 .drake/drake/history/total
 logs/workers/*
 drake-cache-neon.sqlite
+.drake
+.drake/*
+
+*.sqlite*
 
 # mammals raw trap nights
 neon_mammals/provisional_rata_raw/filesToStack10072/stackedFiles/mam_pertrapnight.csv
+old/neon_mammals/provisional_rata_raw/filesToStack10072/stackedFiles/mam_pertrapnight.csv
 
 # bird comparisons - will be huge
 all_bird_comps.csv
 
 all_bird_comps_nt.csv
+
+analysis_walkthroughs/BOTW*
+analysis_walkthroughs/ranges/species_in_bbs*
+methods_sections/ranges/species_in_bbs*
+
+route_species_lists.csv
+
+*e_brm_*
+*b_brm_*
+*.Rds*
+
+k.R
+*.DS_Store*
+.DS_Store

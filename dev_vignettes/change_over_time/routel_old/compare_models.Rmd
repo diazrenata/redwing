@@ -1,0 +1,85 @@
+---
+title: "Exploring on some examples"
+output: 
+  github_document:
+     toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = F)
+library(dplyr)
+library(drake)
+library(ggplot2)
+library(multipanelfigure)
+theme_set(theme_bw())
+```
+
+```{r}
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("aspirational_structure", "drake_caches", "dev-change-cache.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+cached(cache = cache)
+```
+
+```{r}
+
+loadd(all_sims, cache = cache)
+
+
+all_sims <- all_sims %>% filter(as.numeric(sim_iteration) < 10)
+
+shortsims <- filter(all_sims, matssname == "bbs_rtrg_116_18", source != "raw")
+
+
+```
+
+
+```{r}
+
+library(brms)
+
+m1 <- brm(total_energy ~ timeperiod * source + (1 | year), data = shortsims, cores =4)
+
+m2 <- brm(total_energy ~ timeperiod + source + (1 | year), data = shortsims, cores = 4)
+
+m1 <- m1 %>% add_criterion("loo")
+m2 <- m2 %>% add_criterion("loo")
+
+loo_compare(m1, m2)
+
+summary(m1)
+```
+
+
+```{r}
+
+
+shortsims <- filter(all_sims, matssname == "bbs_rtrg_318_3", source != "raw")
+
+
+```
+
+
+```{r}
+
+library(brms)
+
+m1 <- brm(total_energy ~ timeperiod * source + (1 | year), data = shortsims, cores =4)
+
+m2 <- brm(total_energy ~ timeperiod + source + (1 | year), data = shortsims, cores = 4)
+
+m1 <- m1 %>% add_criterion("loo")
+m2 <- m2 %>% add_criterion("loo")
+
+loo_compare(m1, m2)
+```
+
+```{r}
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
+```

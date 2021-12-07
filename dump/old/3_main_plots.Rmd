@@ -1,0 +1,256 @@
+---
+title: "3 main plots"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+        toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.dim = c(4,3))
+library(dplyr)
+library(ggplot2)
+theme_set(theme_bw())
+library(multipanelfigure)
+
+#allComps <- read.csv(here::here("all_bird_comps_temporal_continental.csv"))
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-bird-pairs-temporal.sqlite"), synchronous = NULL)
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+allComps <- drake::readd(allComps, cache = cache)
+
+
+
+DBI::dbDisconnect(db)
+rm(cache)
+print("Completed OK")
+obs <- filter(allComps, sim < 0)
+
+```
+
+Red dots are for Portal from 1978-1982 compared to 2000-2004 (approximately the window in the White 2004 paper.)
+
+# Change in E vs. change in N
+
+```{r}
+
+obspred <- obs %>%
+  mutate(actual = e_logr,
+         predicted = n_logr,
+         difference = e_logr - n_logr)
+  
+overall_num <- sum(obspred$difference ^ 2)
+overall_denom <- sum((obspred$actual - mean(obspred$actual)) ^ 2)
+
+overall_r2 <- 1 - (overall_num / overall_denom)
+
+
+e_v_n_scatter <- ggplot(obs, aes(n_logr, e_logr)) +
+  geom_point() +
+  geom_hline(yintercept = 0, size = .2 ) +
+  geom_vline(xintercept = 0, size = .2) +
+  geom_abline(intercept = 0, slope = 1) +
+  xlab("Change in total abundance (log ratio)") +
+  ylab("Change in total energy use (log ratio)") +
+  geom_point(aes(.57, .1), color = "red") +
+  geom_point(aes(.21, .32), color = "blue") +
+  geom_point(aes(.21, .37), color = "green")
+
+
+e_v_n_scatter
+
+hist(obspred$difference)
+
+obs <- obs %>%
+  mutate(mean_e_logr = log((exp(e_logr) / exp(n_logr))))
+
+ggplot(obs, aes(exp(mean_e_logr))) +
+  geom_histogram() +
+  geom_vline(xintercept = 1)
+
+ggplot(obs, aes(exp(mean_m_logr))) + geom_histogram() +
+  geom_vline(xintercept = 1)
+
+ggplot(obs, aes(mean_m_logr, mean_e_logr)) + geom_point() + geom_line(aes(y = mean_m_logr))
+
+# 
+# 
+# obslong <- select(obs, n_logr, e_logr) %>%
+#   mutate(row = dplyr::row_number()) %>%
+#   tidyr::pivot_longer(-row, names_to = "variable", values_to = "logratio") %>%
+#   group_by_all() %>%
+#   mutate(description = ifelse(grepl("e_", variable), "Change in energy use", "Change in abundance")) %>%
+#   ungroup() 
+# 
+# e_n_hists = ggplot(obslong, aes(logratio)) +
+#   geom_histogram() +
+#   facet_wrap(vars(description), nrow = 2) +
+#   geom_vline(xintercept = 0) +
+#   xlab("Log ratio") +
+#   ylab("Number of routes")
+# 
+# e_n_hists
+# 
+# 
+# en_mpf <- multi_panel_figure(columns = 2, rows =1) %>%
+#   fill_panel(e_v_n_scatter) %>%
+#   fill_panel(e_n_hists)
+# 
+# en_mpf
+```
+
+# Change in size structure
+
+```{r}
+
+isd_vs_spp_scatter <- ggplot(obs, aes(1 - species_overlap, 1 - isd_overlap)) +
+  geom_point() +
+  xlim(0,1) +
+  ylim(0,1)+
+  geom_abline(slope = 1,intercept = 0) +
+  xlab("Species turnover") +
+  ylab("Size structure turnover") +
+  geom_point(aes(1-.411, 1-.588), color = "red") + # portal over time
+  geom_point(aes(1-.67, 1-.86), color = "blue") + # 2000s manipulated so PB is closer in size to krats
+  geom_point(aes(1-.67, 1-.77), color = "green") # 2000s real
+
+isd_vs_spp_scatter
+
+```
+
+# Compared to null model
+
+```{r}
+
+
+allCompsSummary <- allComps %>%
+  filter(sim > 0) %>%
+  left_join(select(obs, region.x, route.x, isd_overlap, e_logr, mean_m_logr) %>% rename(obs_isd_overlap = isd_overlap, obs_e_logr = e_logr, obs_mean_m_logr = mean_m_logr)) %>%
+  group_by(site.x, route.x, region.x, location.bcr.x, location.longitude.x, location.latitude.x) %>%
+  summarize(
+    isd_ses = (obs_isd_overlap - mean(isd_overlap)) / sd(isd_overlap),
+    e_logr_ses = (obs_e_logr - mean(e_logr)) / sd(e_logr),
+    isd_percentile = sum(obs_isd_overlap > isd_overlap) / dplyr::n(),
+    e_logr_percentile = sum(obs_e_logr > e_logr) / dplyr::n(),
+    mean_m_logr_percentile = sum(obs_mean_m_logr > mean_m_logr) / dplyr::n(),
+    median_mean_change = quantile(mean_m_logr, probs = .5),
+    high_isd_turn = quantile(isd_overlap, probs = .025),
+    low_isd_turn = quantile(isd_overlap, probs = .975)
+  ) %>%
+  ungroup() %>%
+  distinct() %>%
+  right_join(obs)
+
+isd_percentile_hist <- ggplot(allCompsSummary, aes(isd_percentile)) +
+  geom_histogram(bins = 20)+
+  xlab("Percentile of observed ISD turnover vs. null model") +
+  ylab("Number of routes") +
+  geom_hline(yintercept = 238/20, linetype = 2)
+
+isd_percentile_hist
+
+isd_constraint_envelope <- ggplot(allCompsSummary, aes(species_overlap, isd_overlap)) +
+  geom_point() +
+geom_errorbar(aes(ymin = high_isd_turn, ymax = low_isd_turn), alpha = .3) +
+ # geom_point(aes(y = low_isd_turn), shape = 3) +
+   # geom_point(aes(y =high_isd_turn), shape = 3) +
+
+  geom_abline(intercept = 0, slope = 1)
+
+isd_constraint_envelope
+```
+
+What's up in the extremes?
+
+```{r}
+
+isd_greater_than_species <- filter(allCompsSummary, isd_overlap < species_overlap)
+
+# Super weird one is bbs_rtrg_139_14
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-bird-pairs-temporal.sqlite"), synchronous = NULL)
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+drake::loadd(siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start, cache = cache)
+drake::loadd(siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end, cache = cache)
+
+
+times_isds <- list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$isd,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$isd
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod')
+
+ggplot(times_isds, aes(log(mass), color = timeperiod)) + geom_histogram() + facet_wrap(vars(timeperiod))
+
+times <- list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$gmm,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$gmm
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod')
+
+
+ggplot(times, aes(mass, density, color = timeperiod)) + geom_line() + scale_x_continuous(n.breaks = 20)
+
+
+# Now I'm wondering if it's not the big N thing, but something about the rescaling of the species?
+
+times_rawcounts <- list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$allCounts,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$allCounts
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod') %>%
+  tidyr::pivot_longer(-timeperiod, names_to = "id", values_to = "abund")
+
+
+times_counts <-  list(
+  start = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_start$allRel,
+  end = siteDescs_real_counts_d_nt_bbs_rtrg_139_14_end$allRel
+) %>%
+  dplyr::bind_rows(.id = 'timeperiod')
+
+times_sp <- times_counts %>%
+  group_by(id) %>%
+  summarize(minRel = min(relAbund)) %>%
+  ungroup() 
+
+sum(times_sp$minRel)
+
+ggplot(times_counts, aes(id, relAbund, color = timeperiod)) + geom_point() + geom_col(data = times_sp, aes(x = id, y = minRel), inherit.aes =F)
+
+
+rel_v_raw <- left_join(times_counts, times_rawcounts)
+
+nonzero_sp <- rel_v_raw %>%
+  filter(abund > 0) %>%
+  select(id) 
+  
+filter(rel_v_raw, id %in% nonzero_sp$id) %>%
+  tidyr::pivot_wider(values_from = c("relAbund", "abund"), id_cols = id, names_from = timeperiod)
+
+
+ggplot(rel_v_raw, aes(abund, relAbund, color = timeperiod)) + geom_point()
+```
+
+
+```{r, fig.dim = c(12,4)}
+
+all_figs = multi_panel_figure(rows = 1, columns = 3) %>%
+  fill_panel(e_v_n_scatter) %>%
+  fill_panel(isd_vs_spp_scatter) %>%
+  fill_panel(isd_percentile_hist)
+
+
+all_figs
+```
+
+```{r}
+c2 <- c2 %>% group_by(id) %>% mutate(minRel = min(relAbund_start, relAbund_end)) %>% ungroup()
+ggplot(c2, aes(logm, minRel)) + geom_col() + scale_x_continuous(n.breaks= 25, limits = c(0,10))
+```

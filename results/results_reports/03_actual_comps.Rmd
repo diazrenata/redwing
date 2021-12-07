@@ -1,0 +1,67 @@
+---
+title: "How many models come out which way"
+output: 
+      github_document:
+          df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(rwar)
+library(BBSsize)
+library(brms)
+library(tidybayes)
+library(ggplot2)
+theme_set(theme_bw())
+
+#load(here::here("results", "results_objects", "portable_results.Rds"))
+load(here::here("results", "results_objects", "portable_results_all.Rds"))
+load(here::here("results", "results_objects", "portable_comps_all.Rds"))
+working_datasets <- read.csv(here::here("supporting_data", "working_routes_max10.csv"))
+```
+
+
+```{r}
+
+actual_winners <- all_winners %>%
+  filter(simtype == "actual") %>%
+  left_join(all_comps) %>%
+  mutate(sizerat = log(end_mean_size / begin_mean_size),
+         erat = log(end_mean_e / begin_mean_e)) %>%
+  mutate(sizerat2 = sizerat ^ 2,
+         erat2 = erat ^ 2)
+
+
+ggplot(actual_winners, aes(overlap, fill = model)) + geom_density() + facet_wrap(vars( currency))
+
+
+ggplot(actual_winners, aes(model, overlap, fill = currency)) + geom_boxplot() 
+summary(lm(overlap ~ model, data =filter(actual_winners, currency == "biomass")))
+summary(lm(overlap ~ model, data =filter(actual_winners, currency == "energy")))
+
+ggplot(actual_winners, aes(end_mean_size / begin_mean_size, fill = model)) + geom_density() + facet_wrap(vars( currency))
+
+ggplot(actual_winners, aes(((end_mean_size/begin_mean_size)), overlap)) + geom_point()
+
+ggplot(actual_winners, aes(end_mean_size / begin_mean_size, overlap)) + geom_point()
+
+unique_aw <- select(actual_winners, matssname, sizerat, sizerat2, erat, erat2, overlap) %>% distinct()
+
+qm <- (lm(overlap ~ sizerat + sizerat2, data = unique_aw))
+
+qm_fit <- unique_aw %>%
+  mutate(fit = predict(qm))
+summary(qm)
+ggplot(qm_fit, aes(sizerat, overlap)) + geom_point() + geom_point(aes(y = fit))
+
+
+
+qm <- (lm(overlap ~ erat + erat2, data = unique_aw))
+
+qm_fit <- unique_aw %>%
+  mutate(fit = predict(qm))
+summary(qm)
+ggplot(qm_fit, aes(erat, overlap)) + geom_point() + geom_point(aes(y = fit))
+```
+```

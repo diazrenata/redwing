@@ -1,0 +1,283 @@
+---
+title: "Actual results"
+author: Renata Diaz
+date: "`r Sys.Date()`"
+output: 
+    github_document:
+      toc: true
+      df_print: kable
+
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(drake)
+library(multipanelfigure)
+theme_set(theme_bw())
+knitr::opts_chunk$set(echo = F)
+
+
+## Set up the cache and config
+db <- DBI::dbConnect(RSQLite::SQLite(), here::here("drake-cache-actual.sqlite"))
+cache <- storr::storr_dbi("datatable", "keystable", db)
+cache$del(key = "lock", namespace = "session")
+
+loadd(all_results, cache = cache)
+
+DBI::dbDisconnect(db)
+rm(cache)
+rm(db)
+
+max10 <- read.csv(here::here("working_routes_max10.csv"))
+
+all_results <- all_results %>%
+  mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum)) #%>%
+#  filter(matssname %in% max10$matssname)
+
+
+onetoone <- geom_abline(slope = 1, intercept = 0)
+pretty <- scale_color_viridis_d(option = "mako", begin = .3, end = .8, direction = -1)
+prettyf <- scale_fill_viridis_d(option = "mako", begin = .3, end = .8, direction = -1)
+
+
+```
+
+# False discovery rate
+
+Here, working with the results of route-level linear models of the form `value ~ timeperiod * currency`.
+
+We are interested in the p-values from 4 tests: 1) is the overall model significant; 2) is there a significant trend (effect of time), 3) and 4) are there significant interactions between time and currency=biomass or currency=energy. Because this is a *lot* of comparisons, using the false discovery rate (`p.adjust(method = "fdr")`) to adjust the p-values, pooling all of the p-values for these 4 tests. All following analyses use adjusted, rather than raw, p-values.
+
+```{r}
+
+
+all_results_adj <- all_results %>%
+  select(overall_p, `Pr(>|t|)_timeperiodend:currencybiomass`, `Pr(>|t|)_timeperiodend:currencyenergy`, `Pr(>|t|)_timeperiodend`, matssname) %>%
+  rename(time_biomass = `Pr(>|t|)_timeperiodend:currencybiomass`,
+         time_energy = `Pr(>|t|)_timeperiodend:currencyenergy`,
+         time = `Pr(>|t|)_timeperiodend`) %>%
+  tidyr::pivot_longer(-matssname, names_to = "comparison", values_to = "p") %>%
+  mutate(padj = p.adjust(p, "fdr")) %>%
+  tidyr::pivot_wider(id_cols = matssname, names_from = comparison, values_from = c(p, padj))
+
+
+
+all_results_use <- all_results %>%
+  select(energy_raw_ratio,
+         biomass_raw_ratio,
+         abundance_raw_ratio,
+         mean_energy_raw_ratio,
+         mean_biomass_raw_ratio,
+         isd_turnover,
+         sp_turnover,
+         bcd,
+         countrynum,
+         statenum,
+         route,
+         routename,
+         matssname) %>%
+  left_join(all_results_adj) %>%
+  mutate(
+    wholemod_significant = padj_overall_p < .05,
+    abundance_significant = (padj_time < .05 & padj_overall_p < .05),
+    energy_interaction_significant = (padj_time_energy < .05 & padj_overall_p < .05),
+    biomass_interaction_significant = (padj_time_biomass < .05 & padj_overall_p < .05),
+    abundance_increase = abundance_raw_ratio > 1,
+    energy_increase = energy_raw_ratio > 1,
+    biomass_increase = biomass_raw_ratio > 1
+  )
+all_results_sig_only <- filter(all_results_use, wholemod_significant)
+
+```
+
+
+# Prevalence of significant changes & interactions
+
+```{r, echo  = T}
+mean(all_results_use$wholemod_significant)
+
+
+mean(all_results_sig_only$abundance_significant)
+mean(all_results_sig_only$energy_interaction_significant)
+mean(all_results_sig_only$biomass_interaction_significant)
+```
+- Just under half of models come out as significant. So, **more than half the time** there's no significant difference detected from beginning to end in any currency.
+- **Of significant models**, 88% of the time there's a significant effect of time on abundance. Rarely, there's an interaction with currency - 7% for energy and 8% for biomass.
+    - (About 8% of the time the model is significant but the only significant term is an intercept.)
+
+# Direction of change
+
+## Abundance
+
+```{r}
+
+ggplot(all_results_use, aes(abundance_raw_ratio)) + geom_histogram(boundary = 1) + geom_vline(xintercept = 1)
+ggplot(all_results_use, aes(abundance_raw_ratio, fill = abundance_significant)) + geom_histogram(boundary = 1) + geom_vline(xintercept = 1) + facet_wrap(vars(abundance_significant)) + prettyf + theme(legend.position = "bottom")
+```
+
+
+```{r, echo = T}
+summary(all_results_use$abundance_raw_ratio)
+
+summary(filter(all_results_use, abundance_significant)$abundance_raw_ratio)
+
+all_results_use %>%
+  group_by(abundance_significant) %>%
+  summarize(proportion_increasing = mean(abundance_increase))
+
+```
+
+Both over all routes, and restricted to routes with significant trends in abundance, ~70% of routes are showing a decrease in abundance.
+
+## Other currencies
+
+We rarely see significantly different trends in the different currencies. 
+
+So, in the aggregate, it's not too surprising that energy and biomass look similar to abundance:
+
+
+### Energy
+
+```{r}
+ggplot(all_results_use, aes(energy_raw_ratio)) + geom_histogram(boundary = 1) + geom_vline(xintercept = 1)
+
+```
+
+
+### Biomass
+
+```{r}
+ggplot(all_results_use, aes(biomass_raw_ratio)) + geom_histogram(boundary = 1) + geom_vline(xintercept = 1)
+```
+
+
+In the aggregate, though, energy and biomass are *less* overwhelmingly decreasing than abundance. 
+
+(Note that a lot of this difference doesn't come out as significant in terms of an interaction).
+
+```{r, echo = T}
+
+summary(all_results_use$energy_raw_ratio)
+summary(all_results_use$biomass_raw_ratio)
+
+
+summary(all_results_sig_only$energy_raw_ratio)
+summary(all_results_sig_only$biomass_raw_ratio)
+
+```
+
+
+# Relationship between currencies
+
+```{r, fig.dim = c(5, 10)}
+
+all_results_use <- all_results_use %>%
+  mutate(b_sigscale = ifelse(
+    biomass_interaction_significant,
+    "time:biomass interaction",
+    ifelse(
+      abundance_significant,
+      "time trend",
+      "non significant"
+    )
+  ),
+  e_sigscale = ifelse(
+    energy_interaction_significant,
+    "time:energy interaction",
+    ifelse(
+      abundance_significant,
+      "time trend",
+      "non significant"
+    )
+  )
+    
+    )
+
+# biomass_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, biomass_raw_ratio, shape = abundance_significant, color = abundance_significant))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + geom_point(data = filter(all_results_use, biomass_interaction_significant), color = "purple") + theme(legend.position = "bottom") + xlab("Ratio of end:start abundance") + ylab("Ratio of end:start biomass") + ggtitle("Biomass") + geom_point(data = filter(all_results_use, !biomass_interaction_significant)) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+biomass_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, biomass_raw_ratio, shape = abundance_significant, color = b_sigscale))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + theme(legend.position = "bottom", legend.direction = "vertical") + xlab("Ratio of end:start abundance") + ylab("Ratio of end:start biomass") + ggtitle("Biomass") + geom_point(data = all_results_use) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+
+# 
+# energy_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, energy_raw_ratio, shape = abundance_significant, color = abundance_significant))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + geom_point(data = filter(all_results_use, energy_interaction_significant), color = "purple") + theme(legend.position = "bottom")+ xlab("Ratio of end:start abundance") + ylab("Ratio of end:start energy use") + ggtitle("Energy use") + geom_point(data = filter(all_results_use, !energy_interaction_significant), alpha = .8) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3) 
+energy_scatter_plot <- ggplot(all_results_use, aes(abundance_raw_ratio, energy_raw_ratio, shape = abundance_significant, color = e_sigscale))+ pretty + onetoone + scale_y_log10() + scale_x_log10()  + theme(legend.position = "bottom", legend.direction = "vertical") + xlab("Ratio of end:start abundance") + ylab("Ratio of end:start energy use") + ggtitle("Energy use") + geom_point(data = all_results_use) + geom_vline(xintercept = 1, linetype = 3) + geom_hline(yintercept = 1, linetype = 3)
+
+
+all_panels <- multi_panel_figure(columns = 1, rows =2) %>%
+  fill_panel(biomass_scatter_plot) %>%
+  fill_panel(energy_scatter_plot)
+
+all_panels
+
+
+summary(all_results_use$biomass_raw_ratio / all_results_use$abundance_raw_ratio)
+
+summary(all_results_use$energy_raw_ratio / all_results_use$abundance_raw_ratio)
+
+```
+
+
+- Energy and biomass generally track abundance
+- There is a lot of scatter. 
+- There is more scatter for biomass than energy.
+- The scatter is disproportionately in the direction of increasing body size resulting in a less negative slope.
+- However, rarely does that shift come out as a statistically significant decoupling of energy/biomass from abundance. 
+
+## Change in ISD v change in E v N
+
+```{r}
+
+ggplot(all_results_use, aes(isd_turnover, (mean_energy_raw_ratio), color = abundance_significant)) + geom_point(shape = 1) + pretty + geom_point(data = filter(all_results_use, energy_interaction_significant), shape = 16) + theme(legend.position = "bottom")
+
+
+summary(lm(mean_biomass_raw_ratio ~ isd_turnover, all_results_use))
+
+
+ggplot(all_results_use, aes(isd_turnover, biomass_raw_ratio / abundance_raw_ratio, color = abundance_significant)) + geom_point(shape = 1) + pretty  + scale_y_log10() + scale_x_log10() + geom_point(data = filter(all_results_use, biomass_interaction_significant), shape = 16) + theme(legend.position = "bottom") + geom_hline(yintercept = 1, linetype = 3)
+
+```
+
+
+There isn't a strong relationship where you get the major interactions, or even drastic differences in the deviations between abundance/energy use, as the amount of isd_turnover increases. Various lms() I've run, using different routes to defining the "difference" between change in abundance and change in energy, come out as *significant* with a slight positive slope but explaining less than 5% of variation. And I'm not sure how much I trust that positive slope because ratios are weirdly bounded.
+
+This in contrast to something you could see, where change in the ISD translates directly into a shift in mean body size decoupling things. Rather, what I think is happening here is, most of the change that happens in the ISD is nondirectional.
+
+
+
+##### linear model dump
+
+
+```{r}
+long_ratios <- all_results %>%
+  select(matssname, energy_raw_ratio, biomass_raw_ratio) %>%
+  tidyr::pivot_longer(-matssname, names_to = "currency", values_to = "rr") %>%
+  mutate(logrr = log(rr)) %>%
+  left_join(select(all_results, matssname, abundance_raw_ratio)) %>%
+  mutate(nlogrr = log(abundance_raw_ratio))
+
+
+ggplot(long_ratios, aes(abundance_raw_ratio, rr, color = currency)) + geom_point() + onetoone + pretty
+
+long_ratios_lm <- lm(rr ~  abundance_raw_ratio* currency, data = long_ratios)
+summary(long_ratios_lm)
+
+long_ratios_lm_no_outliers <- lm(rr ~  abundance_raw_ratio* currency, data = filter(long_ratios, rr < 3.5))
+summary(long_ratios_lm_no_outliers)
+
+library(lme4)
+
+long_ratios_lme <- lmer(rr ~ abundance_raw_ratio * currency + (1 | matssname), data =  filter(long_ratios, rr < 3.5))
+long_ratios_lme1 <- lmer(rr ~ abundance_raw_ratio + currency + (1 | matssname), data =  filter(long_ratios, rr < 3.5))
+long_ratios_lme2 <- lmer(rr ~ abundance_raw_ratio  + (1 | matssname), data =  filter(long_ratios, rr < 3.5))
+
+anova(long_ratios_lme, long_ratios_lme1)
+anova(long_ratios_lme, long_ratios_lme2)
+
+lr_lm_fit <-  filter(long_ratios, rr < 3.5) %>% mutate(fitted = predict(long_ratios_lme, re.form = NA))
+ggplot(lr_lm_fit, aes(abundance_raw_ratio, fitted, color = currency)) + geom_point() + onetoone + pretty
+
+rsq::rsq(long_ratios_lme)
+
+summary(long_ratios_lme)
+
+```
+

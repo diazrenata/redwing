@@ -1,0 +1,34 @@
+---
+title: "Null model gut check"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(drake)
+library(ggplot2)
+
+load(here::here("aspirational_structure", "pipelines", "local_summaries.Rds"))
+```
+
+```{r}
+
+library(BBSsize)
+library(rwar)
+
+g <- granby
+
+
+View(local_null_model)
+  shuffled_dat <- shuffle_local(ts_dat = g, null_mod_seed = 1989)
+
+real_isd <- just_isd(g, 1989)
+
+shuffled_isd <- just_isd(shuffled_dat, 1989)
+
+ggplot(real_isd, aes(log(mass))) + geom_density() + geom_density(data = shuffled_isd, color = "purple")
+
+sum(real_isd$mass)
+sum(shuffled_isd$mass)
+```
