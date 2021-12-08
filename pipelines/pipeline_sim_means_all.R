@@ -8,7 +8,9 @@ library(tidybayes)
 
 run_hpg = T
 max_caps <- c(75, 150, 225, 300, 375, 450, 528)
-for(i in 1:length(max_caps)) {
+# for(i in 1:length(max_caps)) {
+
+i = 1
   datasets <- MATSS::build_bbs_datasets_plan()
 
 
@@ -104,4 +106,4 @@ for(i in 1:length(max_caps)) {
   rm(cache)
   print("Completed OK")
 
-}
+#}
