@@ -25,7 +25,7 @@ i = 1
     ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 1, ndraws = 1),
                    transform = cross(
                      dataset = !!rlang::syms(datasets$target),
-                     simtype = c("actual")#, "nc", "nsc")
+                     simtype = c("actual", "nc", "nsc")
                    ) ),
     as = target(dplyr::combine(ssims),
                 transform = combine(ssims)),
