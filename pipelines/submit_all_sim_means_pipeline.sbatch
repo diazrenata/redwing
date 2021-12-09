@@ -7,7 +7,7 @@
 #SBATCH --ntasks=1                 # Number of MPI ranks
 #SBATCH --cpus-per-task=6            # Number of cores per MPI rank
 #SBATCH --mem-per-cpu=16GB
-#SBATCH --time=6:00:00       #Time limit hrs:min:sec
+#SBATCH --time=1:00:00       #Time limit hrs:min:sec
 #SBATCH --output ../drake_caches/logs/all_sm%j.out
 #SBATCH --error ../drake_caches/logs/all_sm%j.err
 
