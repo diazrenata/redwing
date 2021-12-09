@@ -7,7 +7,7 @@ library(brms)
 library(tidybayes)
 
 run_hpg = T
-max_caps <- c(5, 150, 225, 300, 375, 450, 528)
+max_caps <- c(75, 150, 225, 300, 375, 450, 528)
 # for(i in 1:length(max_caps)) {
 
 i = 1
@@ -25,7 +25,7 @@ methods <- drake_plan(
   ssims = target(rwar::ssims_wrapper(dataset, simtype, n_isd_draws = 1, ndraws = 1),
                  transform = cross(
                    dataset = !!rlang::syms(datasets$target),
-                   simtype = c("actual", "nc", "nsc")
+                   simtype = c("actual")#, "nc", "nsc")
                  ) ),
   # as = target(dplyr::combine(ssims),
   #             transform = combine(ssims)),
