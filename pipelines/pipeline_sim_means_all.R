@@ -76,25 +76,25 @@ nodename <- Sys.info()["nodename"]
 #    print("I know I am on the HiPerGator!")
 #
 #   if(run_hpg) {
-#     library(clustermq)
-#     options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
-#     )
-#     ## Run the pipeline parallelized for HiPerGator
-#     system.time(make(all,
-#                      force = TRUE,
-#                      cache = cache,
-#                      verbose = 1,
-#                      parallelism = "clustermq",
-#                      jobs = 12,
-#                      caching = "main",
-#                      memory_strategy = "autoclean",
-#                      lock_envir = F,
-#                      garbage_collection = T))# Important for DBI caches!
+    library(clustermq)
+    options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
+    )
+    ## Run the pipeline parallelized for HiPerGator
+    system.time(make(all,
+                     force = TRUE,
+                     cache = cache,
+                     verbose = 1,
+                     parallelism = "clustermq",
+                     jobs = 2,
+                     caching = "main",
+                     memory_strategy = "autoclean",
+                     lock_envir = F,
+                     garbage_collection = T))# Important for DBI caches!
 #   } else {
 
 
 # Run the pipeline on multiple local cores
-system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
+#system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
 
 
 # }
