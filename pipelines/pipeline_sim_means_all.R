@@ -10,7 +10,7 @@ run_hpg = T
 max_caps <- c(75, 150, 225, 300, 375, 450, 528)
 # for(i in 1:length(max_caps)) {
 
-i = 6
+i = 7
 datasets <- MATSS::build_bbs_datasets_plan()
 
 
