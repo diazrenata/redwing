@@ -62,7 +62,7 @@ We want to test whether the changes in energy and biomass exceed what we would e
 
 ```{r}
 
-sampling_gmms <- rwar::construct_sampling_gmm(dat, n_isd_draws = 2)
+sampling_gmms <- rwar::construct_sampling_gmm(dat, n_isd_draws = 1)
 
 ```
 
