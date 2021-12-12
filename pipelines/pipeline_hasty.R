@@ -136,12 +136,38 @@ winning_gams <- all_gams_all %>%
   arrange(matssname, type, rank)
 
 
-
-
-  ungroup() %>%
-  filter(prop_inf_loss > .05) %>%
+delta_2 <- winning_gams %>% filter(deltaAIC > -2) %>%
   group_by(matssname, type) %>%
   arrange(complexity) %>%
   mutate(rank = row_number()) %>%
-  ungroup() %>%
-  filter(rank ==1)
+  filter(rank == 1) %>%
+  ungroup()
+
+delta_2 %>% group_by(type, model) %>% tally()
+
+delta_4 <- winning_gams %>% filter(deltaAIC > -4) %>%
+  group_by(matssname, type) %>%
+  arrange(complexity) %>%
+  mutate(rank = row_number()) %>%
+  filter(rank == 1) %>%
+  ungroup()
+
+delta_4 %>% group_by(type, model) %>% tally()
+
+
+wt_9 <- winning_gams %>%
+  filter(rank == 1) %>%
+  filter(aic_wt > .9)
+
+
+rvi <- winning_gams %>%
+  mutate(rv_interaction = ifelse(model == "full", aic_wt, 0),
+         rv_sourceintercept = ifelse(model %in% c("full", "no_interaction"), aic_wt, 0),
+         rv_timeslope = ifelse(model %in% c("full", "no_interaction", "no_source"), aic_wt, 0),
+         rv_intercept = aic_wt) %>%
+  group_by(matssname, type) %>%
+  summarize(rvi_interaction = sum(rv_interaction),
+            rvi_sourceintercept = sum(rv_sourceintercept),
+            rvi_timeslope = sum(rv_timeslope),
+            rv_intercept = sum(rv_intercept)) %>%
+  ungroup()

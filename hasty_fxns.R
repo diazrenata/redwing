@@ -74,14 +74,14 @@ whole_thing <- function(dat) {
 
 pick_gam <- function(sims) {
 
-  linear_gam_full <- gam(total_biomass ~ timeperiod * source, data= sims, method = "REML", family = tw(), select= T)
+  linear_gam_full <- gam(total_biomass ~ timeperiod * source, data= sims, method = "ML", family = tw(), select= T)
 
 
-  linear_gam_noint <- gam(total_biomass ~ timeperiod + source, data= sims, method = "REML", family = tw(), select= T)
+  linear_gam_noint <- gam(total_biomass ~ timeperiod + source, data= sims, method = "ML", family = tw(), select= T)
 
-  linear_gam_nos <- gam(total_biomass ~ timeperiod, data= sims, method = "REML", family = tw(), select= T)
+  linear_gam_nos <- gam(total_biomass ~ timeperiod, data= sims, method = "ML", family = tw(), select= T)
 
-  linear_gam_notime <- gam(total_biomass ~ 1, data = sims, method = "REML", family = tw(), select= T)
+  linear_gam_notime <- gam(total_biomass ~ 1, data = sims, method = "ML", family = tw(), select= T)
 
   linear_aics <- data.frame(
     model = c('full', 'no_interaction', 'no_source', 'no_time'),
@@ -109,5 +109,9 @@ pick_gam <- function(sims) {
     mutate(matssname = sims$matssname[1])
 
   all_aics
+
+}
+
+aicc <- function(a_gam) {
 
 }
