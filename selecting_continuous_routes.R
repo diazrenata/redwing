@@ -22,3 +22,9 @@ more_than_x_years <- route_interval_years %>%
   mutate(matssname = paste0('bbs_rtrg_', route, '_', region))
 
 write.csv(more_than_x_years, file = here::here("supporting_data/perfect_coverage_1988_2018.csv"))
+
+more_than_x_years <- route_interval_years %>%
+  filter(nyears >= 24) %>%
+  mutate(matssname = paste0('bbs_rtrg_', route, '_', region))
+
+write.csv(more_than_x_years, file = here::here("supporting_data/eightypercent_coverage_1988_2018.csv"))

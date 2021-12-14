@@ -59,6 +59,7 @@ whole_thing <- function(dat) {
   dat_resp_isd <- simulate_isd_ts(dat_resp, isd_seed = 1989)
 
 
+
   real_sv <- calc_sv(dat_isd) %>%
     mutate(source = "real")
   sim_sv <- calc_sv(dat_resp_isd) %>%
@@ -72,46 +73,145 @@ whole_thing <- function(dat) {
   both_sv
 }
 
-pick_gam <- function(sims) {
-
-  linear_gam_full <- gam(total_biomass ~ timeperiod * source, data= sims, method = "ML", family = tw(), select= T)
+hasty_models <- function(sims) {
 
 
-  linear_gam_noint <- gam(total_biomass ~ timeperiod + source, data= sims, method = "ML", family = tw(), select= T)
+  models <- list(
 
-  linear_gam_nos <- gam(total_biomass ~ timeperiod, data= sims, method = "ML", family = tw(), select= T)
+    gaussian_glm_full = glm(total_biomass ~ timeperiod * source, data= sims),
+    gaussian_glm_noint = glm(total_biomass ~ timeperiod + source, data= sims),
+    gaussian_glm_nos = glm(total_biomass ~ timeperiod, data= sims),
+    gaussian_glm_notime = glm(total_biomass ~ 1, data = sims),
 
-  linear_gam_notime <- gam(total_biomass ~ 1, data = sims, method = "ML", family = tw(), select= T)
 
-  linear_aics <- data.frame(
-    model = c('full', 'no_interaction', 'no_source', 'no_time'),
-    aic = c(AIC(linear_gam_full), AIC(linear_gam_noint), AIC(linear_gam_nos), AIC(linear_gam_notime)),
-    type = "linear"
+    gamma_glm_full = glm(total_biomass ~ timeperiod * source, family = Gamma(link = "log"), data= sims),
+    gamma_glm_noint = glm(total_biomass ~ timeperiod + source, family = Gamma(link = "log"), data= sims),
+    gamma_glm_nos = glm(total_biomass ~ timeperiod, family = Gamma(link = "log"), data= sims),
+    gamma_glm_notime = glm(total_biomass ~ 1, family = Gamma(link = "log"), data = sims)
+
   )
 
-
-  nonlinear_gam_full <- gam(total_biomass ~ fsource + s(timeperiod, by = fsource), data= sims, method = "REML", family = tw(), select= T)
-
-
-  nonlinear_gam_noint <- gam(total_biomass ~ fsource + s(timeperiod), data= sims, method = "REML", family = tw(), select= T)
-
-  nonlinear_gam_nos <- gam(total_biomass ~ s(timeperiod), data= sims, method = "REML", family = tw(), select= T)
-
-  nonlinear_gam_notime <- gam(total_biomass ~ 1, data = sims, method = "REML", family = tw(), select= T)
-
-  nonlinear_aics <- data.frame(
-    model = c('full', 'no_interaction', 'no_source', 'no_time'),
-    aic = c(AIC(nonlinear_gam_full), AIC(nonlinear_gam_noint), AIC(nonlinear_gam_nos), AIC(nonlinear_gam_notime)),
-    type = "nonlinear"
-  )
-
-  all_aics <- bind_rows(linear_aics, nonlinear_aics) %>%
-    mutate(matssname = sims$matssname[1])
-
-  all_aics
+  models
 
 }
 
-aicc <- function(a_gam) {
+
+hasty_model_aic <- function(some_models) {
+
+  p_interaction <- anova(some_models$gaussian_glm_full, some_models$gaussian_glm_noint, test = "F")[2,6]
+  p_sourceintercept <- anova(some_models$gaussian_glm_noint, some_models$gaussian_glm_nos, test = "F")[2,6]
+  p_slope <- anova(some_models$gaussian_glm_nos,some_models$gaussian_glm_notime, test = "F")[2,6]
+
+  gaussian_aics <- bind_rows(lapply(some_models[1:4], model_aic)) %>%
+    mutate(model_p = c(p_interaction, p_sourceintercept, p_slope, NA),
+           modelcomplexity = c(4,3,2,1))
+
+
+  p_gamma_interaction <- anova(some_models$gamma_glm_full, some_models$gamma_glm_noint, test = "F")[2,6]
+  p_gamma_sourceintercept <- anova(some_models$gamma_glm_noint, some_models$gamma_glm_nos, test = "F")[2,6]
+  p_gamma_slope <- anova(some_models$gamma_glm_nos,some_models$gamma_glm_notime, test = "F")[2,6]
+
+
+  gamma_aics <- bind_rows(lapply(some_models[5:8], model_aic)) %>%
+    mutate(model_p = c(p_gamma_interaction, p_gamma_sourceintercept, p_gamma_slope, NA),
+           modelcomplexity = c(4,3,2,1))
+
+  all_aics <- bind_rows(gaussian_aics, gamma_aics)
+
+  all_aics
+
+
+}
+
+model_aic <- function(one_model) {
+
+  one_model_aic <- data.frame(model_AIC = AIC(one_model),
+                              model_AICc = AICcmodavg::AICc(one_model)) %>%
+    mutate(model_family = one_model$family$family,
+           model_link = one_model$family$link,
+           model_formula = toString(one_model$formula[3]),
+           matssname = one_model$data$matssname[1])
+}
+
+hasty_model_predicted_change <- function(some_models) {
+
+  predicted_changes <- lapply(some_models, model_predicted_change)
+
+  predicted_changes <- bind_rows(predicted_changes)
+  predicted_changes
+}
+
+
+model_predicted_change <- function(one_model) {
+
+  model_dat <- one_model$data %>%
+    mutate(predvals = predict(one_model, type = "response"))
+
+  model_begin <- min(model_dat$timeperiod)
+  model_end <- max(model_dat$timeperiod)
+  model_span <- model_end - model_begin
+
+  model_change <- model_dat %>%
+    filter(timeperiod  %in% c(model_end, model_begin)) %>%
+    mutate(timeperiod_name = ifelse(timeperiod == model_end, "end", "begin")) %>%
+    select(timeperiod_name, predvals, source) %>%
+    tidyr::pivot_wider(names_from = c(timeperiod_name, source), values_from = predvals) %>%
+    mutate(ratio_sim = end_sim / begin_sim,
+           ratio_real = end_real / begin_real) %>%
+    mutate(model_family = one_model$family$family,
+           model_link = one_model$family$link,
+           model_formula = toString(one_model$formula[3]),
+           model_begin = model_begin,
+           model_end = model_end,
+           model_span = model_span,
+           matssname = model_dat$matssname[1],
+           model_observations = length(unique(model_dat$timeperiod))
+    )
+
+  model_change
+}
+
+cor_compare <- function(dataset, ndraws) {
+
+
+  focal_sim <- resp_dat(dataset, 1989)
+
+  compare_sim_seeds <- (1990:(1989+ndraws))
+
+  compare_sims <- lapply(compare_sim_seeds, resp_dat, dataset = dataset)
+
+  focal_isd <- simulate_isd_ts(focal_sim, isd_seed = 1989)
+
+  compare_isds <- lapply(compare_sims, simulate_isd_ts, isd_seed = 1989)
+
+  focal_sv <- calc_sv(focal_isd)
+
+  compare_svs <- lapply(compare_isds, calc_sv)
+
+  cors <- unlist(lapply(compare_svs, sim_cor, focal_sv = focal_sv))
+
+  real_isd <- simulate_isd_ts(dataset, isd_seed = 1989)
+
+  real_sv <- calc_sv(real_isd)
+
+  real_cor <- cor(real_sv$total_biomass, focal_sv$total_biomass)
+
+
+  out <- data.frame(
+    real_cor = real_cor,
+    real_cor_percentile = percentile_score(real_cor, cors),
+    real_cor_ses = ses(real_cor, cors),
+    real_cor_diff = mean(cors) - real_cor,
+    sim_cor_mean = mean(cors)
+  ) %>%
+    bind_cols(dataset$metadata$location) %>%
+    mutate(matssname = paste0("bbs_rtrg_", route, "_", statenum))
+
+  out
+}
+
+sim_cor <- function(compare_sv, focal_sv) {
+
+  cor(focal_sv$total_biomass, compare_sv$total_biomass)
 
 }

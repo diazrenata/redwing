@@ -3,8 +3,7 @@ library(dplyr)
 library(drake)
 library(MATSS)
 library(BBSsize)
-library(gratia)
-library(mgcv)
+
 
 run_hpg = T
 #max_caps <- c(75, 150, 225, 300, 375, 450, 528)
@@ -18,6 +17,7 @@ working_datasets <- read.csv(here::here("supporting_data","perfect_coverage_1988
 
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
+datasets <- datasets[1:2, ]
 #
 # datasets <- datasets[ unique(c(1:max_caps[i], which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 
@@ -27,44 +27,25 @@ methods <- drake_plan(
   ssims = target(whole_thing(dataset),
                  transform = map(
                    dataset = !!rlang::syms(datasets$target)
-                 ) ),
-  # as = target(dplyr::combine(ssims),
-  #             transform = combine(ssims)),
+                 )),
   all_sims = target(dplyr::bind_rows(ssims),
                     transform = combine(ssims)),
-  # fits = target(rwar::fit_stanlm(ssims),
-  #               transform = map(ssims)),
-  # fits_compare = target(rwar::compare_both_stanarms(fits),
-  #                       transform = map(fits)),
-  # # af = target(dplyr::combine(fits_compare),
-  # #             transform = combine(fits_compare)),
-  # # all_comparisons = target(dplyr::bind_rows(af, .id = "drakename")),
-  # winners = target(rwar::loo_select(fits_compare),
-  #                  transform = map(fits_compare)),
-  # # aw = target(dplyr::combine(winners),
-  # #             transform = combine(winners)),
-  # all_winners  = target(dplyr::bind_rows(winners),
-  #                       transform = combine(winners)),
-  # diag = target(rwar::extract_diagnostics(fits),
-  #               transform = map(fits)),
-  # # adg = target(dplyr::combine(diag)),
-  # all_diagnostics = target(dplyr::bind_rows(diag),
-  #                          transform = combine(diag)),
-  # # draws = target(rwar::winner_draws(winners, fits),
-  # #                transform = map(winners, fits)),
-  # #ad = target(dplyr::combine(draws),
-  # #           transform = combine(draws)),
-  # # all_draws = target(dplyr::bind_rows(ad)),
-  # qis = target(rwar::draw_wrapper(winners, fits),
-  #              transform = combine(winners, fits, .by = fits)),
-  # # aq = target(dplyr::combine(qis),
-  # #             transform = combine(qis)),
-  # all_qis = target(dplyr::bind_rows(qis),
-  #                  transform = combine(qis)),
-  all_gams = target(pick_gam(ssims),
-                    transform = map(ssims)),
-  all_gams_all = target(dplyr::bind_rows(all_gams),
-                        transform = combine(all_gams))
+  glms = target(hasty_models(ssims),
+                transform = map(ssims)),
+  aics = target(hasty_model_aic(glms),
+                transform = map(glms)),
+  preds = target(hasty_model_predicted_change(glms),
+                 transform = map(glms)),
+  all_aics = target(dplyr::bind_rows(aics),
+                    transform = combine(aics)),
+  all_preds = target(dplyr::bind_rows(preds),
+                     transform = combine(preds)),
+  cor_comps = target(cor_compare(dataset, ndraws = 10),
+                     transform = map(
+                       dataset = !!rlang::syms(datasets$target)
+                     )),
+  all_cor_comps = target(dplyr::bind_rows(cor_comps),
+                         transform = combine(cor_comps))
 )
 
 all = bind_rows(datasets, methods)
@@ -99,75 +80,5 @@ options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clusterm
 
 
 #Run the pipeline on multiple local cores
-system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F))
+system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F, jobs = 3, parallelism = "clustermq"))
 
-
-# }
-#
-# loadd(all_sims, all_winners,  all_qis, all_diagnostics, cache = cache)
-# save(all_sims, all_winners,  all_qis, all_diagnostics, file = here::here("results", "results_objects", "portable_results_all_hasty_toy.Rds"))
-# rm(all_sims)
-# rm(all_winners)
-# rm(all_qis)
-# rm(all_diagnostics)
-# DBI::dbDisconnect(db)
-# rm(cache)
-# print("Completed OK")
-
-#}
-loadd(all_gams_all, cache=cache)
-
-
-winning_gams <- all_gams_all %>%
-  mutate(complexity = ifelse(model == "full", 4,
-    ifelse(model == "no_interaction", 3,
-           ifelse(model == "no_source", 2, 1)
-  ))) %>%
-  group_by(matssname, type) %>%
-  mutate(minAIC = min(aic)) %>%
-  mutate(deltaAIC = minAIC- aic) %>%
-  mutate(exp_deltas = exp(.5 * deltaAIC)) %>%
-  mutate(denom = sum(exp_deltas)) %>%
-  mutate(aic_wt = exp_deltas/ denom) %>%
-  arrange(desc(aic_wt)) %>%
-  mutate(rank =row_number()) %>%
-  #filter(rank == 1) %>%
-  ungroup() %>%
-  arrange(matssname, type, rank)
-
-
-delta_2 <- winning_gams %>% filter(deltaAIC > -2) %>%
-  group_by(matssname, type) %>%
-  arrange(complexity) %>%
-  mutate(rank = row_number()) %>%
-  filter(rank == 1) %>%
-  ungroup()
-
-delta_2 %>% group_by(type, model) %>% tally()
-
-delta_4 <- winning_gams %>% filter(deltaAIC > -4) %>%
-  group_by(matssname, type) %>%
-  arrange(complexity) %>%
-  mutate(rank = row_number()) %>%
-  filter(rank == 1) %>%
-  ungroup()
-
-delta_4 %>% group_by(type, model) %>% tally()
-
-
-wt_9 <- winning_gams %>%
-  filter(rank == 1) %>%
-  filter(aic_wt > .9)
-
-
-rvi <- winning_gams %>%
-  mutate(rv_interaction = ifelse(model == "full", aic_wt, 0),
-         rv_sourceintercept = ifelse(model %in% c("full", "no_interaction"), aic_wt, 0),
-         rv_timeslope = ifelse(model %in% c("full", "no_interaction", "no_source"), aic_wt, 0),
-         rv_intercept = aic_wt) %>%
-  group_by(matssname, type) %>%
-  summarize(rvi_interaction = sum(rv_interaction),
-            rvi_sourceintercept = sum(rv_sourceintercept),
-            rvi_timeslope = sum(rv_timeslope),
-            rv_intercept = sum(rv_intercept)) %>%
-  ungroup()
