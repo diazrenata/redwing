@@ -17,7 +17,7 @@ working_datasets <- read.csv(here::here("supporting_data","perfect_coverage_1988
 
 
 datasets <- datasets[ which(datasets$target %in% working_datasets$matssname), ]
-datasets <- datasets[1:2, ]
+#datasets <- datasets[1:2, ]
 #
 # datasets <- datasets[ unique(c(1:max_caps[i], which(datasets$target %in% c("bbs_rtrg_224_3", "bbs_rtrg_318_3", "bbs_rtrg_19_7", "bbs_rtrg_116_18", "bbs_rtrg_3_80")))), ]
 
@@ -40,7 +40,7 @@ methods <- drake_plan(
                     transform = combine(aics)),
   all_preds = target(dplyr::bind_rows(preds),
                      transform = combine(preds)),
-  cor_comps = target(cor_compare(dataset, ndraws = 10),
+  cor_comps = target(cor_compare(dataset, ndraws = 100),
                      transform = map(
                        dataset = !!rlang::syms(datasets$target)
                      )),
@@ -66,19 +66,19 @@ library(clustermq)
 options(clustermq.scheduler = "multicore"#, clustermq.template = "slurm_clustermq.tmpl")
 )
 ## Run the pipeline parallelized for HiPerGator
-# system.time(make(all,
-#                  force = TRUE,
-#                  cache = cache,
-#                  verbose = 1,
-#                  parallelism = "clustermq",
-#                  jobs = 6,
-#                  caching = "main",
-#                  memory_strategy = "autoclean",
-#                  lock_envir = F,
-#                  garbage_collection = T))# Important for DBI caches!
+system.time(make(all,
+                 force = TRUE,
+                 cache = cache,
+                 verbose = 1,
+                 parallelism = "clustermq",
+                 jobs = 4,
+                 caching = "main",
+                 memory_strategy = "autoclean",
+                 lock_envir = F,
+                 garbage_collection = T))# Important for DBI caches!
 #   } else {
 
 
 #Run the pipeline on multiple local cores
-system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F, jobs = 3, parallelism = "clustermq"))
+#system.time(make(all, cache = cache,  verbose = 1, memory_strategy = "autoclean", lock_envir = F, jobs = 3, parallelism = "clustermq"))
 
